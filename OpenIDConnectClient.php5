@@ -2,7 +2,7 @@
 
 /**
  *
- * OpenIDConnect for PHP5
+ * OpenIDConnectClient for PHP5
  * Author: Michael Jett <mjett@mitre.org>
  * Creative Commons License http://creativecommons.org/licenses/by/3.0/us/
  *
@@ -18,7 +18,7 @@ if (!isset($_SESSION)) {
 /**
  * OpenIDConnect Exception Class
  */
-class OpenIDConnectException extends Exception
+class OpenIDConnectClientException extends Exception
 {
 
 }
@@ -27,10 +27,10 @@ class OpenIDConnectException extends Exception
  * Require the CURL and JSON PHP extentions to be installed
  */
 if (!function_exists('curl_init')) {
-    throw new OpenIDConnectException('OpenIDConnect needs the CURL PHP extension.');
+    throw new OpenIDConnectClientException('OpenIDConnect needs the CURL PHP extension.');
 }
 if (!function_exists('json_decode')) {
-    throw new OpenIDConnectException('OpenIDConnect needs the JSON PHP extension.');
+    throw new OpenIDConnectClientException('OpenIDConnect needs the JSON PHP extension.');
 }
 
 /**
@@ -38,7 +38,7 @@ if (!function_exists('json_decode')) {
  * Please note this class stores nonces in $_SESSION['openid_connect_nonce']
  *
  */
-class OpenIDConnect
+class OpenIDConnectClient
 {
 
     /**
@@ -84,7 +84,7 @@ class OpenIDConnect
 
     /**
      * @return bool
-     * @throws OpenIDConnectException
+     * @throws OpenIDConnectClientException
      */
     public function authenticate() {
 
@@ -96,7 +96,7 @@ class OpenIDConnect
             $token_json = self::requestTokens($code);
 
             If ($token_json->error) {
-                throw new OpenIDConnectException($token_json->error_description);
+                throw new OpenIDConnectClientException($token_json->error_description);
             }
 
             $claims = self::decodeJWT($token_json->id_token, 1);
@@ -116,7 +116,7 @@ class OpenIDConnect
                 return true;
 
             } else {
-                throw new OpenIDConnectException ("Unable to verify JWT claims");
+                throw new OpenIDConnectClientException ("Unable to verify JWT claims");
             }
 
         } else {
@@ -321,12 +321,12 @@ class OpenIDConnect
 
     /**
      * @return string
-     * @throws OpenIDConnectException
+     * @throws OpenIDConnectClientException
      */
     public function getProviderURL() {
 
         if (!isset($this->providerConfig['issuer'])) {
-            throw new OpenIDConnectException("The provider URL has not been set");
+            throw new OpenIDConnectClientException("The provider URL has not been set");
         } else {
             return rtrim($this->providerConfig['issuer'], '/') . '/';
         }
