@@ -23,12 +23,12 @@
 
 require "OpenIDConnectClient.php5";
 
-$oidc = new OpenIDConnectClient('6e89d765-6333-4759-aa5f-c206052fc1ac',
-                                'AI8Nj8zJ8bV4zgC7MzNMxoQo1PXRRemJ9_QL7lPQVDjURSiq4NzgfIa8sfZJ-VS8XnKLCKeYe_N0YWS4MQVZ_28',
-                                'http://ground.mitre.org:8080/openid-connect-server/');
+$oidc = new OpenIDConnectClient('ClientIDHere',
+                                'ClientSecretHere',
+                                'http://myproviderURL.com/');
 
 // optional
-$oidc->setHttpProxy("http://gatekeeper.mitre.org:80");
+$oidc->setHttpProxy("http://myproxy:80");
 
 $oidc->authenticate();
 $name = $oidc->requestUserInfo('given_name');
