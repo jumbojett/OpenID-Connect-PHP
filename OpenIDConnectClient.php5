@@ -149,7 +149,7 @@ class OpenIDConnectClient
      * @param $scope - example: openid, given_name, etc...
      */
     public function addScope($scope) {
-        array_merge((array)$this->scopes, (array)$scope);
+        $this->scopes = array_merge($this->scopes, (array)$scope);
     }
 
     /**
@@ -161,6 +161,7 @@ class OpenIDConnectClient
     private function getConfigValue($param) {
 
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
+        // This is also known as auto "discovery"
         if (!isset($this->providerConfig[$param])) {
             $well_known_config_url = self::getProviderURL() . ".well-known/openid-configuration";
             $value = json_decode(self::fetchURL($well_known_config_url))->{$param};
@@ -275,8 +276,10 @@ class OpenIDConnectClient
 
         return (($claims->iss == self::getProviderURL())
             && ($claims->aud == $this->clientID)
-            && ($claims->nonce == $_SESSION['openid_connect_nonce'])
-            && ($claims->state == $_SESSION['openid_connect_state']));
+            && ($claims->nonce == $_SESSION['openid_connect_nonce']));
+
+        // TODO: verify state
+        // && ($claims->state == $_SESSION['openid_connect_state'])
 
     }
 
@@ -414,7 +417,7 @@ class OpenIDConnectClient
      *        simple key => value
      */
     public function addConfigParam($array) {
-        array_merge($this->providerConfig, $array);
+        $this->providerConfig = array_merge($this->providerConfig, $array);
     }
 
     /**
