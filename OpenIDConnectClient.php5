@@ -7,11 +7,11 @@
  * OpenIDConnectClient for PHP5
  * Author: Michael Jett <mjett@mitre.org>
  *
- * Licensed under the Creative Commons License, Version 3.0 (the "License"); you may
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
  * a copy of the License at
  *
- * http://creativecommons.org/licenses/by/3.0/us/
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -85,6 +85,11 @@ class OpenIDConnectClient
     private $accessToken;
 
     /**
+     * @var array holds scopes
+     */
+    private $scopes = array();
+
+    /**
      * @param $client_id
      * @param $client_secret
      * @param $provider_url
@@ -141,6 +146,13 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param $scope ex: openid, given_name, etc...
+     */
+    public function addScope($scope) {
+        array_merge((array)$this->scopes, (array)$scope);
+    }
+
+    /**
      * Get's anything that we need configuration wise including endpoints, and other values
      *
      * @param $param
@@ -173,15 +185,17 @@ class OpenIDConnectClient
          * Thank you
          * http://stackoverflow.com/questions/189113/how-do-i-get-current-page-full-url-in-php-on-a-windows-iis-server
          */
-        $page_URL = (@$_SERVER["HTTPS"] == "on") ? "https://" : "http://";
+        $base_page_url = (@$_SERVER["HTTPS"] == "on") ? "https://" : "http://";
         if ($_SERVER["SERVER_PORT"] != "80") {
-            $page_URL .= $_SERVER["SERVER_NAME"] . ":" . $_SERVER["SERVER_PORT"] . $_SERVER["REQUEST_URI"];
+            $base_page_url .= $_SERVER["SERVER_NAME"] . ":" . $_SERVER["SERVER_PORT"];
         } else {
-            $page_URL .= $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"];
+            $base_page_url .= $_SERVER["SERVER_NAME"];
         }
 
+        $base_page_url .= reset(explode("?", $_SERVER['REQUEST_URI']));
+
         // encode the URL so we can pass it back as a parameter
-        return urlencode($page_URL);
+        return urlencode($base_page_url);
     }
 
     /**
@@ -194,7 +208,7 @@ class OpenIDConnectClient
         $response_type = "code";
 
         // fetch scopes
-        $scope = "openid,email,profile";
+        $scope = urlencode(implode(' ', $this->scopes));
 
         // generate and store a nonce in the session
         // the nonce is an arbitrary value
@@ -204,8 +218,12 @@ class OpenIDConnectClient
         $auth_endpoint .= "?response_type=" . $response_type
             . "&client_id=" . $this->clientID
             . "&redirect_uri=" . self::getRedirectURL()
-            . "&scope=" . $scope
             . "&nonce=" . $nonce;
+
+        // If the client has been registered with additional scopes
+        if (sizeof($this->scopes) > 0) {
+            $auth_endpoint .= "&scope=" . $scope;
+        }
 
         self::redirect($auth_endpoint);
 
@@ -283,6 +301,7 @@ class OpenIDConnectClient
 
     /**
      * @param $url
+     * @throws OpenIDConnectClientException
      * @return mixed
      */
     private function fetchURL($url) {
@@ -321,10 +340,15 @@ class OpenIDConnectClient
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
         // Timeout in seconds
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 
         // Download the given URL, and return output
         $output = curl_exec($ch);
+
+        if (curl_exec($ch) === false) {
+            throw new OpenIDConnectClientException('Curl error: ' . curl_error($ch));
+            //die('Curl error: ' . curl_error($ch));
+        }
 
         // Close the cURL resource, and free system resources
         curl_close($ch);

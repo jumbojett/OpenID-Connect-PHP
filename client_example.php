@@ -7,11 +7,11 @@
  * OpenIDConnectClient for PHP5
  * Author: Michael Jett <mjett@mitre.org>
  *
- * Licensed under the Creative Commons License, Version 3.0 (the "License"); you may
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
  * a copy of the License at
  *
- * http://creativecommons.org/licenses/by/3.0/us/
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -23,12 +23,12 @@
 
 require "OpenIDConnectClient.php5";
 
-$oidc = new OpenIDConnectClient('clientIDHere',
-                                'clientSecretHere',
-                                'http://providerURLHere');
+$oidc = new OpenIDConnectClient('6e89d765-6333-4759-aa5f-c206052fc1ac',
+                                'AI8Nj8zJ8bV4zgC7MzNMxoQo1PXRRemJ9_QL7lPQVDjURSiq4NzgfIa8sfZJ-VS8XnKLCKeYe_N0YWS4MQVZ_28',
+                                'http://ground.mitre.org:8080/openid-connect-server/');
 
 // optional
-// $oidc->setHttpProxy("http://");
+$oidc->setHttpProxy("http://gatekeeper.mitre.org:80");
 
 $oidc->authenticate();
 $name = $oidc->requestUserInfo('given_name');
