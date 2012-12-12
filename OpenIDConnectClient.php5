@@ -146,7 +146,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @param $scope ex: openid, given_name, etc...
+     * @param $scope - example: openid, given_name, etc...
      */
     public function addScope($scope) {
         array_merge((array)$this->scopes, (array)$scope);
@@ -199,6 +199,15 @@ class OpenIDConnectClient
     }
 
     /**
+     * Used for arbitrary value generation for nonces and state
+     *
+     * @return string
+     */
+    private function generateRandString () {
+        return md5(uniqid(rand(), TRUE));
+    }
+
+    /**
      * Start Here
      * @return void
      */
@@ -207,18 +216,23 @@ class OpenIDConnectClient
         $auth_endpoint = self::getConfigValue("authorization_endpoint");
         $response_type = "code";
 
-        // fetch scopes
+        // Fetch scopes
         $scope = urlencode(implode(' ', $this->scopes));
 
-        // generate and store a nonce in the session
-        // the nonce is an arbitrary value
-        $nonce = md5(uniqid(rand(), TRUE));
+        // Generate and store a nonce in the session
+        // The nonce is an arbitrary value
+        $nonce = self::generateRandString();
         $_SESSION['openid_connect_nonce'] = $nonce;
+
+        // State essentially acts as a session key for OIDC
+        $state = self::generateRandString();
+        $_SESSION['openid_connect_state'] = $state;
 
         $auth_endpoint .= "?response_type=" . $response_type
             . "&client_id=" . $this->clientID
             . "&redirect_uri=" . self::getRedirectURL()
-            . "&nonce=" . $nonce;
+            . "&nonce=" . $nonce
+            . "&state=" . $state;
 
         // If the client has been registered with additional scopes
         if (sizeof($this->scopes) > 0) {
@@ -261,7 +275,8 @@ class OpenIDConnectClient
 
         return (($claims->iss == self::getProviderURL())
             && ($claims->aud == $this->clientID)
-            && ($claims->nonce == $_SESSION['openid_connect_nonce']));
+            && ($claims->nonce == $_SESSION['openid_connect_nonce'])
+            && ($claims->state == $_SESSION['openid_connect_state']));
 
     }
 
