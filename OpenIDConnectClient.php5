@@ -90,6 +90,11 @@ class OpenIDConnectClient
     private $scopes = array();
 
     /**
+     * @var array holds a cache of info returned from the user info endpoint
+     */
+    private $userInfo;
+
+    /**
      * @param $client_id
      * @param $client_secret
      * @param $provider_url
@@ -114,7 +119,7 @@ class OpenIDConnectClient
             $token_json = self::requestTokens($code);
 
             // Throw an error if the server returns one
-            if ($token_json->error) {
+            if (isset($token_json->error)) {
                 throw new OpenIDConnectClientException($token_json->error_description);
             }
 
@@ -301,6 +306,11 @@ class OpenIDConnectClient
      */
     public function requestUserInfo($attribute) {
 
+        // Check to see if the attribute is already in memory
+        if (array_key_exists($attribute, $this->userInfo)) {
+            return $this->userInfo->$attribute;
+        }
+
         $user_info_endpoint = self::getConfigValue("userinfo_endpoint");
         $schema = 'openid';
 
@@ -309,8 +319,10 @@ class OpenIDConnectClient
 
         $user_json = json_decode(self::fetchURL($user_info_endpoint));
 
-        if (array_key_exists($attribute, $user_json)) {
-            return $user_json->$attribute;
+        $this->userInfo = $user_json;
+
+        if (array_key_exists($attribute, $this->userInfo)) {
+            return $this->userInfo->$attribute;
         }
 
         return null;
