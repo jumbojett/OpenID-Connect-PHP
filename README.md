@@ -3,8 +3,6 @@ OpenID Connect for PHP 5
 A simple client library
 ------------------------
 
-
-----------
 # Goals #
  1. Simple
  2. Clean
