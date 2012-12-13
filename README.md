@@ -32,3 +32,12 @@ A simple client library
     try {
         $oidc->authenticate();
     }
+
+## Learn about the user ##
+
+    $name = $oidc->requestUserInfo('given_name');
+
+[See openid spec for available user attributes][1]
+
+
+  [1]: http://openid.net/specs/openid-connect-basic-1_0-15.html#id_res
