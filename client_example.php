@@ -45,11 +45,10 @@ $name = $oidc->requestUserInfo('given_name');
     </style>
 </head>
 <body>
-<?php if ($name): ?>
+
     <div>
-        Hello <?= $name ?>
+        Hello <?php echo $name; ?>
     </div>
-<?php endif ?>
 
 </body>
 </html>
