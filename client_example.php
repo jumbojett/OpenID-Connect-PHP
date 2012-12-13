@@ -27,9 +27,6 @@ $oidc = new OpenIDConnectClient('ClientIDHere',
                                 'ClientSecretHere',
                                 'http://myproviderURL.com/');
 
-// optional
-$oidc->setHttpProxy("http://myproxy:80");
-
 $oidc->authenticate();
 $name = $oidc->requestUserInfo('given_name');
 
