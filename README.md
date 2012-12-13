@@ -8,7 +8,6 @@ A simple client library
  2. Clean
  3. Compact
  4. Free from spec jargon
- 5. List item
 
 ----------
 
