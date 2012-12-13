@@ -113,8 +113,14 @@ class OpenIDConnectClient
 
             $token_json = self::requestTokens($code);
 
-            If ($token_json->error) {
+            // Throw an error if the server returns one
+            if ($token_json->error) {
                 throw new OpenIDConnectClientException($token_json->error_description);
+            }
+
+            // Do an OpenID Connect session check
+            if ($_REQUEST['state'] != $_SESSION['openid_connect_state']){
+                throw new OpenIDConnectClientException("Unable to determine state");
             }
 
             $claims = self::decodeJWT($token_json->id_token, 1);
@@ -128,9 +134,7 @@ class OpenIDConnectClient
                 // Save the access token
                 $this->accessToken = $token_json->access_token;
 
-                /**
-                 * Success!
-                 */
+                // Success!
                 return true;
 
             } else {
@@ -277,9 +281,6 @@ class OpenIDConnectClient
         return (($claims->iss == self::getProviderURL())
             && ($claims->aud == $this->clientID)
             && ($claims->nonce == $_SESSION['openid_connect_nonce']));
-
-        // TODO: verify state
-        // && ($claims->state == $_SESSION['openid_connect_state'])
 
     }
 
