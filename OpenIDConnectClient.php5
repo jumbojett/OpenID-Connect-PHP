@@ -2,7 +2,7 @@
 
 /**
  *
- * Copyright MITRE 2012
+ * Copyright MITRE 2013
  *
  * OpenIDConnectClient for PHP5
  * Author: Michael Jett <mjett@mitre.org>
@@ -284,7 +284,7 @@ class OpenIDConnectClient
     private function verifyJWTclaims($claims) {
 
         return (($claims->iss == self::getProviderURL())
-            && ($claims->aud == $this->clientID)
+            && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
             && ($claims->nonce == $_SESSION['openid_connect_nonce']));
 
     }
@@ -304,7 +304,7 @@ class OpenIDConnectClient
      *
      * @param $attribute
      *
-     * Attribute	    Type	Description
+     * Attribute        Type	Description
      * user_id 	        string 	REQUIRED Identifier for the End-User at the Issuer.
      * name 	        string 	End-User's full name in displayable form including all name parts, ordered according to End-User's locale and preferences.
      * given_name 	    string 	Given name or first name of the End-User.
