@@ -1,7 +1,6 @@
 OpenID Connect for PHP 5
 ========================
-A simple "basic client" library
-------------------------
+A simple "basic client" library that allows an application to authenticate a user via an OpenID Connect server.
 
 # Goals #
  1. Simple
