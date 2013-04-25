@@ -12,29 +12,39 @@ A simple "basic client" library that allows an application to authenticate a use
 
 ## Create an instance ##
 
-    $oidc = new OpenIDConnectClient('clientID',
-                                    'clientSecret',
-                                    'https://provider.url');
+```php
+$oidc = new OpenIDConnectClient('clientID',
+                                'clientSecret',
+                                'https://provider.url');
+                                 
+```
 
 ## Add optional parameters ##
 ### Configure a proxy ###
 
-    $oidc->setHttpProxy("http://my.proxy.org:80");
+```php
+$oidc->setHttpProxy("http://my.proxy.org:80");
+```
 
 ### Add a scope###
 
-    $oidc->addScope('openid');
-
+```php
+$oidc->addScope('openid');
+```
 
 ## Authenticate ##
 
-    try {
-        $oidc->authenticate();
-    }
+```php
+try {
+    $oidc->authenticate();
+}
+```
 
 ## Learn about the user ##
 
-    $name = $oidc->requestUserInfo('given_name');
+```php
+$name = $oidc->requestUserInfo('given_name');
+```
 
 [See openid spec for available user attributes][1]
 
