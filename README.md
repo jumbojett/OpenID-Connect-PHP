@@ -40,3 +40,6 @@ A simple "basic client" library that allows an application to authenticate a use
 
 
   [1]: http://openid.net/specs/openid-connect-basic-1_0-15.html#id_res
+  
+## Todo ##
+- Support dynamic registration
