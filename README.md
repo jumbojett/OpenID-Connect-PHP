@@ -13,7 +13,7 @@ A simple "basic client" library that allows an application to authenticate a use
 ## It's easy! ##
 
 ```php
-$oidc = new OpenIDConnectClient('http://myproviderURL.com/',
+$oidc = new OpenIDConnectClient('http://id.provider.com/',
                                 'ClientIDHere',
                                 'ClientSecretHere');
 
