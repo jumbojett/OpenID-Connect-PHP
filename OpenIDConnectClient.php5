@@ -59,6 +59,11 @@ class OpenIDConnectClient
      */
     private $clientID;
 
+    /*
+     * @var string arbitrary name value
+     */
+    private $clientName;
+
     /**
      * @var string arbitrary secret value
      */
@@ -99,9 +104,16 @@ class OpenIDConnectClient
      * @param $client_secret
      * @param $provider_url
      */
-    public function __construct($client_id, $client_secret, $provider_url) {
+    public function __construct($client_id = null, $client_secret = null, $provider_url = null) {
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
+        $this->setProviderURL($provider_url);
+    }
+
+    /**
+     * @param $provider_url
+     */
+    public function setProviderURL($provider_url) {
         $this->providerConfig['issuer'] = $provider_url;
     }
 
@@ -124,7 +136,7 @@ class OpenIDConnectClient
             }
 
             // Do an OpenID Connect session check
-            if ($_REQUEST['state'] != $_SESSION['openid_connect_state']){
+            if ($_REQUEST['state'] != $_SESSION['openid_connect_state']) {
                 throw new OpenIDConnectClientException("Unable to determine state");
             }
 
@@ -167,7 +179,7 @@ class OpenIDConnectClient
      * @param $param
      * @return string
      */
-    private function getConfigValue($param) {
+    private function getProviderConfigValue($param) {
 
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
@@ -204,8 +216,7 @@ class OpenIDConnectClient
 
         $base_page_url .= reset(explode("?", $_SERVER['REQUEST_URI']));
 
-        // encode the URL so we can pass it back as a parameter
-        return urlencode($base_page_url);
+        return $base_page_url;
     }
 
     /**
@@ -213,7 +224,7 @@ class OpenIDConnectClient
      *
      * @return string
      */
-    private function generateRandString () {
+    private function generateRandString() {
         return md5(uniqid(rand(), TRUE));
     }
 
@@ -223,11 +234,8 @@ class OpenIDConnectClient
      */
     private function requestAuthorization() {
 
-        $auth_endpoint = self::getConfigValue("authorization_endpoint");
+        $auth_endpoint = self::getProviderConfigValue("authorization_endpoint");
         $response_type = "code";
-
-        // Fetch scopes
-        $scope = urlencode(implode(' ', $this->scopes));
 
         // Generate and store a nonce in the session
         // The nonce is an arbitrary value
@@ -238,16 +246,20 @@ class OpenIDConnectClient
         $state = self::generateRandString();
         $_SESSION['openid_connect_state'] = $state;
 
-        $auth_endpoint .= "?response_type=" . $response_type
-            . "&client_id=" . $this->clientID
-            . "&redirect_uri=" . self::getRedirectURL()
-            . "&nonce=" . $nonce
-            . "&state=" . $state;
+        $auth_params = array(
+            'response_type' => $response_type,
+            'redirect_uri' => self::getRedirectURL(),
+            'client_id' => $this->clientID,
+            'nonce' => $nonce,
+            'state' => $state
+        );
 
         // If the client has been registered with additional scopes
         if (sizeof($this->scopes) > 0) {
-            $auth_endpoint .= "&scope=" . $scope;
+            $auth_params = array_merge($auth_params, array('scope' => implode(' ', $this->scopes)));
         }
+
+        $auth_endpoint .= '?' . http_build_query($auth_params, null, '&');
 
         self::redirect($auth_endpoint);
 
@@ -263,15 +275,19 @@ class OpenIDConnectClient
     private function requestTokens($code) {
 
 
-        $token_endpoint = self::getConfigValue("token_endpoint");
+        $token_endpoint = self::getProviderConfigValue("token_endpoint");
 
         $grant_type = "authorization_code";
 
-        $token_endpoint .= "?grant_type=" . $grant_type
-            . "&code=" . $code
-            . "&redirect_uri=" . self::getRedirectURL()
-            . "&client_id=" . $this->clientID
-            . "&client_secret=" . $this->clientSecret;
+        $token_params = array(
+            'grant_type' => $grant_type,
+            'code' => $code,
+            'redirect_uri' => self::getRedirectURL(),
+            'client_id' => $this->clientID,
+            'client_secret' => $this->clientSecret
+        );
+
+        $token_endpoint .= '?' . http_build_query($token_params, null, '&');
 
         return json_decode(self::fetchURL($token_endpoint));
 
@@ -304,25 +320,25 @@ class OpenIDConnectClient
      *
      * @param $attribute
      *
-     * Attribute        Type	Description
-     * user_id 	        string 	REQUIRED Identifier for the End-User at the Issuer.
-     * name 	        string 	End-User's full name in displayable form including all name parts, ordered according to End-User's locale and preferences.
-     * given_name 	    string 	Given name or first name of the End-User.
-     * family_name 	    string 	Surname or last name of the End-User.
-     * middle_name 	    string 	Middle name of the End-User.
-     * nickname 	    string 	Casual name of the End-User that may or may not be the same as the given_name. For instance, a nickname value of Mike might be returned alongside a given_name value of Michael.
-     * profile 	        string 	URL of End-User's profile page.
-     * picture 	        string 	URL of the End-User's profile picture.
-     * website 	        string 	URL of End-User's web page or blog.
-     * email 	        string 	The End-User's preferred e-mail address.
-     * verified 	    boolean 	True if the End-User's e-mail address has been verified; otherwise false.
-     * gender 	        string 	The End-User's gender: Values defined by this specification are female and male. Other values MAY be used when neither of the defined values are applicable.
-     * birthday 	    string 	The End-User's birthday, represented as a date string in MM/DD/YYYY format. The year MAY be 0000, indicating that it is omitted.
-     * zoneinfo 	    string 	String from zoneinfo [zoneinfo] time zone database. For example, Europe/Paris or America/Los_Angeles.
-     * locale 	        string 	The End-User's locale, represented as a BCP47 [RFC5646] language tag. This is typically an ISO 639-1 Alpha-2 [ISO639‑1] language code in lowercase and an ISO 3166-1 Alpha-2 [ISO3166‑1] country code in uppercase, separated by a dash. For example, en-US or fr-CA. As a compatibility note, some implementations have used an underscore as the separator rather than a dash, for example, en_US; Implementations MAY choose to accept this locale syntax as well.
-     * phone_number 	string 	The End-User's preferred telephone number. E.164 [E.164] is RECOMMENDED as the format of this Claim. For example, +1 (425) 555-1212 or +56 (2) 687 2400.
-     * address 	        JSON object 	The End-User's preferred address. The value of the address member is a JSON [RFC4627] structure containing some or all of the members defined in Section 2.4.2.1.
-     * updated_time 	string 	Time the End-User's information was last updated, represented as a RFC 3339 [RFC3339] datetime. For example, 2011-01-03T23:58:42+0000.
+     * Attribute        Type    Description
+     * user_id            string    REQUIRED Identifier for the End-User at the Issuer.
+     * name            string    End-User's full name in displayable form including all name parts, ordered according to End-User's locale and preferences.
+     * given_name        string    Given name or first name of the End-User.
+     * family_name        string    Surname or last name of the End-User.
+     * middle_name        string    Middle name of the End-User.
+     * nickname        string    Casual name of the End-User that may or may not be the same as the given_name. For instance, a nickname value of Mike might be returned alongside a given_name value of Michael.
+     * profile            string    URL of End-User's profile page.
+     * picture            string    URL of the End-User's profile picture.
+     * website            string    URL of End-User's web page or blog.
+     * email            string    The End-User's preferred e-mail address.
+     * verified        boolean    True if the End-User's e-mail address has been verified; otherwise false.
+     * gender            string    The End-User's gender: Values defined by this specification are female and male. Other values MAY be used when neither of the defined values are applicable.
+     * birthday        string    The End-User's birthday, represented as a date string in MM/DD/YYYY format. The year MAY be 0000, indicating that it is omitted.
+     * zoneinfo        string    String from zoneinfo [zoneinfo] time zone database. For example, Europe/Paris or America/Los_Angeles.
+     * locale            string    The End-User's locale, represented as a BCP47 [RFC5646] language tag. This is typically an ISO 639-1 Alpha-2 [ISO639‑1] language code in lowercase and an ISO 3166-1 Alpha-2 [ISO3166‑1] country code in uppercase, separated by a dash. For example, en-US or fr-CA. As a compatibility note, some implementations have used an underscore as the separator rather than a dash, for example, en_US; Implementations MAY choose to accept this locale syntax as well.
+     * phone_number    string    The End-User's preferred telephone number. E.164 [E.164] is RECOMMENDED as the format of this Claim. For example, +1 (425) 555-1212 or +56 (2) 687 2400.
+     * address            JSON object    The End-User's preferred address. The value of the address member is a JSON [RFC4627] structure containing some or all of the members defined in Section 2.4.2.1.
+     * updated_time    string    Time the End-User's information was last updated, represented as a RFC 3339 [RFC3339] datetime. For example, 2011-01-03T23:58:42+0000.
      *
      * @return mixed
      *
@@ -334,7 +350,7 @@ class OpenIDConnectClient
             return $this->userInfo->$attribute;
         }
 
-        $user_info_endpoint = self::getConfigValue("userinfo_endpoint");
+        $user_info_endpoint = self::getProviderConfigValue("userinfo_endpoint");
         $schema = 'openid';
 
         $user_info_endpoint .= "?schema=" . $schema
@@ -355,16 +371,27 @@ class OpenIDConnectClient
 
     /**
      * @param $url
+     * @param null $post_body If this is set the post type will be POST
      * @throws OpenIDConnectClientException
      * @return mixed
      */
-    private function fetchURL($url) {
+    private function fetchURL($url, $post_body = null) {
 
 
         // OK cool - then let's create a new cURL resource handle
         $ch = curl_init();
 
-        // Now set some options (most are optional)
+        // Determine whether this is a GET or POST
+        if ($post_body != null) {
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
+
+            // All POSTs will have a JSON Body
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                    'Content-Type: application/json',
+                    'Content-Length: ' . strlen($post_body))
+            );
+        }
 
         // Set URL to download
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -401,7 +428,6 @@ class OpenIDConnectClient
 
         if (curl_exec($ch) === false) {
             throw new OpenIDConnectClientException('Curl error: ' . curl_error($ch));
-            //die('Curl error: ' . curl_error($ch));
         }
 
         // Close the cURL resource, and free system resources
@@ -452,7 +478,7 @@ class OpenIDConnectClient
      * @param $array
      *        simple key => value
      */
-    public function addConfigParam($array) {
+    public function providerConfigParam($array) {
         $this->providerConfig = array_merge($this->providerConfig, $array);
     }
 
@@ -468,6 +494,57 @@ class OpenIDConnectClient
      */
     public function setClientID($clientID) {
         $this->clientID = $clientID;
+    }
+
+
+    /**
+     * Dynamic registration
+     * @throws OpenIDConnectClientException
+     */
+    public function register() {
+
+        $registration_endpoint = $this->getProviderConfigValue('registration_endpoint');
+
+        $send_object = (object)array(
+            'redirect_uris' => array($this->getRedirectURL()),
+            'client_name' => $this->getClientName()
+        );
+
+        $response = self::fetchURL($registration_endpoint, json_encode($send_object));
+
+        $json_response = json_decode($response);
+
+        // Throw some errors if we encounter them
+        if ($json_response === false) {
+            throw new OpenIDConnectClientException("Error registering: JSON response received from the server was invalid.");
+        } elseif (isset($json_response->{'error_description'})) {
+            throw new OpenIDConnectClientException($json_response->{'error_description'});
+        }
+
+        $this->setClientID($json_response->{'client_id'});
+
+        // The OpenID Connect Dynamic registration protocol makes the client secret optional
+        // and provides a registration access token and URI endpoint if it is not present
+        if (isset($json_response->{'client_secret'})) {
+            $this->setClientSecret($json_response->{'client_secret'});
+        } else {
+            throw new OpenIDConnectClientException("Error registering:
+                                                    Please contact the OpenID Connect provider and obtain a Client ID and Secret directly from them");
+        }
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getClientName() {
+        return $this->clientName;
+    }
+
+    /**
+     * @param $clientName
+     */
+    public function setClientName($clientName) {
+        $this->clientName = $clientName;
     }
 
 
