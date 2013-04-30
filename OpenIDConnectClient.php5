@@ -100,14 +100,23 @@ class OpenIDConnectClient
     private $userInfo = array();
 
     /**
-     * @param $client_id
-     * @param $client_secret
-     * @param $provider_url
+     * @param $provider_url string required
+     *
+     * @param $client_id string optional
+     * @param $client_secret string optional
+     *
+     * Note: If the client id or client secret are not passed then the
+     *       client will automatically begin dynamic registration
      */
-    public function __construct($client_id = null, $client_secret = null, $provider_url = null) {
+    public function __construct($provider_url = null, $client_id = null, $client_secret = null) {
+        $this->setProviderURL($provider_url);
+
+        if ($client_id == null || $client_secret == null) {
+            self::register($this->getProviderURL());
+        }
+
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
-        $this->setProviderURL($provider_url);
     }
 
     /**
@@ -499,9 +508,17 @@ class OpenIDConnectClient
 
     /**
      * Dynamic registration
+     *
+     * @param $provider_url string
+     *          A provider url needs to be directly set using the self::setProviderURL()
+     *          method or passed into this function or else registration will fail.
      * @throws OpenIDConnectClientException
      */
-    public function register() {
+    public function register($provider_url = null) {
+
+        if ($provider_url != null) {
+            $this->setProviderURL($provider_url);
+        }
 
         $registration_endpoint = $this->getProviderConfigValue('registration_endpoint');
 
