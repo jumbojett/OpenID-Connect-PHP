@@ -10,46 +10,43 @@ A simple "basic client" library that allows an application to authenticate a use
 
 ----------
 
-## Create an instance ##
+## It's easy! ##
 
 ```php
-$oidc = new OpenIDConnectClient('clientID',
-                                'clientSecret',
-                                'https://provider.url');
+$oidc = new OpenIDConnectClient('http://myproviderURL.com/',
+                                'ClientIDHere',
+                                'ClientSecretHere');
+
+$oidc->authenticate();
+$name = $oidc->requestUserInfo('given_name');
                                  
 ```
 
-## Add optional parameters ##
-### Configure a proxy ###
+## Dynamic Registration Example ##
 
 ```php
-$oidc->setHttpProxy("http://my.proxy.org:80");
-```
+$client_id = $_SESSION['client_id'];
+$client_secret = $_SESSION['client_secret'];
+$provider = "http://id.provider.com/";
 
-### Add a scope###
-
-```php
-$oidc->addScope('openid');
-```
-
-## Authenticate ##
-
-```php
-try {
-    $oidc->authenticate();
+// If we don't have a client id or secret then obtain one
+if (!$client_id || !$client_secret) {
+    $oidc = new OpenIDConnectClient($provider);
+    $_SESSION['client_id'] = $oidc->getClientID();
+    $_SESSION['client_secret'] = $oidc->getClientSecret();
+} else {
+    $oidc = new OpenIDConnectClient($provider, $client_id, $client_secret);
 }
-```
 
-## Learn about the user ##
-
-```php
+$oidc->authenticate();
 $name = $oidc->requestUserInfo('given_name');
 ```
+
 
 [See openid spec for available user attributes][1]
 
 
   [1]: http://openid.net/specs/openid-connect-basic-1_0-15.html#id_res
   
-## Todo ##
-- Support dynamic registration
+### Todo ###
+- Dynamic registration does not support registration auth tokens and endpoints
