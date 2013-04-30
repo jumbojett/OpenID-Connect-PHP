@@ -23,9 +23,9 @@
 
 require "OpenIDConnectClient.php5";
 
-$oidc = new OpenIDConnectClient('ClientIDHere',
-                                'ClientSecretHere',
-                                'http://myproviderURL.com/');
+$oidc = new OpenIDConnectClient('http://myproviderURL.com/',
+                                'ClientIDHere',
+                                'ClientSecretHere');
 
 $oidc->authenticate();
 $name = $oidc->requestUserInfo('given_name');
