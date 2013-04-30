@@ -113,10 +113,10 @@ class OpenIDConnectClient
 
         if ($client_id == null || $client_secret == null) {
             self::register($this->getProviderURL());
+        } else {
+            $this->clientID = $client_id;
+            $this->clientSecret = $client_secret;
         }
-
-        $this->clientID = $client_id;
-        $this->clientSecret = $client_secret;
     }
 
     /**
@@ -562,6 +562,20 @@ class OpenIDConnectClient
      */
     public function setClientName($clientName) {
         $this->clientName = $clientName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClientID() {
+        return $this->clientID;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClientSecret() {
+        return $this->clientSecret;
     }
 
 
