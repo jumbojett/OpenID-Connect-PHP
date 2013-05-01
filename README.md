@@ -1,16 +1,13 @@
-OpenID Connect for PHP 5
+PHP OpenID Connect Basic Client
 ========================
-A simple "basic client" library that allows an application to authenticate a user through an OpenID Connect provider.
+A simple library that allows an application to authenticate a user through the basic OpenID Connect flow.
 This library hopes to encourage OpenID Connect use by making it simple enough for a developer with little knowledge of
 the OpenID Connect protocol to setup authentication.
 
-# Goals #
- 1. Simple
- 2. Clean
- 3. Compact
- 4. Free from spec jargon
-
-----------
+# Requirements #
+ 1. PHP 5.2 or greater 
+ 2. CURL extension
+ 3. JSON extension
 
 ## Example 1: Basic Client ##
 
@@ -24,6 +21,8 @@ $name = $oidc->requestUserInfo('given_name');
                                  
 ```
 
+[See openid spec for available user attributes][1]
+
 ## Example 2: Dynamic Registration ##
 
 ```php
@@ -35,9 +34,6 @@ $client_secret = $oidc->getClientSecret();
 
 // Be sure to add logic to store the client id and client secret
 ```
-
-
-[See openid spec for available user attributes][1]
 
 
   [1]: http://openid.net/specs/openid-connect-basic-1_0-15.html#id_res
