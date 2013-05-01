@@ -15,7 +15,7 @@ the OpenID Connect protocol to setup authentication.
 ## Example 1: Basic Client ##
 
 ```php
-$oidc = new OpenIDConnectClient('http://id.provider.com/',
+$oidc = new OpenIDConnectClient('https://id.provider.com/',
                                 'ClientIDHere',
                                 'ClientSecretHere');
 
@@ -27,7 +27,7 @@ $name = $oidc->requestUserInfo('given_name');
 ## Example 2: Dynamic Registration ##
 
 ```php
-$oidc = new OpenIDConnectClient("http://id.provider.com/");
+$oidc = new OpenIDConnectClient("https://id.provider.com/");
 
 $oidc->register();
 $client_id = $oidc->getClientID();
