@@ -191,6 +191,8 @@ class OpenIDConnectClient
 
             if ($value) {
                 $this->providerConfig[$param] = $value;
+            } else {
+                throw new OpenIDConnectClientException("The provider {$param} has not been set. Make sure your provider has a well known configuration available.");
             }
 
         }
