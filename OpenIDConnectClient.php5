@@ -406,17 +406,15 @@ class OpenIDConnectClient
         curl_setopt($ch, CURLOPT_HEADER, 0);
 
         /**
-         * Jon Maul <maul@mitre.org>
-         *
-         * A quick fix for SSL
-         *      curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-         *
-         * Otherwise we need to set cURL to trust a specific root certificate
+         * Set cert
+         * Otherwise ignore SSL peer verification
          */
         if (isset($this->certPath)) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
             curl_setopt($ch, CURLOPT_CAINFO, $this->certPath);
+        } else {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
         }
 
         // Should cURL return or print out the data? (true = return, false = print)
