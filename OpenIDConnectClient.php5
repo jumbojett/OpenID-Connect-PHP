@@ -212,7 +212,7 @@ class OpenIDConnectClient
          * http://stackoverflow.com/questions/189113/how-do-i-get-current-page-full-url-in-php-on-a-windows-iis-server
          */
         $base_page_url = (@$_SERVER["HTTPS"] == "on") ? "https://" : "http://";
-        if ($_SERVER["SERVER_PORT"] != "80") {
+        if ($_SERVER["SERVER_PORT"] != "80" && $_SERVER["SERVER_PORT"] != "443") {
             $base_page_url .= $_SERVER["SERVER_NAME"] . ":" . $_SERVER["SERVER_PORT"];
         } else {
             $base_page_url .= $_SERVER["SERVER_NAME"];
