@@ -125,7 +125,12 @@ class OpenIDConnectClient
      */
     public function authenticate() {
 
-        $code = $_REQUEST["code"];
+        if (array_key_exists("code", $_REQUEST)) {
+            $code = $_REQUEST["code"];
+        } else {
+            $code = null;
+        }
+
 
         // If we have an authorization code then proceed to request a token
         if ($code) {
