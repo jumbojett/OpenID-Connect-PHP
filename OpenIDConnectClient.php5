@@ -124,17 +124,16 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function authenticate() {
-
-        if (array_key_exists("code", $_REQUEST)) {
-            $code = $_REQUEST["code"];
-        } else {
-            $code = null;
+        
+        // Do a preemptive check to see if the provider has thrown an error from a previous redirect
+        if ($_REQUEST['error']) {
+            throw new OpenIDConnectClientException("Error: " . $_REQUEST['error'] . " Description: " . $_REQUEST['error_description']);
         }
 
-
         // If we have an authorization code then proceed to request a token
-        if ($code) {
-
+        if ($_REQUEST["code"]) {
+            
+            $code = $_REQUEST["code"];
             $token_json = self::requestTokens($code);
 
             // Throw an error if the server returns one
