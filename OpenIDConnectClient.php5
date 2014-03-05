@@ -295,9 +295,10 @@ class OpenIDConnectClient
             'client_secret' => $this->clientSecret
         );
 
-        $token_endpoint .= '?' . http_build_query($token_params, null, '&');
+        // Convert token params to string format
+        $token_params = http_build_query($token_params, null, '&');
 
-        return json_decode(self::fetchURL($token_endpoint));
+        return json_decode(self::fetchURL($token_endpoint, $token_params));
 
     }
 
@@ -379,7 +380,7 @@ class OpenIDConnectClient
 
     /**
      * @param $url
-     * @param null $post_body If this is set the post type will be POST
+     * @param null $post_body string If this is set the post type will be POST
      * @throws OpenIDConnectClientException
      * @return mixed
      */
@@ -394,11 +395,19 @@ class OpenIDConnectClient
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
 
-            // All POSTs will have a JSON Body
+            // Default content type is form encoded
+            $content_type = 'application/x-www-form-urlencoded';
+
+            // Determine if this is a JSON payload and add the appropriate content type
+            if (is_object(json_decode($post_body))) {
+                $content_type = 'application/json';
+            }
+
             curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                    'Content-Type: application/json',
-                    'Content-Length: ' . strlen($post_body))
-            );
+                    "Content-Type: {$content_type}",
+                    'Content-Length: ' . strlen($post_body)
+            ));
+
         }
 
         // Set URL to download
