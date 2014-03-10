@@ -308,7 +308,7 @@ class OpenIDConnectClient
      */
     private function verifyJWTclaims($claims) {
 
-        return (($claims->iss == self::getProviderURL())
+        return (rtrim($claims->iss,'/') == rtrim(self::getProviderURL(),'/'))
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
             && ($claims->nonce == $_SESSION['openid_connect_nonce']));
 
