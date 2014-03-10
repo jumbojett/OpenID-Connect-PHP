@@ -460,7 +460,7 @@ class OpenIDConnectClient
         if (!isset($this->providerConfig['issuer'])) {
             throw new OpenIDConnectClientException("The provider URL has not been set");
         } else {
-            return rtrim($this->providerConfig['issuer'], '/') . '/';
+            return $this->providerConfig['issuer'];
         }
     }
 
