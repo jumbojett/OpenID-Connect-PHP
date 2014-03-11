@@ -190,7 +190,7 @@ class OpenIDConnectClient
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
         if (!isset($this->providerConfig[$param])) {
-            $well_known_config_url = self::getProviderURL() . ".well-known/openid-configuration";
+            $well_known_config_url = rtrim(self::getProviderURL(),"/") . "/.well-known/openid-configuration";
             $value = json_decode(self::fetchURL($well_known_config_url))->{$param};
 
             if ($value) {
