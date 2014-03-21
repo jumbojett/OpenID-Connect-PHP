@@ -2,11 +2,14 @@
 
 /**
  *
+ * Additional improvements for working version with OpenAM
+ * Author: Rahul Ghose <rahul.gh@directi.com>
+ *
  * Copyright MITRE 2013
  *
  * OpenIDConnectClient for PHP5
  * Author: Michael Jett <mjett@mitre.org>
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
  * a copy of the License at
@@ -190,8 +193,8 @@ class OpenIDConnectClient
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
         if (!isset($this->providerConfig[$param])) {
-            $well_known_config_url = rtrim(self::getProviderURL(),"/") . "/.well-known/openid-configuration";
-            $value = json_decode(self::fetchURL($well_known_config_url))->{$param};
+            $well_known_config_url = rtrim(self::getProviderURL(),'/') . "/.well-known/openid-configuration";
+            $value = json_decode(self::fetchURL($well_known_config_url))->{$param}; 
 
             if ($value) {
                 $this->providerConfig[$param] = $value;
@@ -280,27 +283,40 @@ class OpenIDConnectClient
      * @param $code
      * @return mixed
      */
-    private function requestTokens($code) {
+		private function requestTokens($code) {
 
 
-        $token_endpoint = self::getProviderConfigValue("token_endpoint");
+			$token_endpoint = self::getProviderConfigValue("token_endpoint");
+			$ch = curl_init($token_endpoint);
 
-        $grant_type = "authorization_code";
+			$grant_type = "authorization_code";
+			$token_params = array(
+					'grant_type' => $grant_type,
+					'code' => $code,
+					'redirect_uri' => self::getRedirectURL()
+					);
 
-        $token_params = array(
-            'grant_type' => $grant_type,
-            'code' => $code,
-            'redirect_uri' => self::getRedirectURL(),
-            'client_id' => $this->clientID,
-            'client_secret' => $this->clientSecret
-        );
+			// Convert token params to string format
+			$token_params = http_build_query($token_params, null, '&');
 
-        // Convert token params to string format
-        $token_params = http_build_query($token_params, null, '&');
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $token_params);
+			$content_type = 'application/x-www-form-urlencoded';
+			$headers = array_merge($headers, array(
+						"Content-Type: {$content_type}",
+						'Content-Length: ' . strlen($post_body)
+						));
 
-        return json_decode(self::fetchURL($token_endpoint, $token_params));
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+			curl_setopt($ch, CURLOPT_HEADER, 1);
+			curl_setopt($ch, CURLOPT_USERPWD,  "$this->clientID:$this->clientSecret");
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+			curl_setopt($ch, CURLOPT_HEADER, 0);
 
-    }
+			$response = curl_exec($ch);
+
+			return json_decode($response);
+		}
 
     /**
      * @param object $claims
@@ -360,12 +376,9 @@ class OpenIDConnectClient
         }
 
         $user_info_endpoint = self::getProviderConfigValue("userinfo_endpoint");
-        $schema = 'openid';
 
-        $user_info_endpoint .= "?schema=" . $schema
-            . "&access_token=" . $this->accessToken;
-
-        $user_json = json_decode(self::fetchURL($user_info_endpoint));
+				$headers = array("Authorization: Bearer $this->accessToken");
+        $user_json = json_decode(self::fetchURL($user_info_endpoint,null,$headers));
 
         $this->userInfo = $user_json;
 
@@ -384,16 +397,18 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      * @return mixed
      */
-    private function fetchURL($url, $post_body = null) {
-
+    private function fetchURL($url, $post_body = null, $extra_headers = null) {
 
         // OK cool - then let's create a new cURL resource handle
         $ch = curl_init();
+
+				$headers = array();
 
         // Determine whether this is a GET or POST
         if ($post_body != null) {
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
+						curl_setopt($ch, CURLOPT_USERPWD, $this->clientID  . ":" . $this->clientSecret);
 
             // Default content type is form encoded
             $content_type = 'application/x-www-form-urlencoded';
@@ -403,12 +418,21 @@ class OpenIDConnectClient
                 $content_type = 'application/json';
             }
 
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+						$headers = array_merge($headers, array(
                     "Content-Type: {$content_type}",
                     'Content-Length: ' . strlen($post_body)
             ));
-
         }
+
+				// Extra headers are needed for authorization
+				if( $extra_headers )
+					$headers = array_merge($headers, $extra_headers);
+
+				if( sizeof($headers)>0 )
+					file_put_contents($log_file,"Extra headers: ". serialize($headers)."\n",FILE_APPEND);
+	
+				// Adds any extra headers required in the request
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         // Set URL to download
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -456,7 +480,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function getProviderURL() {
-
+				
         if (!isset($this->providerConfig['issuer'])) {
             throw new OpenIDConnectClientException("The provider URL has not been set");
         } else {
