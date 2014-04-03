@@ -402,7 +402,7 @@ class OpenIDConnectClient
         // OK cool - then let's create a new cURL resource handle
         $ch = curl_init();
 
-				$headers = array();
+	    $headers = array();
 
         // Determine whether this is a GET or POST
         if ($post_body != null) {
@@ -418,20 +418,18 @@ class OpenIDConnectClient
                 $content_type = 'application/json';
             }
 
-						$headers = array_merge($headers, array(
+            $headers = array_merge($headers, array(
                     "Content-Type: {$content_type}",
                     'Content-Length: ' . strlen($post_body)
             ));
         }
 
-				// Extra headers are needed for authorization
-				if( $extra_headers )
-					$headers = array_merge($headers, $extra_headers);
+		// Extra headers are needed for authorization
+		if( $extra_headers )
+            $headers = array_merge($headers, $extra_headers);
 
-				if( sizeof($headers)>0 )
-					file_put_contents($log_file,"Extra headers: ". serialize($headers)."\n",FILE_APPEND);
-	
-				// Adds any extra headers required in the request
+
+        // Adds any extra headers required in the request
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         // Set URL to download
