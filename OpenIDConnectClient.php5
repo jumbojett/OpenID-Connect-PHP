@@ -183,7 +183,9 @@ class OpenIDConnectClient
      * Get's anything that we need configuration wise including endpoints, and other values
      *
      * @param $param
+     * @throws OpenIDConnectClientException
      * @return string
+     *
      */
     private function getProviderConfigValue($param) {
 
@@ -209,7 +211,7 @@ class OpenIDConnectClient
      *
      * @return string
      */
-    private function getRedirectURL() {
+    protected function getRedirectURL() {
 
         /**
          * Thank you
@@ -232,7 +234,7 @@ class OpenIDConnectClient
      *
      * @return string
      */
-    private function generateRandString() {
+    protected function generateRandString() {
         return md5(uniqid(rand(), TRUE));
     }
 
@@ -384,7 +386,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      * @return mixed
      */
-    private function fetchURL($url, $post_body = null) {
+    protected function fetchURL($url, $post_body = null) {
 
 
         // OK cool - then let's create a new cURL resource handle
