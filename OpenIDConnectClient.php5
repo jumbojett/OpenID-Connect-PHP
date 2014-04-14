@@ -124,7 +124,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function authenticate() {
-        
+
         // Do a preemptive check to see if the provider has thrown an error from a previous redirect
         if (isset($_REQUEST['error'])) {
             throw new OpenIDConnectClientException("Error: " . $_REQUEST['error'] . " Description: " . $_REQUEST['error_description']);
@@ -132,9 +132,9 @@ class OpenIDConnectClient
 
         // If we have an authorization code then proceed to request a token
         if (isset($_REQUEST["code"])) {
-            
+
             $code = $_REQUEST["code"];
-            $token_json = self::requestTokens($code);
+            $token_json = $this->requestTokens($code);
 
             // Throw an error if the server returns one
             if (isset($token_json->error)) {
@@ -146,10 +146,10 @@ class OpenIDConnectClient
                 throw new OpenIDConnectClientException("Unable to determine state");
             }
 
-            $claims = self::decodeJWT($token_json->id_token, 1);
+            $claims = $this->decodeJWT($token_json->id_token, 1);
 
             // If this is a valid claim
-            if (self::verifyJWTclaims($claims)) {
+            if ($this->verifyJWTclaims($claims)) {
 
                 // Clean up the session a little
                 unset($_SESSION['openid_connect_nonce']);
@@ -166,7 +166,7 @@ class OpenIDConnectClient
 
         } else {
 
-            self::requestAuthorization();
+            $this->requestAuthorization();
             return false;
         }
 
@@ -190,8 +190,8 @@ class OpenIDConnectClient
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
         if (!isset($this->providerConfig[$param])) {
-            $well_known_config_url = rtrim(self::getProviderURL(),"/") . "/.well-known/openid-configuration";
-            $value = json_decode(self::fetchURL($well_known_config_url))->{$param};
+            $well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/openid-configuration";
+            $value = json_decode($this->fetchURL($well_known_config_url))->{$param};
 
             if ($value) {
                 $this->providerConfig[$param] = $value;
@@ -242,21 +242,21 @@ class OpenIDConnectClient
      */
     private function requestAuthorization() {
 
-        $auth_endpoint = self::getProviderConfigValue("authorization_endpoint");
+        $auth_endpoint = $this->getProviderConfigValue("authorization_endpoint");
         $response_type = "code";
 
         // Generate and store a nonce in the session
         // The nonce is an arbitrary value
-        $nonce = self::generateRandString();
+        $nonce = $this->generateRandString();
         $_SESSION['openid_connect_nonce'] = $nonce;
 
         // State essentially acts as a session key for OIDC
-        $state = self::generateRandString();
+        $state = $this->generateRandString();
         $_SESSION['openid_connect_state'] = $state;
 
         $auth_params = array(
             'response_type' => $response_type,
-            'redirect_uri' => self::getRedirectURL(),
+            'redirect_uri' => $this->getRedirectURL(),
             'client_id' => $this->clientID,
             'nonce' => $nonce,
             'state' => $state
@@ -269,7 +269,7 @@ class OpenIDConnectClient
 
         $auth_endpoint .= '?' . http_build_query($auth_params, null, '&');
 
-        self::redirect($auth_endpoint);
+        $this->redirect($auth_endpoint);
 
     }
 
@@ -283,14 +283,14 @@ class OpenIDConnectClient
     private function requestTokens($code) {
 
 
-        $token_endpoint = self::getProviderConfigValue("token_endpoint");
+        $token_endpoint = $this->getProviderConfigValue("token_endpoint");
 
         $grant_type = "authorization_code";
 
         $token_params = array(
             'grant_type' => $grant_type,
             'code' => $code,
-            'redirect_uri' => self::getRedirectURL(),
+            'redirect_uri' => $this->getRedirectURL(),
             'client_id' => $this->clientID,
             'client_secret' => $this->clientSecret
         );
@@ -298,7 +298,7 @@ class OpenIDConnectClient
         // Convert token params to string format
         $token_params = http_build_query($token_params, null, '&');
 
-        return json_decode(self::fetchURL($token_endpoint, $token_params));
+        return json_decode($this->fetchURL($token_endpoint, $token_params));
 
     }
 
@@ -308,7 +308,7 @@ class OpenIDConnectClient
      */
     private function verifyJWTclaims($claims) {
 
-        return (($claims->iss == self::getProviderURL())
+        return (($claims->iss == $this->getProviderURL())
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
             && ($claims->nonce == $_SESSION['openid_connect_nonce']));
 
@@ -359,13 +359,13 @@ class OpenIDConnectClient
             return $this->userInfo->$attribute;
         }
 
-        $user_info_endpoint = self::getProviderConfigValue("userinfo_endpoint");
+        $user_info_endpoint = $this->getProviderConfigValue("userinfo_endpoint");
         $schema = 'openid';
 
         $user_info_endpoint .= "?schema=" . $schema
             . "&access_token=" . $this->accessToken;
 
-        $user_json = json_decode(self::fetchURL($user_info_endpoint));
+        $user_json = json_decode($this->fetchURL($user_info_endpoint));
 
         $this->userInfo = $user_json;
 
@@ -404,8 +404,8 @@ class OpenIDConnectClient
             }
 
             curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                    "Content-Type: {$content_type}",
-                    'Content-Length: ' . strlen($post_body)
+                "Content-Type: {$content_type}",
+                'Content-Length: ' . strlen($post_body)
             ));
 
         }
@@ -526,7 +526,7 @@ class OpenIDConnectClient
             'client_name' => $this->getClientName()
         );
 
-        $response = self::fetchURL($registration_endpoint, json_encode($send_object));
+        $response = $this->fetchURL($registration_endpoint, json_encode($send_object));
 
         $json_response = json_decode($response);
 
