@@ -2,14 +2,11 @@
 
 /**
  *
- * Additional improvements for working version with OpenAM
- * Author: Rahul Ghose <rahul.gh@directi.com>
- *
  * Copyright MITRE 2013
  *
  * OpenIDConnectClient for PHP5
  * Author: Michael Jett <mjett@mitre.org>
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
  * a copy of the License at
@@ -92,6 +89,11 @@ class OpenIDConnectClient
      */
     private $accessToken;
 
+		/**
+		 *	@var string needed for logout
+		 */
+		private $id_token;
+
     /**
      * @var array holds scopes
      */
@@ -101,6 +103,13 @@ class OpenIDConnectClient
      * @var array holds a cache of info returned from the user info endpoint
      */
     private $userInfo = array();
+
+		/**
+		 * the logout url
+		 */
+		public function getLogOutURL() {
+			return $this->getProviderConfigValue('end_session_endpoint');
+		}
 
     /**
      * @param $provider_url string optional
@@ -121,6 +130,14 @@ class OpenIDConnectClient
     public function setProviderURL($provider_url) {
         $this->providerConfig['issuer'] = $provider_url;
     }
+
+		public function getAccessToken() {
+			return $this->accessToken;
+		}
+
+		public function getIdToken() {
+			return $this->id_token;
+		}
 
     /**
      * @return bool
@@ -159,6 +176,9 @@ class OpenIDConnectClient
 
                 // Save the access token
                 $this->accessToken = $token_json->access_token;
+
+								// Save the id_token, needed for logout
+								$this->id_token = $token_json->id_token;
 
                 // Success!
                 return true;
@@ -296,23 +316,25 @@ class OpenIDConnectClient
 					'redirect_uri' => self::getRedirectURL()
 					);
 
+
 			// Convert token params to string format
 			$token_params = http_build_query($token_params, null, '&');
 
 			curl_setopt($ch, CURLOPT_POST, 1);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $token_params);
 			$content_type = 'application/x-www-form-urlencoded';
-			$headers = array_merge($headers, array(
+			if (is_object(json_decode($token_params))) {
+				$content_type = 'application/json';
+			}
+			$headers = array(
 						"Content-Type: {$content_type}",
-						'Content-Length: ' . strlen($post_body)
-						));
-
+						'Content-Length: ' . strlen($token_params)
+						);
 			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 			curl_setopt($ch, CURLOPT_HEADER, 1);
-			curl_setopt($ch, CURLOPT_USERPWD,  "$this->clientID:$this->clientSecret");
+			curl_setopt($ch, CURLOPT_USERPWD,  $this->clientID . ":" . $this->clientSecret);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 			curl_setopt($ch, CURLOPT_HEADER, 0);
-
 			$response = curl_exec($ch);
 
 			return json_decode($response);
@@ -402,7 +424,7 @@ class OpenIDConnectClient
         // OK cool - then let's create a new cURL resource handle
         $ch = curl_init();
 
-	    $headers = array();
+				$headers = array();
 
         // Determine whether this is a GET or POST
         if ($post_body != null) {
@@ -418,18 +440,17 @@ class OpenIDConnectClient
                 $content_type = 'application/json';
             }
 
-            $headers = array_merge($headers, array(
+						$headers = array_merge($headers, array(
                     "Content-Type: {$content_type}",
                     'Content-Length: ' . strlen($post_body)
             ));
         }
 
-		// Extra headers are needed for authorization
-		if( $extra_headers )
-            $headers = array_merge($headers, $extra_headers);
+				// Extra headers are needed for authorization
+				if( $extra_headers )
+					$headers = array_merge($headers, $extra_headers);
 
-
-        // Adds any extra headers required in the request
+				// Adds any extra headers required in the request
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         // Set URL to download
