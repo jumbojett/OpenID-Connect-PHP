@@ -305,7 +305,6 @@ class OpenIDConnectClient
      */
 		private function requestTokens($code) {
 
-
 			$token_endpoint = self::getProviderConfigValue("token_endpoint");
 			$ch = curl_init($token_endpoint);
 
@@ -335,6 +334,7 @@ class OpenIDConnectClient
 			curl_setopt($ch, CURLOPT_USERPWD,  $this->clientID . ":" . $this->clientSecret);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 			curl_setopt($ch, CURLOPT_HEADER, 0);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
 			$response = curl_exec($ch);
 
 			return json_decode($response);
