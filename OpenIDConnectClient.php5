@@ -1,7 +1,6 @@
 <?php
 
 /**
- * Copyleft rahul ghose
  *
  * Copyright MITRE 2013
  *
@@ -340,8 +339,8 @@ class OpenIDConnectClient
 			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); 
 
 			$response = curl_exec($ch);
-
-      if (curl_exec($ch) === false) {
+			
+			if (curl_errno($ch)) {
       	throw new OpenIDConnectClientException('Curl error: ' . curl_error($ch));
       }
 
@@ -438,7 +437,6 @@ class OpenIDConnectClient
         if ($post_body != null) {
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
-						curl_setopt($ch, CURLOPT_USERPWD, $this->clientID  . ":" . $this->clientSecret);
 
             // Default content type is form encoded
             $content_type = 'application/x-www-form-urlencoded';
