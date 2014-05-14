@@ -334,8 +334,15 @@ class OpenIDConnectClient
 			curl_setopt($ch, CURLOPT_USERPWD,  $this->clientID . ":" . $this->clientSecret);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 			curl_setopt($ch, CURLOPT_HEADER, 0);
+
 			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); 
+
 			$response = curl_exec($ch);
+
+      if (curl_exec($ch) === false) {
+      	throw new OpenIDConnectClientException('Curl error: ' . curl_error($ch));
+      }
 
 			return json_decode($response);
 		}
@@ -473,6 +480,7 @@ class OpenIDConnectClient
             curl_setopt($ch, CURLOPT_CAINFO, $this->certPath);
         } else {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+						curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); 
         }
 
         // Should cURL return or print out the data? (true = return, false = print)
