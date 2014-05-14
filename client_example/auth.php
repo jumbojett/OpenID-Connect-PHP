@@ -4,7 +4,7 @@
 	require_once "OpenIDConnectClient.php5";
 
 	try {
-		$oidc = new OpenIDConnectClient('http://jpvip.internal.directi.com:2014/openam',
+		$oidc = new OpenIDConnectClient('url',
                                   'test',
                                   'test');
 		$oidc->addScope('openid');
