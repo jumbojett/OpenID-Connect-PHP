@@ -100,6 +100,11 @@ class OpenIDConnectClient
     private $userInfo = array();
 
     /**
+     * @var array holds authentication parameters
+     */
+    private $authParams = array();
+    
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -123,7 +128,7 @@ class OpenIDConnectClient
      * @return bool
      * @throws OpenIDConnectClientException
      */
-    public function authenticate($forceLogin=false) {
+    public function authenticate() {
 
         // Do a preemptive check to see if the provider has thrown an error from a previous redirect
         if (isset($_REQUEST['error'])) {
@@ -166,7 +171,7 @@ class OpenIDConnectClient
 
         } else {
 
-            $this->requestAuthorization($forceLogin);
+            $this->requestAuthorization();
             return false;
         }
 
@@ -177,6 +182,14 @@ class OpenIDConnectClient
      */
     public function addScope($scope) {
         $this->scopes = array_merge($this->scopes, (array)$scope);
+    }
+
+    /**
+     * @param $param - authetication parameter name
+     * @param $value - authetication parameter value
+     */
+    public function addAuthParam($param, $value) {
+        $this->authParams[$param] = $value;
     }
 
     /**
@@ -242,7 +255,7 @@ class OpenIDConnectClient
      * Start Here
      * @return void
      */
-    private function requestAuthorization($forceLogin) {
+    private function requestAuthorization() {
 
         $auth_endpoint = $this->getProviderConfigValue("authorization_endpoint");
         $response_type = "code";
@@ -256,17 +269,13 @@ class OpenIDConnectClient
         $state = $this->generateRandString();
         $_SESSION['openid_connect_state'] = $state;
 
-        $auth_params = array(
+        $auth_params = array_merge($this->authParams, array(
             'response_type' => $response_type,
             'redirect_uri' => $this->getRedirectURL(),
             'client_id' => $this->clientID,
             'nonce' => $nonce,
             'state' => $state
-        );
-        
-        if ($forceLogin) {
-            $auth_params['prompt'] = 'login';
-        }
+        )};
 
         // If the client has been registered with additional scopes
         if (sizeof($this->scopes) > 0) {
