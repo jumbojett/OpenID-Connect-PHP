@@ -185,11 +185,10 @@ class OpenIDConnectClient
     }
 
     /**
-     * @param $param - authetication parameter name
-     * @param $value - authetication parameter value
+     * @param $param - example: prompt=login
      */
-    public function addAuthParam($param, $value) {
-        $this->authParams[$param] = $value;
+    public function addAuthParam($param) {
+        $this->authParams = array_merge($this->authParams, (array)$param);
     }
 
     /**
