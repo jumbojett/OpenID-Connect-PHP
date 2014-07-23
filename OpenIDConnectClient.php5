@@ -123,7 +123,7 @@ class OpenIDConnectClient
      * @return bool
      * @throws OpenIDConnectClientException
      */
-    public function authenticate() {
+    public function authenticate($forceLogin=false) {
 
         // Do a preemptive check to see if the provider has thrown an error from a previous redirect
         if (isset($_REQUEST['error'])) {
@@ -166,7 +166,7 @@ class OpenIDConnectClient
 
         } else {
 
-            $this->requestAuthorization();
+            $this->requestAuthorization($forceLogin);
             return false;
         }
 
@@ -242,7 +242,7 @@ class OpenIDConnectClient
      * Start Here
      * @return void
      */
-    private function requestAuthorization() {
+    private function requestAuthorization($forceLogin) {
 
         $auth_endpoint = $this->getProviderConfigValue("authorization_endpoint");
         $response_type = "code";
@@ -263,6 +263,10 @@ class OpenIDConnectClient
             'nonce' => $nonce,
             'state' => $state
         );
+        
+        if ($forceLogin) {
+            $auth_params['prompt'] = 'login';
+        }
 
         // If the client has been registered with additional scopes
         if (sizeof($this->scopes) > 0) {
