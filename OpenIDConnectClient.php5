@@ -274,7 +274,7 @@ class OpenIDConnectClient
             'client_id' => $this->clientID,
             'nonce' => $nonce,
             'state' => $state
-        )};
+        ));
 
         // If the client has been registered with additional scopes
         if (sizeof($this->scopes) > 0) {
