@@ -103,7 +103,7 @@ class OpenIDConnectClient
      * @var array holds authentication parameters
      */
     private $authParams = array();
-    
+
     /**
      * @param $provider_url string optional
      *
