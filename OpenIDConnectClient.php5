@@ -100,6 +100,11 @@ class OpenIDConnectClient
     private $userInfo = array();
 
     /**
+     * @var array holds authentication parameters
+     */
+    private $authParams = array();
+    
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -180,6 +185,13 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param $param - example: prompt=login
+     */
+    public function addAuthParam($param) {
+        $this->authParams = array_merge($this->authParams, (array)$param);
+    }
+
+    /**
      * Get's anything that we need configuration wise including endpoints, and other values
      *
      * @param $param
@@ -256,13 +268,13 @@ class OpenIDConnectClient
         $state = $this->generateRandString();
         $_SESSION['openid_connect_state'] = $state;
 
-        $auth_params = array(
+        $auth_params = array_merge($this->authParams, array(
             'response_type' => $response_type,
             'redirect_uri' => $this->getRedirectURL(),
             'client_id' => $this->clientID,
             'nonce' => $nonce,
             'state' => $state
-        );
+        )};
 
         // If the client has been registered with additional scopes
         if (sizeof($this->scopes) > 0) {
