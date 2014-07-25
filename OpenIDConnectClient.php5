@@ -103,7 +103,7 @@ class OpenIDConnectClient
      * @var array holds authentication parameters
      */
     private $authParams = array();
-    
+
     /**
      * @param $provider_url string optional
      *
@@ -274,7 +274,7 @@ class OpenIDConnectClient
             'client_id' => $this->clientID,
             'nonce' => $nonce,
             'state' => $state
-        )};
+        ));
 
         // If the client has been registered with additional scopes
         if (sizeof($this->scopes) > 0) {
