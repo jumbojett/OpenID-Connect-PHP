@@ -217,13 +217,28 @@ class OpenIDConnectClient
 
         return $this->providerConfig[$param];
     }
+    
+    
+    /**
+     * @param $url Sets redirect URL for auth flow
+     */
+    public function setRedirectURL ($url) {
+        if (filter_var($url, FILTER_VALIDATE_URL) !== false) {
+            $this->redirectURL = $url;
+        }
+    }
 
     /**
      * Gets the URL of the current page we are on, encodes, and returns it
      *
      * @return string
      */
-    protected function getRedirectURL() {
+    public function getRedirectURL() {
+        
+        // If the redirect URL has been set then return it.
+        if ($this->redirectURL) return $this->redirectURL;
+
+        // Other-wise return the URL of the current page
 
         /**
          * Thank you
