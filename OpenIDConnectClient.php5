@@ -236,7 +236,7 @@ class OpenIDConnectClient
     public function getRedirectURL() {
         
         // If the redirect URL has been set then return it.
-        if (property_exists($this, ‘redirectURL’) && $this->redirectURL) {
+        if (property_exists($this, 'redirectURL') && $this->redirectURL) {
             return $this->redirectURL;
         }
 
