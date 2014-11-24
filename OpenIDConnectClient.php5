@@ -29,6 +29,45 @@ if (!isset($_SESSION)) {
 }
 
 /**
+ *
+ * JWT signature verification support by Jonathan Reed <jdreed@mit.edu>
+ * Licensed under the same license as the rest of this file.
+ *
+ * phpseclib is required to validate the signatures of some tokens.
+ * It can be downloaded from: http://phpseclib.sourceforge.net/
+ */
+
+include('Crypt/RSA.php');
+if (!class_exists('Crypt_RSA')) {
+    user_error('Unable to find phpseclib Crypt/RSA.php.  Ensure phpseclib is installed and in include_path');
+}
+
+/**
+ * A wrapper around base64_decode which decodes Base64URL-encoded data,
+ * which is not the same alphabet as base64.
+ */
+function base64url_decode($base64url) {
+    return base64_decode(b64url2b64($base64url));
+}
+
+/**
+ * Per RFC4648, "base64 encoding with URL-safe and filename-safe
+ * alphabet".  This just replaces characters 62 and 63.  None of the
+ * reference implementations seem to restore the padding if necessary,
+ * but we'll do it anyway.
+ *
+ */
+function b64url2b64($base64url) {
+    // "Shouldn't" be necessary, but why not
+    $padding = strlen($base64url) % 4;
+    if ($padding > 0) {
+	$base64url .= str_repeat("=", 4 - $padding);
+    }
+    return strtr($base64url, '-_', '+/');
+}
+
+
+/**
  * OpenIDConnect Exception Class
  */
 class OpenIDConnectClientException extends Exception
@@ -152,6 +191,15 @@ class OpenIDConnectClient
             }
 
             $claims = $this->decodeJWT($token_json->id_token, 1);
+
+	    // Verify the signature
+	    if ($this->canVerifySignatures()) {
+		if (!$this->verifyJWTsignature($token_json->id_token)) {
+		    throw new OpenIDConnectClientException ("Unable to verify signature");
+		}
+	    } else {
+		user_error("Warning: JWT signature verification unavailable.");
+	    }
 
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims)) {
@@ -334,6 +382,79 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param array $keys
+     * @param string $alg
+     * @throws OpenIDConnectClientException
+     * @return object
+     */
+    private function get_key_for_alg($keys, $alg) {
+        foreach ($keys as $key) {
+            if ($key->kty == $alg) {
+                return $key;
+            }
+        }
+        throw new OpenIDConnectClientException('Unable to find a key for algorithm:' . $alg);
+    }
+
+
+    /**
+     * @param string $hashtype
+     * @param object $key
+     * @throws OpenIDConnectClientException
+     * @return bool
+     */
+    private function verifyRSAJWTsignature($hashtype, $key, $payload, $signature) {
+        if (!class_exists('Crypt_RSA')) {
+            throw new OpenIDConnectClientException('Crypt_RSA support unavailable.');
+        }
+        if (!(property_exists($key, 'n') and property_exists($key, 'e'))) {
+            throw new OpenIDConnectClientException('Malformed key object');
+        }
+        /* We already have base64url-encoded data, so re-encode it as
+           regular base64 and use the XML key format for simplicity.
+        */
+        $public_key_xml = "<RSAKeyValue>\r\n".
+            "  <Modulus>" . b64url2b64($key->n) . "</Modulus>\r\n" .
+            "  <Exponent>" . b64url2b64($key->e) . "</Exponent>\r\n" .
+            "</RSAKeyValue>";
+        $rsa = new Crypt_RSA();
+        $rsa->setHash($hashtype);
+        $rsa->loadKey($public_key_xml, CRYPT_RSA_PUBLIC_FORMAT_XML);
+        $rsa->signatureMode = CRYPT_RSA_SIGNATURE_PKCS1;
+        return $rsa->verify($payload, $signature);
+    }
+
+    /**
+     * @param $jwt string encoded JWT
+     * @throws OpenIDConnectClientException
+     * @return bool
+     */
+    private function verifyJWTsignature($jwt) {
+        $parts = explode(".", $jwt);
+        $signature = base64url_decode(array_pop($parts));
+        $header = json_decode(base64url_decode($parts[0]));
+        $payload = implode(".", $parts);
+        $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
+        if ($jwks === NULL) {
+            throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
+        }
+        $verified = false;
+        switch ($header->alg) {
+        case 'RS256':
+        case 'RS384':
+        case 'RS512':
+            $hashtype = 'sha' . substr($header->alg, 2);
+            $verified = $this->verifyRSAJWTsignature($hashtype,
+                                                     $this->get_key_for_alg($jwks->keys, 'RSA'),
+                                                     $payload, $signature);
+            break;
+        default:
+            throw new OpenIDConnectClientException('No support for signature type: ' . $header->alg);
+        }
+        return $verified;
+    }
+
+    /**
      * @param object $claims
      * @return bool
      */
@@ -353,7 +474,7 @@ class OpenIDConnectClient
     private function decodeJWT($jwt, $section = 0) {
 
         $parts = explode(".", $jwt);
-        return json_decode(base64_decode($parts[$section]));
+        return json_decode(base64url_decode($parts[$section]));
     }
 
     /**
@@ -607,6 +728,13 @@ class OpenIDConnectClient
      */
     public function getClientSecret() {
         return $this->clientSecret;
+    }
+
+    /**
+     * @return bool
+     */
+    public function canVerifySignatures() {
+      return class_exists('Crypt_RSA');
     }
 
 
