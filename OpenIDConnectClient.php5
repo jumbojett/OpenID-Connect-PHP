@@ -190,6 +190,10 @@ class OpenIDConnectClient
                 throw new OpenIDConnectClientException("Unable to determine state");
             }
 
+	    if (!property_exists($token_json, 'id_token')) {
+		throw new OpenIDConnectClientException("User did not authorize openid scope.");
+	    }
+
             $claims = $this->decodeJWT($token_json->id_token, 1);
 
 	    // Verify the signature
