@@ -190,6 +190,10 @@ class OpenIDConnectClient
                 throw new OpenIDConnectClientException("Unable to determine state");
             }
 
+	    if (!property_exists($token_json, 'id_token')) {
+		throw new OpenIDConnectClientException("User did not authorize openid scope.");
+	    }
+
             $claims = $this->decodeJWT($token_json->id_token, 1);
 
 	    // Verify the signature
@@ -301,7 +305,7 @@ class OpenIDConnectClient
             $base_page_url .= $_SERVER["SERVER_NAME"];
         }
 
-        $base_page_url .= reset(explode("?", $_SERVER['REQUEST_URI']));
+        $base_page_url .= explode("?", $_SERVER['REQUEST_URI'])[0];
 
         return $base_page_url;
     }
