@@ -305,7 +305,8 @@ class OpenIDConnectClient
             $base_page_url .= $_SERVER["SERVER_NAME"];
         }
 
-        $base_page_url .= explode("?", $_SERVER['REQUEST_URI'])[0];
+        $tmp = explode("?", $_SERVER['REQUEST_URI']);
+        $base_page_url .= $tmp[0];
 
         return $base_page_url;
     }
