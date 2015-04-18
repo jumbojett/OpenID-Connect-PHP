@@ -388,6 +388,22 @@ class OpenIDConnectClient
     }
 
     /**
+      * @param array $keys
+      * @param array $header
+      * @throws OpenIDConnectClientException
+      * @return object
+      */
+     private function get_key_for_header($keys, $header) {
+         foreach ($keys as $key) {
+             if ($key->alg == $header->alg && $key->kid == $header->kid) {
+                 return $key;
+             }
+         }
+         throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' . $header->alg . ', ' . $header->kid . ')');
+     }
+ 
+
+    /**
      * @param array $keys
      * @param string $alg
      * @throws OpenIDConnectClientException
@@ -451,7 +467,7 @@ class OpenIDConnectClient
         case 'RS512':
             $hashtype = 'sha' . substr($header->alg, 2);
             $verified = $this->verifyRSAJWTsignature($hashtype,
-                                                     $this->get_key_for_alg($jwks->keys, 'RSA'),
+                                                     $this->get_key_for_header($jwks->keys, $header),
                                                      $payload, $signature);
             break;
         default:
