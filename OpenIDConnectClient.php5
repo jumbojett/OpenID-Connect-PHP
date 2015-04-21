@@ -344,7 +344,7 @@ class OpenIDConnectClient
             'client_id' => $this->clientID,
             'nonce' => $nonce,
             'state' => $state,
-            'scope' => 'openid email'
+            'scope' => 'openid'
         ));
 
         // If the client has been registered with additional scopes
