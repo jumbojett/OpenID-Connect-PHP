@@ -129,6 +129,11 @@ class OpenIDConnectClient
     private $accessToken;
 
     /**
+     * @var string if we aquire a refresh token it will be stored here
+     */
+    private $refreshToken;
+
+    /**
      * @var array holds scopes
      */
     private $scopes = array();
@@ -213,6 +218,9 @@ class OpenIDConnectClient
 
                 // Save the access token
                 $this->accessToken = $token_json->access_token;
+                
+                // Save the refresh token, if we got one
+                if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
 
                 // Success!
                 return true;
@@ -757,6 +765,20 @@ class OpenIDConnectClient
      */
     public function canVerifySignatures() {
       return class_exists('Crypt_RSA');
+    }
+
+    /**
+     * @return string
+     */
+    public function getAccessToken() {
+        return $this->accessToken;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRefreshToken() {
+        return $this->refreshToken;
     }
 
 
