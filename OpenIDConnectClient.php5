@@ -218,7 +218,7 @@ class OpenIDConnectClient
 
                 // Save the access token
                 $this->accessToken = $token_json->access_token;
-                
+
                 // Save the refresh token, if we got one
                 if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
 
@@ -277,8 +277,8 @@ class OpenIDConnectClient
 
         return $this->providerConfig[$param];
     }
-    
-    
+
+
     /**
      * @param $url Sets redirect URL for auth flow
      */
@@ -294,7 +294,7 @@ class OpenIDConnectClient
      * @return string
      */
     public function getRedirectURL() {
-        
+
         // If the redirect URL has been set then return it.
         if (property_exists($this, 'redirectURL') && $this->redirectURL) {
             return $this->redirectURL;
@@ -403,28 +403,13 @@ class OpenIDConnectClient
       */
      private function get_key_for_header($keys, $header) {
          foreach ($keys as $key) {
-             if ($key->alg == $header->alg && $key->kid == $header->kid) {
+             if (($key->alg == $header->alg && $key->kid == $header->kid) || ($key->kty == $alg)) {
                  return $key;
              }
          }
          throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' . $header->alg . ', ' . $header->kid . ')');
      }
- 
 
-    /**
-     * @param array $keys
-     * @param string $alg
-     * @throws OpenIDConnectClientException
-     * @return object
-     */
-    private function get_key_for_alg($keys, $alg) {
-        foreach ($keys as $key) {
-            if ($key->kty == $alg) {
-                return $key;
-            }
-        }
-        throw new OpenIDConnectClientException('Unable to find a key for algorithm:' . $alg);
-    }
 
 
     /**
@@ -474,12 +459,8 @@ class OpenIDConnectClient
         case 'RS384':
         case 'RS512':
             $hashtype = 'sha' . substr($header->alg, 2);
-            if (isset($header->kid)) {
-                $key = $this->get_key_for_header($jwks->keys, $header);
-            } else {
-                $key = $this->get_key_for_alg($jwks->keys, 'RSA');
-            }        
-            $verified = $this->verifyRSAJWTsignature($hashtype, $key,
+            $verified = $this->verifyRSAJWTsignature($hashtype, 
+                                                     $this->get_key_for_header($jwks->keys, $header),
                                                      $payload, $signature);
             break;
         default:
