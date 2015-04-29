@@ -474,8 +474,12 @@ class OpenIDConnectClient
         case 'RS384':
         case 'RS512':
             $hashtype = 'sha' . substr($header->alg, 2);
-            $verified = $this->verifyRSAJWTsignature($hashtype,
-                                                     $this->get_key_for_header($jwks->keys, $header),
+            if (isset($header->kid)) {
+                $key = $this->get_key_for_header($jwks->keys, $header);
+            } else {
+                $key = $this->get_key_for_alg($jwks->keys, 'RSA');
+            }        
+            $verified = $this->verifyRSAJWTsignature($hashtype, $key,
                                                      $payload, $signature);
             break;
         default:
