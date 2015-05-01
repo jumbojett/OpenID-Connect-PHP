@@ -408,7 +408,11 @@ class OpenIDConnectClient
                  return $key;
              }
          }
-         throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' . $header->alg . ', ' . $header->kid . ')');
+         if (isset($header->kid)) {
+             throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' . $header->alg . ', ' . $header->kid . ')');
+         } else {
+             throw new OpenIDConnectClientException('Unable to find a key for RSA');
+         }
      }
 
 
