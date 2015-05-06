@@ -464,7 +464,7 @@ class OpenIDConnectClient
         case 'RS384':
         case 'RS512':
             $hashtype = 'sha' . substr($header->alg, 2);
-            $verified = $this->verifyRSAJWTsignature($hashtype, 
+            $verified = $this->verifyRSAJWTsignature($hashtype,
                                                      $this->get_key_for_header($jwks->keys, $header),
                                                      $payload, $signature);
             break;
@@ -534,10 +534,10 @@ class OpenIDConnectClient
         $user_info_endpoint = $this->getProviderConfigValue("userinfo_endpoint");
         $schema = 'openid';
 
-        $user_info_endpoint .= "?schema=" . $schema
-            . "&access_token=" . $this->accessToken;
+        $user_info_endpoint .= "?schema=" . $schema;
+        //. "&access_token=" . $this->accessToken;
 
-        $user_json = json_decode($this->fetchURL($user_info_endpoint));
+        $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$this->accessToken));
 
         $this->userInfo = $user_json;
 
@@ -553,14 +553,18 @@ class OpenIDConnectClient
     /**
      * @param $url
      * @param null $post_body string If this is set the post type will be POST
+     * @param null $access_token If this is set the access_token will be send as Authorization header
      * @throws OpenIDConnectClientException
      * @return mixed
      */
-    protected function fetchURL($url, $post_body = null) {
+    protected function fetchURL($url, $post_body = null,$access_token = null) {
 
 
         // OK cool - then let's create a new cURL resource handle
         $ch = curl_init();
+
+        // Create an empty array for the headers.
+        $headers = array();
 
         // Determine whether this is a GET or POST
         if ($post_body != null) {
@@ -575,11 +579,20 @@ class OpenIDConnectClient
                 $content_type = 'application/json';
             }
 
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                "Content-Type: {$content_type}",
-                'Content-Length: ' . strlen($post_body)
-            ));
+            // Add POST-specific headers
+            $headers[] = "Content-Type: {$content_type}";
+            $headers[] = 'Content-Length: ' . strlen($post_body);
 
+        }
+
+        // Check if the access-token is set, and add it to the headers
+        if(!empty($access_token)){
+          $headers[] = "Authorization: Bearer {$access_token}";
+        }
+
+        // If we set some heaers include them
+        if(count($headers) > 0) {
+          curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         }
 
         // Set URL to download
