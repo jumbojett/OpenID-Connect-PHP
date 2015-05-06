@@ -403,8 +403,7 @@ class OpenIDConnectClient
       */
      private function get_key_for_header($keys, $header) {
          foreach ($keys as $key) {
-             if (($key->kty == 'RSA') || (isset($header->kid) && $key->alg == $header->alg && $key->kid == $header->kid)
-                  ) {
+           if ((!(isset($key->alg) && isset($header->kid)) && $key->kty == 'RSA') || ($key->alg == $header->alg && $key->kid == $header->kid)) {
                  return $key;
              }
          }
