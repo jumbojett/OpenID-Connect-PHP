@@ -534,9 +534,11 @@ class OpenIDConnectClient
         $schema = 'openid';
 
         $user_info_endpoint .= "?schema=" . $schema;
-        //. "&access_token=" . $this->accessToken;
 
-        $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$this->accessToken));
+        //The accessToken has to be send in the Authorization header, so we create a new array with only this header.
+        $headers = array("Authorization: Bearer {$this->accessToken}");
+
+        $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
 
         $this->userInfo = $user_json;
 
@@ -552,18 +554,15 @@ class OpenIDConnectClient
     /**
      * @param $url
      * @param null $post_body string If this is set the post type will be POST
-     * @param null $access_token If this is set the access_token will be send as Authorization header
+     * @param array() $headers Extra headers to be send with the request. Format as 'NameHeader: ValueHeader'
      * @throws OpenIDConnectClientException
      * @return mixed
      */
-    protected function fetchURL($url, $post_body = null,$access_token = null) {
+    protected function fetchURL($url, $post_body = null,$headers = array()) {
 
 
         // OK cool - then let's create a new cURL resource handle
         $ch = curl_init();
-
-        // Create an empty array for the headers.
-        $headers = array();
 
         // Determine whether this is a GET or POST
         if ($post_body != null) {
@@ -582,11 +581,6 @@ class OpenIDConnectClient
             $headers[] = "Content-Type: {$content_type}";
             $headers[] = 'Content-Length: ' . strlen($post_body);
 
-        }
-
-        // Check if the access-token is set, and add it to the headers
-        if(!empty($access_token)){
-          $headers[] = "Authorization: Bearer {$access_token}";
         }
 
         // If we set some heaers include them
