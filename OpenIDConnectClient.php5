@@ -493,6 +493,9 @@ class OpenIDConnectClient
      * @return bool
      */
     private function verifyJWTclaims($claims) {
+        if ($claims->iss != $this->getProviderURL() && rtrim($claims->iss,"/") == rtrim($this->getProviderURL(),"/")) {
+            throw new OpenIDConnectClientException('ProviderURL MUST match "'.$claims->iss.'"');
+        }
 
         return (($claims->iss == $this->getProviderURL())
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
