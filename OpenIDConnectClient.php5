@@ -627,7 +627,7 @@ class OpenIDConnectClient
         // Download the given URL, and return output
         $output = curl_exec($ch);
 
-        if (curl_exec($ch) === false) {
+        if ($output === false) {
             throw new OpenIDConnectClientException('Curl error: ' . curl_error($ch));
         }
 
