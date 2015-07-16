@@ -1,0 +1,13 @@
+{
+    "name": "jumbojett/openid-connect-php",
+    "description": "Bare-bones OpenID Connect client",
+    "require": {
+        "php": ">=5.2",
+        "phpseclib/phpseclib" : "~0.3.10",
+        "ext-json": "*",
+        "ext-curl": "*"
+    },
+    "autoload": {
+        "classmap": ["OpenIDConnectClient.php"]
+    }
+}

@@ -21,7 +21,7 @@
  *
  */
 
-require "OpenIDConnectClient.php5";
+require "../../autoload.php";
 
 $oidc = new OpenIDConnectClient('http://myproviderURL.com/',
                                 'ClientIDHere',
