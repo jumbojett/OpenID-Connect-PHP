@@ -395,6 +395,33 @@ class OpenIDConnectClient
     }
 
     /**
+     * Requests Access token with refresh token
+     *
+     * @param $code
+     * @return mixed
+     */
+    public function refreshToken($refresh_token) {
+        $token_endpoint = $this->getProviderConfigValue("token_endpoint");
+
+        $grant_type = "refresh_token";
+
+        $token_params = array(
+            'grant_type' => $grant_type,
+            'refresh_token' => $refresh_token,
+            'client_id' => $this->clientID,
+            'client_secret' => $this->clientSecret,
+        );
+
+        // Convert token params to string format
+        $token_params = http_build_query($token_params, null, '&');
+
+        $json = json_decode($this->fetchURL($token_endpoint, $token_params));
+        $this->refreshToken = $json->refresh_token;
+
+        return $json;
+    }
+
+    /**
       * @param array $keys
       * @param array $header
       * @throws OpenIDConnectClientException
