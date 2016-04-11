@@ -37,7 +37,7 @@ if (!isset($_SESSION)) {
  * It can be downloaded from: http://phpseclib.sourceforge.net/
  */
 
-if (!class_exists('Crypt_RSA')) {
+if (!class_exists('\phpseclib\Crypt\RSA')) {
     user_error('Unable to find phpseclib Crypt/RSA.php.  Ensure phpseclib is installed and in include_path');
 }
 
@@ -194,20 +194,20 @@ class OpenIDConnectClient
                 throw new OpenIDConnectClientException("Unable to determine state");
             }
 
-	    if (!property_exists($token_json, 'id_token')) {
-		throw new OpenIDConnectClientException("User did not authorize openid scope.");
-	    }
+            if (!property_exists($token_json, 'id_token')) {
+                throw new OpenIDConnectClientException("User did not authorize openid scope.");
+            }
 
             $claims = $this->decodeJWT($token_json->id_token, 1);
 
-	    // Verify the signature
-	    if ($this->canVerifySignatures()) {
-		if (!$this->verifyJWTsignature($token_json->id_token)) {
-		    throw new OpenIDConnectClientException ("Unable to verify signature");
-		}
-	    } else {
-		user_error("Warning: JWT signature verification unavailable.");
-	    }
+            // Verify the signature
+            if ($this->canVerifySignatures()) {
+                if (!$this->verifyJWTsignature($token_json->id_token)) {
+                    throw new OpenIDConnectClientException ("Unable to verify signature");
+                }
+            } else {
+                user_error("Warning: JWT signature verification unavailable.");
+            }
 
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims)) {
@@ -449,12 +449,13 @@ class OpenIDConnectClient
      * @return bool
      */
     private function verifyRSAJWTsignature($hashtype, $key, $payload, $signature) {
-        if (!class_exists('Crypt_RSA')) {
+        if (!class_exists('\phpseclib\Crypt\RSA')) {
             throw new OpenIDConnectClientException('Crypt_RSA support unavailable.');
         }
         if (!(property_exists($key, 'n') and property_exists($key, 'e'))) {
             throw new OpenIDConnectClientException('Malformed key object');
         }
+
         /* We already have base64url-encoded data, so re-encode it as
            regular base64 and use the XML key format for simplicity.
         */
@@ -462,10 +463,10 @@ class OpenIDConnectClient
             "  <Modulus>" . b64url2b64($key->n) . "</Modulus>\r\n" .
             "  <Exponent>" . b64url2b64($key->e) . "</Exponent>\r\n" .
             "</RSAKeyValue>";
-        $rsa = new Crypt_RSA();
+        $rsa = new \phpseclib\Crypt\RSA();
         $rsa->setHash($hashtype);
-        $rsa->loadKey($public_key_xml, CRYPT_RSA_PUBLIC_FORMAT_XML);
-        $rsa->signatureMode = CRYPT_RSA_SIGNATURE_PKCS1;
+        $rsa->loadKey($public_key_xml, \phpseclib\Crypt\RSA::PUBLIC_FORMAT_XML);
+        $rsa->signatureMode = \phpseclib\Crypt\RSA::SIGNATURE_PKCS1;
         return $rsa->verify($payload, $signature);
     }
 
@@ -489,6 +490,7 @@ class OpenIDConnectClient
         case 'RS384':
         case 'RS512':
             $hashtype = 'sha' . substr($header->alg, 2);
+
             $verified = $this->verifyRSAJWTsignature($hashtype,
                                                      $this->get_key_for_header($jwks->keys, $header),
                                                      $payload, $signature);
@@ -504,7 +506,6 @@ class OpenIDConnectClient
      * @return bool
      */
     private function verifyJWTclaims($claims) {
-
         return (($claims->iss == $this->getProviderURL())
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
             && ($claims->nonce == $_SESSION['openid_connect_nonce']));
@@ -786,7 +787,7 @@ class OpenIDConnectClient
      * @return bool
      */
     public function canVerifySignatures() {
-      return class_exists('Crypt_RSA');
+      return class_exists('\phpseclib\Crypt\RSA');
     }
 
     /**

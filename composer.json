@@ -3,7 +3,7 @@
     "description": "Bare-bones OpenID Connect client",
     "require": {
         "php": ">=5.2",
-        "phpseclib/phpseclib" : "~0.3.10",
+        "phpseclib/phpseclib" : "2.0.1",
         "ext-json": "*",
         "ext-curl": "*"
     },
