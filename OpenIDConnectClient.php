@@ -136,6 +136,11 @@ class OpenIDConnectClient
      * @var array holds scopes
      */
     private $scopes = array();
+    
+    /**
+     * @var array holds response types
+     */
+    private $responseTypes = array();
 
     /**
      * @var array holds a cache of info returned from the user info endpoint
@@ -165,6 +170,13 @@ class OpenIDConnectClient
      */
     public function setProviderURL($provider_url) {
         $this->providerConfig['issuer'] = $provider_url;
+    }
+
+    /**
+     * @param $response_types
+     */
+    public function setResponseTypes($response_types) {
+        $this->responseTypes = array_merge($this->responseTypes, (array)$response_types);
     }
 
     /**
@@ -335,7 +347,7 @@ class OpenIDConnectClient
 
         $auth_endpoint = $this->getProviderConfigValue("authorization_endpoint");
         $response_type = "code";
-
+        
         // Generate and store a nonce in the session
         // The nonce is an arbitrary value
         $nonce = $this->generateRandString();
@@ -359,10 +371,15 @@ class OpenIDConnectClient
             $auth_params = array_merge($auth_params, array('scope' => implode(' ', $this->scopes)));
         }
 
+        // If the client has been registered with additional response types
+        if (sizeof($this->setResponseTypes) > 0) {
+            $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->setResponseTypes)));
+        }
+        
         $auth_endpoint .= '?' . http_build_query($auth_params, null, '&');
 
+        session_commit();
         $this->redirect($auth_endpoint);
-
     }
 
 
