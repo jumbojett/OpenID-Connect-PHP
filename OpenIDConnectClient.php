@@ -2,7 +2,7 @@
 
 /**
  *
- * Copyright MITRE 2015
+ * Copyright MITRE 2016
  *
  * OpenIDConnectClient for PHP5
  * Author: Michael Jett <mjett@mitre.org>
