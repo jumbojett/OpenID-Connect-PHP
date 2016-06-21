@@ -1,5 +1,5 @@
 {
-    "name": "virteom/openid-connect-php",
+    "name": "jumbojett/openid-connect-php",
     "description": "Bare-bones OpenID Connect client",
     "require": {
         "php": ">=5.2",
