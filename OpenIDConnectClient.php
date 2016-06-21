@@ -317,12 +317,49 @@ class OpenIDConnectClient
          * Thank you
          * http://stackoverflow.com/questions/189113/how-do-i-get-current-page-full-url-in-php-on-a-windows-iis-server
          */
-        $base_page_url = (@$_SERVER["HTTPS"] == "on") ? "https://" : "http://";
-        if ($_SERVER["SERVER_PORT"] != "80" && $_SERVER["SERVER_PORT"] != "443") {
-            $base_page_url .= $_SERVER["SERVER_NAME"] . ":" . $_SERVER["SERVER_PORT"];
+         
+        /**
+         * Compatibility with multiple host headers.
+         * The problem with SSL over port 80 is resolved and non-SSL over port 443.
+         * Support of 'ProxyReverse' configurations.
+         */
+         
+        $protocol = null;
+        $port = null;
+        $hostname = null;
+        $setport = null;
+        
+        if(isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+            $protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'];
+        } else if(isset($_SERVER['REQUEST_SCHEME'])) {
+            $protocol = $_SERVER['REQUEST_SCHEME'];
+        } else if(isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
+            $protocol = "https";
         } else {
-            $base_page_url .= $_SERVER["SERVER_NAME"];
+            $protocol = "http";
         }
+        
+        if(isset($_SERVER['HTTP_X_FORWARDED_PORT'])) {
+            $port = intval($_SERVER['HTTP_X_FORWARDED_PORT']);
+        } else if(isset($_SERVER["SERVER_PORT"])) {
+            $port = intval($_SERVER["SERVER_PORT"]);
+        } else if($protocol === 'https') {
+            $port = 443;
+        } else {
+            $port = 80;
+        }
+        
+        if(isset($_SERVER['HTTP_HOST'])) {
+            $hostname = $_SERVER['HTTP_HOST'];
+        } else if(isset($_SERVER['SERVER_NAME'])) {
+            $hostname = $_SERVER['SERVER_NAME'];
+        } else if(isset($_SERVER['SERVER_ADDR'])) {
+            $hostname = $_SERVER['SERVER_ADDR'];
+        }
+        
+        $useport = ($protocol === 'https' && $port !== 443) || ($protocol === 'http' && $port !== 80);
+        
+        $base_page_url = $protocol . '://' . $hostname . ($useport ? (':' . $port) : '');
 
         $tmp = explode("?", $_SERVER['REQUEST_URI']);
         $base_page_url .= $tmp[0];
