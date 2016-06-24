@@ -164,6 +164,46 @@ class OpenIDConnectClient
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
     }
+    
+    /**
+     * Create a new instance initialized with the configuration data of a 'KeyCloack' server.
+     * @param $authServerUrl string
+     * @param $realm string
+     * @param $resource string
+     * @param $creditalsSecret string optional
+     */
+    public static function fromKeycloack($authServerUrl, $realm, $resource, $creditalsSecret = null) {
+        return new self("$authServerUrl/realms/$realm", $resource, $creditalsSecret);
+    }
+    
+    /**
+     * Create a new instance initialized with the configuration data of a 'KeyCloack' server store in a array.
+     * @param $settings array
+     */
+    public static function fromKeyclockArray($settings) {
+        return self::fromKeycloack(
+            $settings['auth-server-url'],
+            $settings['realm'],
+            $settings['resource'],
+            isset($settings['credentials']['secret']) ? $settings['credentials']['secret'] : null
+        );
+    }
+    
+    /**
+     * Create a new instance initialized with the configuration data of a 'KeyCloack' server stored in a string.
+     * @param $json string
+     */
+    public static function fromKeyclockJson($json) {
+        return self::fromKeyclockArray(json_decode($json, true));
+    }
+    
+    /**
+     * Create a new instance initialized with the configuration data of a 'KeyCloack' server stored in a file.
+     * @param $json string
+     */
+    public static function fromKeycloackJsonFile($file) {
+        return self::fromKeyclockJson(file_get_contents($file));        
+    }
 
     /**
      * @param $provider_url

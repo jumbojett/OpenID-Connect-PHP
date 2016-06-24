@@ -56,10 +56,26 @@ $oidc->setHttpProxy("http://my.proxy.com:80/");
 $oidc->setCertPath("/path/to/my.cert");
 ```
 
+## Example 4: Keycloack client ##
+
+```php
+$oidc = OpenIDConnectClient::fromKeycloackJsonFile('/path/to/keycloack.json');
+$oidc = OpenIDConnectClient::fromKeycloackJson('{"auth-server-url": "etc.."}');
+$oidc = OpenIDConnectClient::fromKeycloackArray(array("auth-server-url" => "etc.."));
+$oidc = OpenIDConnectClient::fromKeycloack('http://server', 'realm', 'client', 'secret');
+
+$oidc->authenticate();
+$name = $oidc->requestUserInfo('given_name');
+```
+
+[For more information about Keycloack visit this link.][2]
+
+
 ### Todo ###
 - Dynamic registration does not support registration auth tokens and endpoints
 
   [1]: http://openid.net/specs/openid-connect-basic-1_0-15.html#id_res
+  [2]: http://www.keycloak.org/
 
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/jumbojett/openid-connect-php/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
