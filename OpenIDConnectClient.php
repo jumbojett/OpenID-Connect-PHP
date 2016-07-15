@@ -132,6 +132,11 @@ class OpenIDConnectClient
      */
     private $refreshToken;
 
+    /** 
+     * @var string if we acquire an id token it will be stored here
+     */
+    private $idToken;
+
     /**
      * @var array holds scopes
      */
@@ -227,6 +232,9 @@ class OpenIDConnectClient
                 // Clean up the session a little
                 unset($_SESSION['openid_connect_nonce']);
 
+                // Save the id token
+                $this->idToken = $token_json->id_token;
+                
                 // Save the access token
                 $this->accessToken = $token_json->access_token;
 
@@ -396,6 +404,7 @@ class OpenIDConnectClient
 
         $auth_params = array_merge($this->authParams, array(
             'response_type' => $response_type,
+            'response_mode' => "form_post",
             'redirect_uri' => $this->getRedirectURL(),
             'client_id' => $this->clientID,
             'nonce' => $nonce,
@@ -858,5 +867,10 @@ class OpenIDConnectClient
         return $this->refreshToken;
     }
 
-
+    /**
+     * @return string
+     */
+    public function getIdToken() {
+        return $this->idToken;
+    }
 }
