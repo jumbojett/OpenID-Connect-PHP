@@ -59,10 +59,10 @@ $oidc->setCertPath("/path/to/my.cert");
 ## Example 4: Keycloack client ##
 
 ```php
-$oidc = OpenIDConnectClient::fromKeycloackJsonFile('/path/to/keycloack.json');
-$oidc = OpenIDConnectClient::fromKeycloackJson('{"auth-server-url": "etc.."}');
-$oidc = OpenIDConnectClient::fromKeycloackArray(array('auth-server-url' => 'etc..'));
-$oidc = OpenIDConnectClient::fromKeycloack('http://server', 'realm', 'client', 'secret');
+$oidc = OpenIDConnectClient::fromKeyCloakJsonFile('/path/to/keycloack.json');
+$oidc = OpenIDConnectClient::fromKeyCloakJson('{"auth-server-url": "etc.."}');
+$oidc = OpenIDConnectClient::fromKeyCloakArray(array('auth-server-url' => 'etc..'));
+$oidc = OpenIDConnectClient::fromKeyCloak('http://server', 'realm', 'client', 'secret');
 
 $oidc->authenticate();
 $name = $oidc->requestUserInfo('given_name');

@@ -166,22 +166,23 @@ class OpenIDConnectClient
     }
     
     /**
-     * Create a new instance initialized with the configuration data of a 'KeyCloack' server.
+     * Create a new instance initialized with the configuration data of a 'KeyCloak' server.
      * @param $authServerUrl string
      * @param $realm string
      * @param $resource string
      * @param $creditalsSecret string optional
      */
-    public static function fromKeycloack($authServerUrl, $realm, $resource, $creditalsSecret = null) {
+    public static function fromKeyCloak($authServerUrl, $realm, $resource, $creditalsSecret = null) {
         return new self("$authServerUrl/realms/$realm", $resource, $creditalsSecret);
     }
     
     /**
-     * Create a new instance initialized with the configuration data of a 'KeyCloack' server store in a array.
+     * Create a new instance initialized with the configuration data of a 'KeyCloak' server store in a array.
      * @param $settings array
      */
-    public static function fromKeyclockArray($settings) {
-        return self::fromKeycloack(
+    public static function fromKeyCloakArray($settings) {
+        
+        return self::fromKeyCloak(
             $settings['auth-server-url'],
             $settings['realm'],
             $settings['resource'],
@@ -190,19 +191,19 @@ class OpenIDConnectClient
     }
     
     /**
-     * Create a new instance initialized with the configuration data of a 'KeyCloack' server stored in a string.
+     * Create a new instance initialized with the configuration data of a 'KeyCloak' server stored in a string.
      * @param $json string
      */
-    public static function fromKeyclockJson($json) {
-        return self::fromKeyclockArray(json_decode($json, true));
+    public static function fromKeyCloakJson($json) {
+        return self::fromKeyCloakArray(json_decode($json, true));
     }
     
     /**
-     * Create a new instance initialized with the configuration data of a 'KeyCloack' server stored in a file.
+     * Create a new instance initialized with the configuration data of a 'KeyCloak' server stored in a file.
      * @param $json string
      */
-    public static function fromKeycloackJsonFile($file) {
-        return self::fromKeyclockJson(file_get_contents($file));        
+    public static function fromKeyCloakJsonFile($file) {
+        return self::fromKeyCloakJson(file_get_contents($file));        
     }
 
     /**
