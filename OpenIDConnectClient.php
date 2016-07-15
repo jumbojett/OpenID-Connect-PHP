@@ -588,7 +588,7 @@ class OpenIDConnectClient
 
     /**
      *
-     * @param $attribute
+     * @param $attribute string optional
      *
      * Attribute        Type    Description
      * user_id            string    REQUIRED Identifier for the End-User at the Issuer.
@@ -613,12 +613,7 @@ class OpenIDConnectClient
      * @return mixed
      *
      */
-    public function requestUserInfo($attribute) {
-
-        // Check to see if the attribute is already in memory
-        if (array_key_exists($attribute, $this->userInfo)) {
-            return $this->userInfo->$attribute;
-        }
+    public function requestUserInfo($attribute = null) {
 
         $user_info_endpoint = $this->getProviderConfigValue("userinfo_endpoint");
         $schema = 'openid';
@@ -632,14 +627,14 @@ class OpenIDConnectClient
 
         $this->userInfo = $user_json;
 
-        if (array_key_exists($attribute, $this->userInfo)) {
+        if($attribute === null) {
+            return $this->userInfo;
+        } else if (array_key_exists($attribute, $this->userInfo)) {
             return $this->userInfo->$attribute;
+        } else {
+            return null;
         }
-
-        return null;
-
     }
-
 
     /**
      * @param $url
