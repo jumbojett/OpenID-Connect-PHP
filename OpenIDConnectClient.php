@@ -878,4 +878,18 @@ class OpenIDConnectClient
     public function getIdToken() {
         return $this->idToken;
     }
+
+    /**
+     * @return array
+     */
+    public function getAccessTokenHeader() {
+        return $this->decodeJWT($this->accessToken, 0);
+    }
+
+    /**
+     * @return array
+     */
+    public function getAccessTokenPayload() {
+        return $this->decodeJWT($this->accessToken, 1);
+    }
 }
