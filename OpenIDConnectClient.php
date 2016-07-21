@@ -203,7 +203,10 @@ class OpenIDConnectClient
 
             // Throw an error if the server returns one
             if (isset($token_json->error)) {
-                throw new OpenIDConnectClientException($token_json->error_description);
+                if (isset($token_json->error_description)) {
+                    throw new OpenIDConnectClientException($token_json->error_description);
+                }
+                throw new OpenIDConnectClientException('Got response: ' . $token_json->error);
             }
 
             // Do an OpenID Connect session check
