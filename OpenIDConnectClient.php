@@ -418,8 +418,8 @@ class OpenIDConnectClient
         }
 
         // If the client has been registered with additional response types
-        if (sizeof($this->setResponseTypes) > 0) {
-            $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->setResponseTypes)));
+        if (sizeof($this->responseTypes) > 0) {
+            $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->responseTypes)));
         }
         
         $auth_endpoint .= '?' . http_build_query($auth_params, null, '&');
