@@ -203,7 +203,10 @@ class OpenIDConnectClient
 
             // Throw an error if the server returns one
             if (isset($token_json->error)) {
-                throw new OpenIDConnectClientException($token_json->error_description);
+                if (isset($token_json->error_description)) {
+                    throw new OpenIDConnectClientException($token_json->error_description);
+                }
+                throw new OpenIDConnectClientException('Got response: ' . $token_json->error);
             }
 
             // Do an OpenID Connect session check
@@ -418,8 +421,8 @@ class OpenIDConnectClient
         }
 
         // If the client has been registered with additional response types
-        if (sizeof($this->setResponseTypes) > 0) {
-            $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->setResponseTypes)));
+        if (sizeof($this->responseTypes) > 0) {
+            $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->responseTypes)));
         }
         
         $auth_endpoint .= '?' . http_build_query($auth_params, null, '&');
@@ -436,9 +439,10 @@ class OpenIDConnectClient
      * @return mixed
      */
     private function requestTokens($code) {
-
-
         $token_endpoint = $this->getProviderConfigValue("token_endpoint");
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported");
+
+        $headers = [];
 
         $grant_type = "authorization_code";
 
@@ -450,10 +454,16 @@ class OpenIDConnectClient
             'client_secret' => $this->clientSecret
         );
 
+        # Consider Basic authentication if provider config is set this way
+        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported)) {
+            $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret)];
+            unset($token_params['client_secret']);
+        }
+
         // Convert token params to string format
         $token_params = http_build_query($token_params, null, '&');
 
-        return json_decode($this->fetchURL($token_endpoint, $token_params));
+        return json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
 
     }
 
@@ -867,5 +877,19 @@ class OpenIDConnectClient
      */
     public function getIdToken() {
         return $this->idToken;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAccessTokenHeader() {
+        return $this->decodeJWT($this->accessToken, 0);
+    }
+
+    /**
+     * @return array
+     */
+    public function getAccessTokenPayload() {
+        return $this->decodeJWT($this->accessToken, 1);
     }
 }
