@@ -62,4 +62,3 @@ $oidc->setCertPath("/path/to/my.cert");
   [1]: http://openid.net/specs/openid-connect-basic-1_0-15.html#id_res
 
 
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/jumbojett/openid-connect-php/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
