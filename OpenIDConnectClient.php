@@ -361,7 +361,9 @@ class OpenIDConnectClient
         }
         
         if(isset($_SERVER['HTTP_HOST'])) {
-            $hostname = $_SERVER['HTTP_HOST'];
+            $http_host_value = $_SERVER['HTTP_HOST'];
+            $tmp = explode(":", $http_host_value);
+            $hostname = $tmp[0];
         } else if(isset($_SERVER['SERVER_NAME'])) {
             $hostname = $_SERVER['SERVER_NAME'];
         } else if(isset($_SERVER['SERVER_ADDR'])) {
