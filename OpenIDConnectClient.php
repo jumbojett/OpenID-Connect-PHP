@@ -370,14 +370,14 @@ class OpenIDConnectClient
         
         $is_default_port = ($protocol === 'https' && $port === 443) || ($protocol === 'http' && $port === 80);
         
-		if($is_default_port) {
-			$tmp = explode(":", $host);
-			$host = $tmp[0];
-		}
+        if($is_default_port) {
+            $tmp = explode(":", $host);
+            $host = $tmp[0];
+        }
 
         $tmp = explode("?", $_SERVER['REQUEST_URI']);
-		$path = $tmp[0];
-		
+        $path = $tmp[0];
+        
         return $protocol . '://' . $host . $path;
     }
 
