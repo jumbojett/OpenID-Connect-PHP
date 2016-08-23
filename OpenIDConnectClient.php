@@ -337,7 +337,7 @@ class OpenIDConnectClient
          
         $protocol = null;
         $port = null;
-        $hostname = null;
+        $host = null;
         $setport = null;
         
         if(isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
@@ -361,21 +361,24 @@ class OpenIDConnectClient
         }
         
         if(isset($_SERVER['HTTP_HOST'])) {
-            $hostname = $_SERVER['HTTP_HOST'];
+            $host = $_SERVER['HTTP_HOST'];
         } else if(isset($_SERVER['SERVER_NAME'])) {
-            $hostname = $_SERVER['SERVER_NAME'];
+            $host = $_SERVER['SERVER_NAME'] . ':' . $port;
         } else if(isset($_SERVER['SERVER_ADDR'])) {
-            $hostname = $_SERVER['SERVER_ADDR'];
+            $host = $_SERVER['SERVER_ADDR'] . ':' . $port;
         }
         
-        $useport = ($protocol === 'https' && $port !== 443) || ($protocol === 'http' && $port !== 80);
+        $is_default_port = ($protocol === 'https' && $port === 443) || ($protocol === 'http' && $port === 80);
         
-        $base_page_url = $protocol . '://' . $hostname . ($useport ? (':' . $port) : '');
+		if($is_default_port) {
+			$tmp = explode(":", $host);
+			$host = $tmp[0];
+		}
 
         $tmp = explode("?", $_SERVER['REQUEST_URI']);
-        $base_page_url .= $tmp[0];
-
-        return $base_page_url;
+		$path = $tmp[0];
+		
+        return $protocol . '://' . $host . $path;
     }
 
     /**
@@ -428,6 +431,7 @@ class OpenIDConnectClient
         $auth_endpoint .= '?' . http_build_query($auth_params, null, '&');
 
         session_commit();
+
         $this->redirect($auth_endpoint);
     }
 
