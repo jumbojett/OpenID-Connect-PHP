@@ -377,7 +377,7 @@ class OpenIDConnectClient
 
         $tmp = explode("?", $_SERVER['REQUEST_URI']);
         $path = $tmp[0];
-        
+
         return $protocol . '://' . $host . $path;
     }
 
@@ -431,7 +431,6 @@ class OpenIDConnectClient
         $auth_endpoint .= '?' . http_build_query($auth_params, null, '&');
 
         session_commit();
-
         $this->redirect($auth_endpoint);
     }
 
