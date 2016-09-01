@@ -328,57 +328,29 @@ class OpenIDConnectClient
          * Thank you
          * http://stackoverflow.com/questions/189113/how-do-i-get-current-page-full-url-in-php-on-a-windows-iis-server
          */
-         
-        /**
+
+        /*
          * Compatibility with multiple host headers.
          * The problem with SSL over port 80 is resolved and non-SSL over port 443.
          * Support of 'ProxyReverse' configurations.
          */
-         
-        $protocol = null;
-        $port = null;
-        $host = null;
-        $setport = null;
-        
-        if(isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
-            $protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'];
-        } else if(isset($_SERVER['REQUEST_SCHEME'])) {
-            $protocol = $_SERVER['REQUEST_SCHEME'];
-        } else if(isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
-            $protocol = "https";
-        } else {
-            $protocol = "http";
-        }
-        
-        if(isset($_SERVER['HTTP_X_FORWARDED_PORT'])) {
-            $port = intval($_SERVER['HTTP_X_FORWARDED_PORT']);
-        } else if(isset($_SERVER["SERVER_PORT"])) {
-            $port = intval($_SERVER["SERVER_PORT"]);
-        } else if($protocol === 'https') {
-            $port = 443;
-        } else {
-            $port = 80;
-        }
-        
-        if(isset($_SERVER['HTTP_HOST'])) {
-            $host = $_SERVER['HTTP_HOST'];
-        } else if(isset($_SERVER['SERVER_NAME'])) {
-            $host = $_SERVER['SERVER_NAME'] . ':' . $port;
-        } else if(isset($_SERVER['SERVER_ADDR'])) {
-            $host = $_SERVER['SERVER_ADDR'] . ':' . $port;
-        }
-        
-        $is_default_port = ($protocol === 'https' && $port === 443) || ($protocol === 'http' && $port === 80);
-        
-        if($is_default_port) {
-            $tmp = explode(":", $host);
-            $host = $tmp[0];
-        }
 
-        $tmp = explode("?", $_SERVER['REQUEST_URI']);
-        $path = $tmp[0];
+        $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO'] 
+                  ?: @$_SERVER['REQUEST_SCHEME']
+                  ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http");
 
-        return $protocol . '://' . $host . $path;
+        $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT'])
+              ?: @intval($_SERVER["SERVER_PORT"])
+              ?: (($protocol === 'https') ? 443 : 80);
+
+        $host = @explode(":", $_SERVER['HTTP_HOST'])[0]
+              ?: @$_SERVER['SERVER_NAME']
+              ?: @$_SERVER['SERVER_ADDR'];
+
+        // Don't include port if it's 80 or 443 and the protocol matches
+        $port = ($protocol === 'https' && $port === 443) || ($protocol === 'http' && $port === 80) ? '' : ':' . $port;
+
+        return sprintf('%s://%s%s/%s', $protocol, $host, $port, @trim(reset(explode("?", $_SERVER['REQUEST_URI'])), '/'));
     }
 
     /**
