@@ -137,6 +137,11 @@ class OpenIDConnectClient
      */
     private $idToken;
 
+    /** 
+     * @var string stores the token response
+     */
+    private $tokenResponse;
+
     /**
      * @var array holds scopes
      */
@@ -234,6 +239,9 @@ class OpenIDConnectClient
 
                 // Clean up the session a little
                 unset($_SESSION['openid_connect_nonce']);
+
+		// Save the full response
+                $this->tokenResponse = $token_json;
 
                 // Save the id token
                 $this->idToken = $token_json->id_token;
@@ -872,5 +880,12 @@ class OpenIDConnectClient
      */
     public function getAccessTokenPayload() {
         return $this->decodeJWT($this->accessToken, 1);
+    }
+	
+    /**
+     * @return array
+     */
+    public function getTokenResponse() {
+        return $this->tokenResponse;
     }
 }
