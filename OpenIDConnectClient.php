@@ -243,7 +243,7 @@ class OpenIDConnectClient
             }
 
             // If this is a valid claim
-            if ($this->verifyJWTclaims($claims)) {
+            if ($this->verifyJWTclaims($claims, $token_json->access_token)) {
 
                 // Clean up the session a little
                 $this->unsetNonce();
@@ -584,11 +584,36 @@ class OpenIDConnectClient
      * @param object $claims
      * @return bool
      */
-    private function verifyJWTclaims($claims) {
+    private function verifyJWTclaims($claims, $accessToken = null) {
+	if(isset($claims->at_hash) && isset($accessToken)){
+            if(isset($this->getAccessTokenHeader()->alg) && $this->getAccessTokenHeader()->alg != 'none'){
+                $bit = substr($this->getAccessTokenHeader()->alg, 2, 3);
+            }else{
+                // TODO: Error case. throw exception???
+                $bit = '256';
+            }
+            $len = ((int)$bit)/16;
+            $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
+        }
         return (($claims->iss == $this->getProviderURL())
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
-            && ($claims->nonce == $_SESSION['openid_connect_nonce']));
+            && ($claims->nonce == $_SESSION['openid_connect_nonce'])
+            && ( !isset($claims->exp) || $claims->exp > time())
+            && ( !isset($claims->nbf) || $claims->nbf < time())
+            && ( !isset($claims->at_hash) || $claims->at_hash == $expecte_at_hash )
+        );
 
+    }
+	
+    /**
+     * @param string $str
+     * @return string
+     */
+    protected function urlEncode($str) {
+        $enc = base64_encode($str);
+        $enc = rtrim($enc, "=");
+        $enc = strtr($enc, "+/", "-_");
+        return $enc;
     }
 
     /**
