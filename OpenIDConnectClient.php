@@ -290,11 +290,12 @@ class OpenIDConnectClient
      * Get's anything that we need configuration wise including endpoints, and other values
      *
      * @param $param
+     * @param $default optional
      * @throws OpenIDConnectClientException
      * @return string
      *
      */
-    private function getProviderConfigValue($param) {
+    private function getProviderConfigValue($param, $default = null) {
 
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
@@ -311,6 +312,9 @@ class OpenIDConnectClient
 	    
             if ($value) {
                 $this->providerConfig[$param] = $value;
+            } elseif(isset($default)) {
+                // Uses default value if provided
+                $this->providerConfig[$param] = $default;
             } else {
                 throw new OpenIDConnectClientException("The provider {$param} has not been set. Make sure your provider has a well known configuration available.");
             }
@@ -435,7 +439,7 @@ class OpenIDConnectClient
      */
     private function requestTokens($code) {
         $token_endpoint = $this->getProviderConfigValue("token_endpoint");
-        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported");
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported", ['client_secret_basic']);
 
         $headers = [];
 
