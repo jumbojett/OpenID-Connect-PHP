@@ -902,7 +902,20 @@ class OpenIDConnectClient
     public function getAccessTokenPayload() {
         return $this->decodeJWT($this->accessToken, 1);
     }
-	
+
+    /**
+     * @return array
+     */
+    public function getIdTokenHeader() {
+        return $this->decodeJWT($this->idToken, 0);
+    }
+
+    /**
+     * @return array
+     */
+    public function getIdTokenPayload() {
+        return $this->decodeJWT($this->idToken, 1);
+    }
     /**
      * @return array
      */
