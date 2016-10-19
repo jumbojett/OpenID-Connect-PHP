@@ -163,6 +163,11 @@ class OpenIDConnectClient
     private $authParams = array();
 
     /**
+     * @var mixed holds well-known openid server properties
+     */
+    private $wellKnown = false;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -294,9 +299,16 @@ class OpenIDConnectClient
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
         if (!isset($this->providerConfig[$param])) {
-            $well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/openid-configuration";
-            $value = json_decode($this->fetchURL($well_known_config_url))->{$param};
+	    if(!$this->wellKnown){
+            	$well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/openid-configuration";
+            	$this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
+	    }
 
+	    $value = false;
+	    if(isset($this->wellKnown->{$param})){
+                $value = $this->wellKnown->{$param};
+            }	
+	    
             if ($value) {
                 $this->providerConfig[$param] = $value;
             } else {
