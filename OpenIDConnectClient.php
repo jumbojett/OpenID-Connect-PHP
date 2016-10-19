@@ -86,7 +86,7 @@ if (!function_exists('json_decode')) {
 
 /**
  *
- * Please note this class stores nonces in $_SESSION['openid_connect_nonce']
+ * Please note this class stores nonces by default in $_SESSION['openid_connect_nonce']
  *
  */
 class OpenIDConnectClient
@@ -220,9 +220,12 @@ class OpenIDConnectClient
             }
 
             // Do an OpenID Connect session check
-            if ($_REQUEST['state'] != $_SESSION['openid_connect_state']) {
+            if ($_REQUEST['state'] != $this->getState()) {
                 throw new OpenIDConnectClientException("Unable to determine state");
             }
+		
+	    // Cleanup state
+	    $this->unsetState();
 
             if (!property_exists($token_json, 'id_token')) {
                 throw new OpenIDConnectClientException("User did not authorize openid scope.");
@@ -243,7 +246,7 @@ class OpenIDConnectClient
             if ($this->verifyJWTclaims($claims)) {
 
                 // Clean up the session a little
-                unset($_SESSION['openid_connect_nonce']);
+                $this->unsetNonce();
 
 		// Save the full response
                 $this->tokenResponse = $token_json;
@@ -397,12 +400,10 @@ class OpenIDConnectClient
         
         // Generate and store a nonce in the session
         // The nonce is an arbitrary value
-        $nonce = $this->generateRandString();
-        $_SESSION['openid_connect_nonce'] = $nonce;
+        $nonce = $this->setNonce($this->generateRandString());
 
         // State essentially acts as a session key for OIDC
-        $state = $this->generateRandString();
-        $_SESSION['openid_connect_state'] = $state;
+        $state = $this->setState($this->generateRandString());
 
         $auth_params = array_merge($this->authParams, array(
             'response_type' => $response_type,
@@ -921,5 +922,83 @@ class OpenIDConnectClient
      */
     public function getTokenResponse() {
         return $this->tokenResponse;
+    }
+	
+    /**
+     * Stores nonce
+     *
+     * @param string $nonce
+     * @return string
+     */
+    protected function setNonce($nonce) {
+        /**
+         * Use session to manage a nonce
+         */
+        if (!isset($_SESSION)) {
+            session_start();
+        }
+        
+        $_SESSION['openid_connect_nonce'] = $nonce;
+        return $nonce;
+    }
+    
+    /**
+     * Get stored nonce 
+     *
+     * @return string
+     */
+    protected function getNonce() {
+        if (!isset($_SESSION)) {
+            session_start();
+        }
+        return $_SESSION['openid_connect_nonce'];
+    }
+    
+    /**
+     * Stores $state
+     *
+     * @param string $state
+     * @return string
+     */
+    protected function setState($state) {
+        /**
+         * Use session to manage a nonce
+         */
+        if (!isset($_SESSION)) {
+            session_start();
+        }
+        
+        $_SESSION['openid_connect_state'] = $state;
+        return $state;
+    }
+    
+    /**
+     * Get stored state 
+     *
+     * @return string
+     */
+    protected function getState() {
+        if (!isset($_SESSION)) {
+            session_start();
+        }
+        return $_SESSION['openid_connect_state'];
+    }
+    
+    /**
+     * Cleanup state 
+     *
+     * @return string
+     */
+    protected function unsetState() {
+        unset($_SESSION['openid_connect_state']);
+    }
+    
+    /**
+     * Cleanup nonce 
+     *
+     * @return string
+     */
+    protected function unsetNonce() {
+        unset($_SESSION['openid_connect_nonce']);
     }
 }
