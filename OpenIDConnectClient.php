@@ -666,7 +666,9 @@ class OpenIDConnectClient
 
         // Determine whether this is a GET or POST
         if ($post_body != null) {
-            curl_setopt($ch, CURLOPT_POST, 1);
+            // curl_setopt($ch, CURLOPT_POST, 1);
+	    // Alows to keep the POST method even after redirect
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
 
             // Default content type is form encoded
@@ -697,7 +699,10 @@ class OpenIDConnectClient
 
         // Include header in result? (0 = yes, 1 = no)
         curl_setopt($ch, CURLOPT_HEADER, 0);
-
+	
+	// Allows to follow redirect
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	    
         /**
          * Set cert
          * Otherwise ignore SSL peer verification
