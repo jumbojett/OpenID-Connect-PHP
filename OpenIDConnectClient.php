@@ -956,13 +956,6 @@ class OpenIDConnectClient
      * @return string
      */
     protected function setNonce($nonce) {
-        /**
-         * Use session to manage a nonce
-         */
-        if (!isset($_SESSION)) {
-            session_start();
-        }
-        
         $_SESSION['openid_connect_nonce'] = $nonce;
         return $nonce;
     }
@@ -973,12 +966,18 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getNonce() {
-        if (!isset($_SESSION)) {
-            session_start();
-        }
         return $_SESSION['openid_connect_nonce'];
     }
-    
+	
+    /**
+     * Cleanup nonce 
+     *
+     * @return void
+     */
+    protected function unsetNonce() {
+        unset($_SESSION['openid_connect_nonce']);
+    }
+
     /**
      * Stores $state
      *
@@ -986,13 +985,6 @@ class OpenIDConnectClient
      * @return string
      */
     protected function setState($state) {
-        /**
-         * Use session to manage a nonce
-         */
-        if (!isset($_SESSION)) {
-            session_start();
-        }
-        
         $_SESSION['openid_connect_state'] = $state;
         return $state;
     }
@@ -1003,27 +995,15 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getState() {
-        if (!isset($_SESSION)) {
-            session_start();
-        }
         return $_SESSION['openid_connect_state'];
     }
     
     /**
      * Cleanup state 
      *
-     * @return string
+     * @return void
      */
     protected function unsetState() {
         unset($_SESSION['openid_connect_state']);
-    }
-    
-    /**
-     * Cleanup nonce 
-     *
-     * @return string
-     */
-    protected function unsetNonce() {
-        unset($_SESSION['openid_connect_nonce']);
     }
 }
