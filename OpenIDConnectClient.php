@@ -194,23 +194,6 @@ class OpenIDConnectClient
         $this->responseTypes = array_merge($this->responseTypes, (array)$response_types);
     }
 
-    public function signOut($accessToken, $redirect) {
-        $signout_endpoint = $this->getProviderConfigValue("end_session_endpoint");
-
-        $signout_params = null;
-        if($redirect == null){
-          $signout_params = array('id_token_hint' => $accessToken);
-        }
-        else {
-          $signout_params = array(
-                'id_token_hint' => $accessToken,
-                'post_logout_redirect_uri' => $redirect);
-        }
-
-        $signout_endpoint  .= '?' . http_build_query( $signout_params, null, '&');
-        $this->redirect($signout_endpoint);
-    }
-
     /**
      * @return bool
      * @throws OpenIDConnectClientException
@@ -290,6 +273,34 @@ class OpenIDConnectClient
             return false;
         }
 
+    }
+
+    /**
+     * It calls the end-session endpoint of the OpenID Connect provider to notify the OpenID
+     * Connect provider that the end-user has logged out of the relying party site
+     * (the client application).
+     *
+     * @param $accessToken ID token (obtained at login)
+     * @param $redirect URL to which the RP is requesting that the End-User's User Agent
+     * be redirected after a logout has been performed. The value MUST have been previously
+     * registered with the OP. Value can be null.
+     *
+     */
+    public function signOut($accessToken, $redirect) {
+        $signout_endpoint = $this->getProviderConfigValue("end_session_endpoint");
+
+        $signout_params = null;
+        if($redirect == null){
+          $signout_params = array('id_token_hint' => $accessToken);
+        }
+        else {
+          $signout_params = array(
+                'id_token_hint' => $accessToken,
+                'post_logout_redirect_uri' => $redirect);
+        }
+
+        $signout_endpoint  .= '?' . http_build_query( $signout_params, null, '&');
+        $this->redirect($signout_endpoint);
     }
 
     /**
