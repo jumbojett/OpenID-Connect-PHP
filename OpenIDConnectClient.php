@@ -194,6 +194,23 @@ class OpenIDConnectClient
         $this->responseTypes = array_merge($this->responseTypes, (array)$response_types);
     }
 
+    public function signOut($accessToken, $redirect) {
+        $signout_endpoint = $this->getProviderConfigValue("end_session_endpoint");
+
+        $signout_params = null;
+        if($redirect == null){
+          $signout_params = array('id_token_hint' => $accessToken);
+        }
+        else {
+          $signout_params = array(
+                'id_token_hint' => $accessToken,
+                'post_logout_redirect_uri' => $redirect);
+        }
+
+        $signout_endpoint  .= '?' . http_build_query( $signout_params, null, '&');
+        $this->redirect($signout_endpoint);
+    }
+
     /**
      * @return bool
      * @throws OpenIDConnectClientException
