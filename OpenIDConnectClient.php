@@ -464,8 +464,6 @@ class OpenIDConnectClient
      *
      */
     public function requestClientCredentialsToken() {
-
-        //curl https://dev.parcelfor.me:44333/connect/token -d 'grant_type=client_credentials&client_id=10004&client_secret=secret&scope=p4mRetail'
         $token_endpoint = $this->getProviderConfigValue("token_endpoint");
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported");
 
