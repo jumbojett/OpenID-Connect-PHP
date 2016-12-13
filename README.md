@@ -56,6 +56,20 @@ $oidc->setHttpProxy("http://my.proxy.com:80/");
 $oidc->setCertPath("/path/to/my.cert");
 ```
 
+## Example 4: Request Client Credentials Token ##
+
+```php
+$oidc = new OpenIDConnectClient('https://id.provider.com/',
+                                'ClientIDHere',
+                                'ClientSecretHere');
+$oidc->providerConfigParam(array('token_endpoint'=>'https://id.provider.com/connect/token'));
+$oidc->addScope('my_scope');
+
+// this assumes success (to validate check if the access_token property is there and a valid JWT) :
+$clientCredentialsToken = $oidc->requestClientCredentialsToken()->access_token;
+
+```
+
 ### Todo ###
 - Dynamic registration does not support registration auth tokens and endpoints
 

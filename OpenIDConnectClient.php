@@ -459,7 +459,34 @@ class OpenIDConnectClient
         $this->redirect($auth_endpoint);
     }
 
+    /**
+     * Requests a client credentials token
+     *
+     */
+    public function requestClientCredentialsToken() {
 
+        //curl https://dev.parcelfor.me:44333/connect/token -d 'grant_type=client_credentials&client_id=10004&client_secret=secret&scope=p4mRetail'
+        $token_endpoint = $this->getProviderConfigValue("token_endpoint");
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported");
+
+        $headers = [];
+
+        $grant_type = "client_credentials";
+
+        $post_data = array(
+            'grant_type'    => $grant_type,
+            'client_id'     => $this->clientID,
+            'client_secret' => $this->clientSecret,
+            'scope'         => implode(' ', $this->scopes)
+        );
+
+        // Convert token params to string format
+        $post_params = http_build_query($post_data, null, '&');
+
+        return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
+    }
+
+    
     /**
      * Requests ID and Access tokens
      *
