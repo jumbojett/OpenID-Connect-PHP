@@ -2,7 +2,7 @@
     "name": "jumbojett/openid-connect-php",
     "description": "Bare-bones OpenID Connect client",
     "require": {
-        "php": ">=5.2",
+        "php": ">=5.4",
         "phpseclib/phpseclib" : "2.0.1",
         "ext-json": "*",
         "ext-curl": "*"

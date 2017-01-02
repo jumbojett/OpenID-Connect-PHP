@@ -7,7 +7,7 @@ the OpenID Connect protocol to setup authentication.
 A special thanks goes to Justin Richer and Amanda Anganes for their help and support of the protocol.
 
 # Requirements #
- 1. PHP 5.2 or greater
+ 1. PHP 5.4 or greater
  2. CURL extension
  3. JSON extension
 
@@ -74,5 +74,3 @@ $clientCredentialsToken = $oidc->requestClientCredentialsToken()->access_token;
 - Dynamic registration does not support registration auth tokens and endpoints
 
   [1]: http://openid.net/specs/openid-connect-basic-1_0-15.html#id_res
-
-
