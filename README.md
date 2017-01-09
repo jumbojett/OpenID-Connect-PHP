@@ -27,7 +27,7 @@ require '/vendor/autoload.php';
 $oidc = new OpenIDConnectClient('https://id.provider.com/',
                                 'ClientIDHere',
                                 'ClientSecretHere');
-
+$oidc->setCertPath('/path/to/my.cert');
 $oidc->authenticate();
 $name = $oidc->requestUserInfo('given_name');
 
@@ -68,6 +68,15 @@ $oidc->addScope('my_scope');
 // this assumes success (to validate check if the access_token property is there and a valid JWT) :
 $clientCredentialsToken = $oidc->requestClientCredentialsToken()->access_token;
 
+```
+
+## Development Environments ##
+In some cases you may need to disable SSL security on on your development systems.
+Note: This is not recommended on production systems.
+
+```php
+$oidc->setVerifyHost(false);
+$oidc->setVerifyPeer(false);
 ```
 
 ### Todo ###
