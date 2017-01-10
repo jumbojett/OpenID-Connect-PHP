@@ -24,7 +24,7 @@ require '/vendor/autoload.php';
 ## Example 1: Basic Client ##
 
 ```php
-$oidc = new OpenIDConnectClient('https://id.provider.com/',
+$oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
 $oidc->setCertPath('/path/to/my.cert');
@@ -38,7 +38,7 @@ $name = $oidc->requestUserInfo('given_name');
 ## Example 2: Dynamic Registration ##
 
 ```php
-$oidc = new OpenIDConnectClient("https://id.provider.com/");
+$oidc = new OpenIDConnectClient("https://id.provider.com");
 
 $oidc->register();
 $client_id = $oidc->getClientID();
@@ -59,7 +59,7 @@ $oidc->setCertPath("/path/to/my.cert");
 ## Example 4: Request Client Credentials Token ##
 
 ```php
-$oidc = new OpenIDConnectClient('https://id.provider.com/',
+$oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
 $oidc->providerConfigParam(array('token_endpoint'=>'https://id.provider.com/connect/token'));
