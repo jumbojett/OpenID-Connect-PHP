@@ -661,11 +661,10 @@ class OpenIDConnectClient
         return (($claims->iss == $this->getProviderURL())
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
             && ($claims->nonce == $this->getNonce())
-            && ( !isset($claims->exp) || $claims->exp > time())
-            && ( !isset($claims->nbf) || $claims->nbf < time())
+            && ( !isset($claims->exp) || $claims->exp >= time())
+            && ( !isset($claims->nbf) || $claims->nbf <= time())
             && ( !isset($claims->at_hash) || $claims->at_hash == $expecte_at_hash )
         );
-
     }
 	
     /**
