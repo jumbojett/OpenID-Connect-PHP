@@ -219,13 +219,13 @@ class OpenIDConnectClient
                 throw new OpenIDConnectClientException('Got response: ' . $token_json->error);
             }
 
-            // Do an OpenID Connect session check
-            if ($_REQUEST['state'] != $this->getState()) {
+            // Do an OpenID Connect session check (IFF state is set)
+            if ( ($this->getState()) && ($_REQUEST['state'] != $this->getState()) ) {
                 throw new OpenIDConnectClientException("Unable to determine state");
             }
 		
-	    // Cleanup state
-	    $this->unsetState();
+            // Cleanup state
+            $this->unsetState();
 
             if (!property_exists($token_json, 'id_token')) {
                 throw new OpenIDConnectClientException("User did not authorize openid scope.");
@@ -242,13 +242,14 @@ class OpenIDConnectClient
                 user_error("Warning: JWT signature verification unavailable.");
             }
 
+
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims, $token_json->access_token)) {
 
                 // Clean up the session a little
                 $this->unsetNonce();
 
-		// Save the full response
+		        // Save the full response
                 $this->tokenResponse = $token_json;
 
                 // Save the id token
@@ -638,6 +639,7 @@ class OpenIDConnectClient
      * @return bool
      */
     private function verifyJWTclaims($claims, $accessToken = null) {
+
 	if(isset($claims->at_hash) && isset($accessToken)){
             if(isset($this->getAccessTokenHeader()->alg) && $this->getAccessTokenHeader()->alg != 'none'){
                 $bit = substr($this->getAccessTokenHeader()->alg, 2, 3);
@@ -648,9 +650,10 @@ class OpenIDConnectClient
             $len = ((int)$bit)/16;
             $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
+
         return (($claims->iss == $this->getProviderURL())
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
-            && ($claims->nonce == $this->getNonce())
+            && ( (!$this->getNonce()) || ($claims->nonce == $this->getNonce()) )
             && ( !isset($claims->exp) || $claims->exp > time())
             && ( !isset($claims->nbf) || $claims->nbf < time())
             && ( !isset($claims->at_hash) || $claims->at_hash == $expecte_at_hash )
@@ -779,7 +782,7 @@ class OpenIDConnectClient
         // Include header in result? (0 = yes, 1 = no)
         curl_setopt($ch, CURLOPT_HEADER, 0);
 	
-	// Allows to follow redirect
+	    // Allows to follow redirect
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 	    
         /**
@@ -1019,6 +1022,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getNonce() {
+        if (!isset($_SESSION['openid_connect_nonce'])) return false;
         return $_SESSION['openid_connect_nonce'];
     }
 	
@@ -1048,6 +1052,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getState() {
+        if (!isset($_SESSION['openid_connect_state'])) return false;
         return $_SESSION['openid_connect_state'];
     }
     
