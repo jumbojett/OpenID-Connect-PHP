@@ -121,6 +121,16 @@ class OpenIDConnectClient
      * @var string full system path to the SSL certificate
      */
     private $certPath;
+    
+    /**
+     * @var bool Verify SSL peer on transactions
+     */
+    private $verifyPeer = true;
+    
+    /**
+     * @var bool Verify peer hostname on transactions
+     */
+    private $verifyHost = true;
 
     /**
      * @var string if we aquire an access token it will be stored here
@@ -787,13 +797,21 @@ class OpenIDConnectClient
          * Otherwise ignore SSL peer verification
          */
         if (isset($this->certPath)) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
             curl_setopt($ch, CURLOPT_CAINFO, $this->certPath);
-        } else {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
         }
-
+        
+        if($this->verifyHost) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        } else {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        }
+        
+        if($this->verifyPeer) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        } else {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);        
+        }
+        
         // Should cURL return or print out the data? (true = return, false = print)
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
@@ -846,6 +864,20 @@ class OpenIDConnectClient
      */
     public function setCertPath($certPath) {
         $this->certPath = $certPath;
+    }
+    
+    /**
+     * @param bool $verifyPeer
+     */
+    public function setVerifyPeer($verifyPeer) {
+        $this->verifyPeer = $verifyPeer;
+    }
+    
+    /**
+     * @param bool $verifyHost
+     */
+    public function setVerifyHost($verifyHost) {
+        $this->verifyHost = $verifyHost;
     }
 
     /**
