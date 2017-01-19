@@ -212,7 +212,8 @@ class OpenIDConnectClient
 
         // Do a preemptive check to see if the provider has thrown an error from a previous redirect
         if (isset($_REQUEST['error'])) {
-            throw new OpenIDConnectClientException("Error: " . $_REQUEST['error'] . " Description: " . $_REQUEST['error_description']);
+            $desc = isset($_REQUEST['error_description']) ? " Description: " . $_REQUEST['error_description'] : "";
+            throw new OpenIDConnectClientException("Error: " . $_REQUEST['error'] .$desc);
         }
 
         // If we have an authorization code then proceed to request a token
