@@ -310,7 +310,7 @@ class OpenIDConnectClient
                 'post_logout_redirect_uri' => $redirect);
         }
 
-        $signout_endpoint  .= '?' . http_build_query( $signout_params, null, '&');
+        $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, null, '&');
         $this->redirect($signout_endpoint);
     }
 
@@ -464,7 +464,7 @@ class OpenIDConnectClient
             $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->responseTypes)));
         }
         
-        $auth_endpoint .= '?' . http_build_query($auth_params, null, '&');
+        $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&');
 
         session_commit();
         $this->redirect($auth_endpoint);
