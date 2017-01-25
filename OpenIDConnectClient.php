@@ -246,6 +246,9 @@ class OpenIDConnectClient
 
             // Verify the signature
             if ($this->canVerifySignatures()) {
+		if (!$this->getProviderConfigValue('jwks_uri')) {
+                    throw new OpenIDConnectClientException ("Unable to verify signature due to no jwks_uri being defined");
+                }
                 if (!$this->verifyJWTsignature($token_json->id_token)) {
                     throw new OpenIDConnectClientException ("Unable to verify signature");
                 }
