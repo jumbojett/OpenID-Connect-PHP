@@ -449,7 +449,6 @@ class OpenIDConnectClient
 
         $auth_params = array_merge($this->authParams, array(
             'response_type' => $response_type,
-            'response_mode' => "form_post",
             'redirect_uri' => $this->getRedirectURL(),
             'client_id' => $this->clientID,
             'nonce' => $nonce,
