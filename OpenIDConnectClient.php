@@ -95,87 +95,87 @@ class OpenIDConnectClient
     /**
      * @var string arbitrary id value
      */
-    private $clientID;
+    protected $clientID;
 
     /*
      * @var string arbitrary name value
      */
-    private $clientName;
+    protected $clientName;
 
     /**
      * @var string arbitrary secret value
      */
-    private $clientSecret;
+    protected $clientSecret;
 
     /**
      * @var array holds the provider configuration
      */
-    private $providerConfig = array();
+    protected $providerConfig = array();
 
     /**
      * @var string http proxy if necessary
      */
-    private $httpProxy;
+    protected $httpProxy;
 
     /**
      * @var string full system path to the SSL certificate
      */
-    private $certPath;
+    protected $certPath;
     
     /**
      * @var bool Verify SSL peer on transactions
      */
-    private $verifyPeer = true;
+    protected $verifyPeer = true;
     
     /**
      * @var bool Verify peer hostname on transactions
      */
-    private $verifyHost = true;
+    protected $verifyHost = true;
 
     /**
      * @var string if we aquire an access token it will be stored here
      */
-    private $accessToken;
+    protected $accessToken;
 
     /**
      * @var string if we aquire a refresh token it will be stored here
      */
-    private $refreshToken;
+    protected $refreshToken;
 
     /** 
      * @var string if we acquire an id token it will be stored here
      */
-    private $idToken;
+    protected $idToken;
 
     /** 
      * @var string stores the token response
      */
-    private $tokenResponse;
+    protected $tokenResponse;
 
     /**
      * @var array holds scopes
      */
-    private $scopes = array();
+    protected $scopes = array();
     
     /**
      * @var array holds response types
      */
-    private $responseTypes = array();
+    protected $responseTypes = array();
 
     /**
      * @var array holds a cache of info returned from the user info endpoint
      */
-    private $userInfo = array();
+    protected $userInfo = array();
 
     /**
      * @var array holds authentication parameters
      */
-    private $authParams = array();
+    protected $authParams = array();
 
     /**
      * @var mixed holds well-known openid server properties
      */
-    private $wellKnown = false;
+    protected $wellKnown = false;
 
     /**
      * @param $provider_url string optional
@@ -340,7 +340,7 @@ class OpenIDConnectClient
      * @return string
      *
      */
-    private function getProviderConfigValue($param, $default = null) {
+    protected function getProviderConfigValue($param, $default = null) {
 
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
@@ -435,7 +435,7 @@ class OpenIDConnectClient
      * Start Here
      * @return void
      */
-    private function requestAuthorization() {
+    protected function requestAuthorization() {
 
         $auth_endpoint = $this->getProviderConfigValue("authorization_endpoint");
         $response_type = "code";
@@ -504,7 +504,7 @@ class OpenIDConnectClient
      * @param $code
      * @return mixed
      */
-    private function requestTokens($code) {
+    protected function requestTokens($code) {
         $token_endpoint = $this->getProviderConfigValue("token_endpoint");
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported", ['client_secret_basic']);
 
@@ -566,7 +566,7 @@ class OpenIDConnectClient
       * @throws OpenIDConnectClientException
       * @return object
       */
-     private function get_key_for_header($keys, $header) {
+     protected function get_key_for_header($keys, $header) {
          foreach ($keys as $key) {
              if ($key->kty == 'RSA') {
                  if (!isset($header->kid) || $key->kid == $header->kid) {
@@ -593,7 +593,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      * @return bool
      */
-    private function verifyRSAJWTsignature($hashtype, $key, $payload, $signature) {
+    protected function verifyRSAJWTsignature($hashtype, $key, $payload, $signature) {
         if (!class_exists('\phpseclib\Crypt\RSA') && !class_exists('Crypt_RSA')) {
             throw new OpenIDConnectClientException('Crypt_RSA support unavailable.');
         }
@@ -627,7 +627,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      * @return bool
      */
-    private function verifyJWTsignature($jwt) {
+    protected function verifyJWTsignature($jwt) {
         $parts = explode(".", $jwt);
         $signature = base64url_decode(array_pop($parts));
         $header = json_decode(base64url_decode($parts[0]));
@@ -657,7 +657,7 @@ class OpenIDConnectClient
      * @param object $claims
      * @return bool
      */
-    private function verifyJWTclaims($claims, $accessToken = null) {
+    protected function verifyJWTclaims($claims, $accessToken = null) {
 	if(isset($claims->at_hash) && isset($accessToken)){
             if(isset($this->getAccessTokenHeader()->alg) && $this->getAccessTokenHeader()->alg != 'none'){
                 $bit = substr($this->getAccessTokenHeader()->alg, 2, 3);
@@ -693,7 +693,7 @@ class OpenIDConnectClient
      * @param int $section the section we would like to decode
      * @return object
      */
-    private function decodeJWT($jwt, $section = 0) {
+    protected function decodeJWT($jwt, $section = 0) {
 
         $parts = explode(".", $jwt);
         return json_decode(base64url_decode($parts[$section]));
