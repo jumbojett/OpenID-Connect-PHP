@@ -632,6 +632,9 @@ class OpenIDConnectClient
         $signature = base64url_decode(array_pop($parts));
         $header = json_decode(base64url_decode($parts[0]));
         $payload = implode(".", $parts);
+        if ($header->alg == "none") {
+            return true;
+        }
         $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
         if ($jwks === NULL) {
             throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
