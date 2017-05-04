@@ -83,3 +83,6 @@ $oidc->setVerifyPeer(false);
 - Dynamic registration does not support registration auth tokens and endpoints
 
   [1]: http://openid.net/specs/openid-connect-basic-1_0-15.html#id_res
+  
+## Contributing ###
+ - All pull requests, once merged, should be added to the changelog.md file.
