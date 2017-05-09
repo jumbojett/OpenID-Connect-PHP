@@ -417,7 +417,7 @@ class OpenIDConnectClient
               ?: @$_SERVER['SERVER_ADDR'];
 
         // Don't include port if it's 80 or 443 and the protocol matches
-        $port = ($protocol === 'https' && $port === 443) || ($protocol === 'http' && $port === 80) ? '' : ':' . $port;
+        $port = (443 == $port) || (80 == $port) ? '' : ':' . $port;
 
         return sprintf('%s://%s%s/%s', $protocol, $host, $port, @trim(reset(explode("?", $_SERVER['REQUEST_URI'])), '/'));
     }
