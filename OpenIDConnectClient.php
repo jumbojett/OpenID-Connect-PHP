@@ -416,7 +416,6 @@ class OpenIDConnectClient
               ?: @$_SERVER['SERVER_NAME']
               ?: @$_SERVER['SERVER_ADDR'];
 
-        // Don't include port if it's 80 or 443 and the protocol matches
         $port = (443 == $port) || (80 == $port) ? '' : ':' . $port;
 
         return sprintf('%s://%s%s/%s', $protocol, $host, $port, @trim(reset(explode("?", $_SERVER['REQUEST_URI'])), '/'));
@@ -890,6 +889,22 @@ class OpenIDConnectClient
     }
 
     /**
+     * @return bool
+     */
+    public function getVerifyHost()
+    {
+        return $this->verifyHost;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getVerifyPeer()
+    {
+        return $this->verifyPeer;
+    }
+
+    /**
      *
      * Use this to alter a provider's endpoints and other attributes
      *
@@ -986,6 +1001,19 @@ class OpenIDConnectClient
      */
     public function canVerifySignatures() {
       return class_exists('\phpseclib\Crypt\RSA') || class_exists('Crypt_RSA');
+    }
+
+    /**
+     * Set the access token.
+     *
+     * May be required for subclasses of this Client.
+     *
+     * @param mixed $accessToken
+     *
+     * @return void
+     */
+    public function setAccessToken($accessToken) {
+        $this->accessToken = $accessToken;
     }
 
     /**
