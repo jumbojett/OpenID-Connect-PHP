@@ -14,7 +14,7 @@ A special thanks goes to Justin Richer and Amanda Anganes for their help and sup
 ## Install ##
  1. Install library using composer
 ```
-composer require jumbojett/openid-connect-php:0.1.*
+composer require jumbojett/openid-connect-php:0.2.*
 ```
  2. Include composer autoloader
 ```php
