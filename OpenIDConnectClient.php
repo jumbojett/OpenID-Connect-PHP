@@ -25,7 +25,7 @@
  * Use session to manage a nonce
  */
 if (!isset($_SESSION)) {
-    session_start();
+    @session_start();
 }
 
 /**
@@ -156,7 +156,12 @@ class OpenIDConnectClient
      * @var array holds scopes
      */
     private $scopes = array();
-    
+
+    /**
+     * @var int|null Response code from the server
+     */
+    private $responseCode = null;
+
     /**
      * @var array holds response types
      */
@@ -829,6 +834,10 @@ class OpenIDConnectClient
         // Download the given URL, and return output
         $output = curl_exec($ch);
 
+        // HTTP Response code from server may be required from subclass
+        $info = curl_getinfo($ch);
+        $this->responseCode = $info['http_code'];
+
         if ($output === false) {
             throw new OpenIDConnectClientException('Curl error: ' . curl_error($ch));
         }
@@ -1127,5 +1136,15 @@ class OpenIDConnectClient
      */
     protected function unsetState() {
         unset($_SESSION['openid_connect_state']);
+    }
+
+    /**
+     * Get the response code from last action/curl request.
+     *
+     * @return int
+     */
+    public function getResponseCode()
+    {
+        return $this->responseCode;
     }
 }
