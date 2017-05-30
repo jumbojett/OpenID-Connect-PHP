@@ -882,6 +882,14 @@ class OpenIDConnectClient
     public function setCertPath($certPath) {
         $this->certPath = $certPath;
     }
+
+    /**
+     * @return string|null
+     */
+    public function getCertPath()
+    {
+        return $this->certPath;
+    }
     
     /**
      * @param bool $verifyPeer
