@@ -25,7 +25,7 @@
  * Use session to manage a nonce
  */
 if (!isset($_SESSION)) {
-    session_start();
+    @session_start();
 }
 
 /**
@@ -156,7 +156,12 @@ class OpenIDConnectClient
      * @var array holds scopes
      */
     private $scopes = array();
-    
+
+    /**
+     * @var int|null Response code from the server
+     */
+    private $responseCode = null;
+
     /**
      * @var array holds response types
      */
@@ -416,7 +421,6 @@ class OpenIDConnectClient
               ?: @$_SERVER['SERVER_NAME']
               ?: @$_SERVER['SERVER_ADDR'];
 
-        // Don't include port if it's 80 or 443 and the protocol matches
         $port = (443 == $port) || (80 == $port) ? '' : ':' . $port;
 
         return sprintf('%s://%s%s/%s', $protocol, $host, $port, @trim(reset(explode("?", $_SERVER['REQUEST_URI'])), '/'));
@@ -830,6 +834,10 @@ class OpenIDConnectClient
         // Download the given URL, and return output
         $output = curl_exec($ch);
 
+        // HTTP Response code from server may be required from subclass
+        $info = curl_getinfo($ch);
+        $this->responseCode = $info['http_code'];
+
         if ($output === false) {
             throw new OpenIDConnectClientException('Curl error: ' . curl_error($ch));
         }
@@ -874,6 +882,14 @@ class OpenIDConnectClient
     public function setCertPath($certPath) {
         $this->certPath = $certPath;
     }
+
+    /**
+     * @return string|null
+     */
+    public function getCertPath()
+    {
+        return $this->certPath;
+    }
     
     /**
      * @param bool $verifyPeer
@@ -887,6 +903,22 @@ class OpenIDConnectClient
      */
     public function setVerifyHost($verifyHost) {
         $this->verifyHost = $verifyHost;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getVerifyHost()
+    {
+        return $this->verifyHost;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getVerifyPeer()
+    {
+        return $this->verifyPeer;
     }
 
     /**
@@ -986,6 +1018,19 @@ class OpenIDConnectClient
      */
     public function canVerifySignatures() {
       return class_exists('\phpseclib\Crypt\RSA') || class_exists('Crypt_RSA');
+    }
+
+    /**
+     * Set the access token.
+     *
+     * May be required for subclasses of this Client.
+     *
+     * @param mixed $accessToken
+     *
+     * @return void
+     */
+    public function setAccessToken($accessToken) {
+        $this->accessToken = $accessToken;
     }
 
     /**
@@ -1099,5 +1144,15 @@ class OpenIDConnectClient
      */
     protected function unsetState() {
         unset($_SESSION['openid_connect_state']);
+    }
+
+    /**
+     * Get the response code from last action/curl request.
+     *
+     * @return int
+     */
+    public function getResponseCode()
+    {
+        return $this->responseCode;
     }
 }
