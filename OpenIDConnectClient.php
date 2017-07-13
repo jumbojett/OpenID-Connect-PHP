@@ -409,13 +409,13 @@ class OpenIDConnectClient
          * Support of 'ProxyReverse' configurations.
          */
 
-        if (isset($_SERVER["HTTP_UPGRADE_INSECURE_REQUESTS"]) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] == 1)) {
-            $protocol = 'https';
-        } else {
-            $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO'] 
-                ?: @$_SERVER['REQUEST_SCHEME']
-                ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http");
-        }
+        if (isset($_SERVER["HTTP_UPGRADE_INSECURE_REQUESTS"]) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] == 1)) { 
+            $protocol = 'https'; 
+        } else { 
+            $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO']
+                ?: @$_SERVER['REQUEST_SCHEME'] 
+                ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http"); 
+        } 
 
         $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT'])
               ?: @intval($_SERVER["SERVER_PORT"])
