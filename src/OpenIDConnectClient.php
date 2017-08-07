@@ -260,7 +260,8 @@ class OpenIDConnectClient
             if ($this->canVerifySignatures()) {
                 if (!$this->getProviderConfigValue('jwks_uri')) {
                     throw new OpenIDConnectClientException(
-                            "Unable to verify signature due to no jwks_uri being defined");
+                    "Unable to verify signature due to no jwks_uri being defined"
+                    );
                 }
                 if (!$this->verifyJWTsignature($token_json->id_token)) {
                     throw new OpenIDConnectClientException("Unable to verify signature");
@@ -284,8 +285,9 @@ class OpenIDConnectClient
                 $this->accessToken = $token_json->access_token;
 
                 // Save the refresh token, if we got one
-                if (isset($token_json->refresh_token))
+                if (isset($token_json->refresh_token)) {
                     $this->refreshToken = $token_json->refresh_token;
+                }
 
                 // Success!
                 return true;
@@ -434,8 +436,8 @@ class OpenIDConnectClient
 
         $port = (443 == $port) || (80 == $port) ? '' : ':' . $port;
 
-        return sprintf('%s://%s%s/%s', $protocol, $host, $port, 
-                @trim(reset(explode("?", $_SERVER['REQUEST_URI'])), '/'));
+        $path = @trim(reset(explode("?", $_SERVER['REQUEST_URI'])), '/');
+        return sprintf('%s://%s%s/%s', $protocol, $host, $port, $path);
     }
 
     /**
