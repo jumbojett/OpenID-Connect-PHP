@@ -260,7 +260,7 @@ class OpenIDConnectClient
             if ($this->canVerifySignatures()) {
                 if (!$this->getProviderConfigValue('jwks_uri')) {
                     throw new OpenIDConnectClientException(
-                    "Unable to verify signature due to no jwks_uri being defined"
+                        "Unable to verify signature due to no jwks_uri being defined"
                     );
                 }
                 if (!$this->verifyJWTsignature($token_json->id_token)) {
@@ -552,7 +552,6 @@ class OpenIDConnectClient
         $token_params = http_build_query($token_params, null, '&');
 
         return json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
-
     }
 
     /**
@@ -589,8 +588,8 @@ class OpenIDConnectClient
       * @throws OpenIDConnectClientException
       * @return object
       */
-     private function getKeyForHeader($keys, $header)
-     {
+    private function getKeyForHeader($keys, $header)
+    {
         foreach ($keys as $key) {
             if ($key->kty == 'RSA') {
                 if (!isset($header->kid) || $key->kid == $header->kid) {
