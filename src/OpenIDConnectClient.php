@@ -589,7 +589,7 @@ class OpenIDConnectClient
       * @throws OpenIDConnectClientException
       * @return object
       */
-     private function get_key_for_header($keys, $header)
+     private function getKeyForHeader($keys, $header)
      {
         foreach ($keys as $key) {
             if ($key->kty == 'RSA') {
@@ -670,7 +670,7 @@ class OpenIDConnectClient
 
                 $verified = $this->verifyRSAJWTsignature(
                     $hashtype,
-                    $this->get_key_for_header($jwks->keys, $header),
+                    $this->getKeyForHeader($jwks->keys, $header),
                     $payload,
                     $signature
                 );
