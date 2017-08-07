@@ -24,6 +24,8 @@ require '/vendor/autoload.php';
 ## Example 1: Basic Client ##
 
 ```php
+use Jumbojett\OpenIDConnectClient;
+
 $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
@@ -38,6 +40,8 @@ $name = $oidc->requestUserInfo('given_name');
 ## Example 2: Dynamic Registration ##
 
 ```php
+use Jumbojett\OpenIDConnectClient;
+
 $oidc = new OpenIDConnectClient("https://id.provider.com");
 
 $oidc->register();
@@ -59,6 +63,8 @@ $oidc->setCertPath("/path/to/my.cert");
 ## Example 4: Request Client Credentials Token ##
 
 ```php
+use Jumbojett\OpenIDConnectClient;
+
 $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
