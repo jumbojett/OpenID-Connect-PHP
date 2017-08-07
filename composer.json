@@ -7,7 +7,12 @@
         "ext-json": "*",
         "ext-curl": "*"
     },
-    "autoload": {
-        "classmap": ["OpenIDConnectClient.php"]
+    "archive" : {
+        "exclude" : [
+            ".*"
+        ]
+    },
+    "autoload" : {
+         "classmap": [ "src/"]
     }
 }
