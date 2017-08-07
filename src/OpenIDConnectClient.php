@@ -591,25 +591,24 @@ class OpenIDConnectClient
       */
      private function get_key_for_header($keys, $header)
      {
-         foreach ($keys as $key) {
-             if ($key->kty == 'RSA') {
-                 if (!isset($header->kid) || $key->kid == $header->kid) {
-                     return $key;
-                 }
-             } else {
-                 if ($key->alg == $header->alg && $key->kid == $header->kid) {
-                     return $key;
-                 }
-             }
-         }
-         if (isset($header->kid)) {
-             throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' . $header->alg . ', ' . $header->kid . ')');
-         } else {
-             throw new OpenIDConnectClientException('Unable to find a key for RSA');
-         }
-     }
-
-
+        foreach ($keys as $key) {
+            if ($key->kty == 'RSA') {
+                if (!isset($header->kid) || $key->kid == $header->kid) {
+                    return $key;
+                }
+            } else {
+                if ($key->alg == $header->alg && $key->kid == $header->kid) {
+                    return $key;
+                }
+            }
+        }
+        if (isset($header->kid)) {
+            throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' .
+                $header->alg . ', ' . $header->kid . ')');
+        } else {
+            throw new OpenIDConnectClientException('Unable to find a key for RSA');
+        }
+    }
 
     /**
      * @param string $hashtype
@@ -633,17 +632,17 @@ class OpenIDConnectClient
             "  <Modulus>" . b64url2b64($key->n) . "</Modulus>\r\n" .
             "  <Exponent>" . b64url2b64($key->e) . "</Exponent>\r\n" .
             "</RSAKeyValue>";
-	if(class_exists('Crypt_RSA')) {
-        	$rsa = new Crypt_RSA();
-		$rsa->setHash($hashtype);
-        	$rsa->loadKey($public_key_xml, Crypt_RSA::PUBLIC_FORMAT_XML);
-        	$rsa->signatureMode = Crypt_RSA::SIGNATURE_PKCS1;
-	} else {
-		$rsa = new \phpseclib\Crypt\RSA();
-		$rsa->setHash($hashtype);
-        	$rsa->loadKey($public_key_xml, \phpseclib\Crypt\RSA::PUBLIC_FORMAT_XML);
-        	$rsa->signatureMode = \phpseclib\Crypt\RSA::SIGNATURE_PKCS1;
-	}
+        if (class_exists('Crypt_RSA')) {
+            $rsa = new Crypt_RSA();
+            $rsa->setHash($hashtype);
+            $rsa->loadKey($public_key_xml, Crypt_RSA::PUBLIC_FORMAT_XML);
+            $rsa->signatureMode = Crypt_RSA::SIGNATURE_PKCS1;
+        } else {
+            $rsa = new \phpseclib\Crypt\RSA();
+            $rsa->setHash($hashtype);
+            $rsa->loadKey($public_key_xml, \phpseclib\Crypt\RSA::PUBLIC_FORMAT_XML);
+            $rsa->signatureMode = \phpseclib\Crypt\RSA::SIGNATURE_PKCS1;
+        }
         return $rsa->verify($payload, $signature);
     }
 
@@ -664,17 +663,20 @@ class OpenIDConnectClient
         }
         $verified = false;
         switch ($header->alg) {
-        case 'RS256':
-        case 'RS384':
-        case 'RS512':
-            $hashtype = 'sha' . substr($header->alg, 2);
+            case 'RS256':
+            case 'RS384':
+            case 'RS512':
+                $hashtype = 'sha' . substr($header->alg, 2);
 
-            $verified = $this->verifyRSAJWTsignature($hashtype,
-                                                     $this->get_key_for_header($jwks->keys, $header),
-                                                     $payload, $signature);
-            break;
-        default:
-            throw new OpenIDConnectClientException('No support for signature type: ' . $header->alg);
+                $verified = $this->verifyRSAJWTsignature(
+                    $hashtype,
+                    $this->get_key_for_header($jwks->keys, $header),
+                    $payload,
+                    $signature
+                );
+                break;
+            default:
+                throw new OpenIDConnectClientException('No support for signature type: ' . $header->alg);
         }
         return $verified;
     }
@@ -685,10 +687,10 @@ class OpenIDConnectClient
      */
     private function verifyJWTclaims($claims, $accessToken = null)
     {
-        if(isset($claims->at_hash) && isset($accessToken)){
-            if(isset($this->getAccessTokenHeader()->alg) && $this->getAccessTokenHeader()->alg != 'none'){
+        if (isset($claims->at_hash) && isset($accessToken)) {
+            if (isset($this->getAccessTokenHeader()->alg) && $this->getAccessTokenHeader()->alg != 'none') {
                 $bit = substr($this->getAccessTokenHeader()->alg, 2, 3);
-            }else{
+            } else {
                 // TODO: Error case. throw exception???
                 $bit = '256';
             }
@@ -703,7 +705,7 @@ class OpenIDConnectClient
             && ( !isset($claims->at_hash) || $claims->at_hash == $expecte_at_hash )
         );
     }
-	
+    
     /**
      * @param string $str
      * @return string
@@ -765,13 +767,13 @@ class OpenIDConnectClient
         //The accessToken has to be send in the Authorization header, so we create a new array with only this header.
         $headers = array("Authorization: Bearer {$this->accessToken}");
 
-        $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
+        $user_json = json_decode($this->fetchURL($user_info_endpoint, null, $headers));
 
         $this->userInfo = $user_json;
 
-        if($attribute === null) {
+        if ($attribute === null) {
             return $this->userInfo;
-        } else if (array_key_exists($attribute, $this->userInfo)) {
+        } elseif (array_key_exists($attribute, $this->userInfo)) {
             return $this->userInfo->$attribute;
         } else {
             return null;
@@ -785,7 +787,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      * @return mixed
      */
-    protected function fetchURL($url, $post_body = null,$headers = array())
+    protected function fetchURL($url, $post_body = null, $headers = array())
     {
         // OK cool - then let's create a new cURL resource handle
         $ch = curl_init();
@@ -793,7 +795,7 @@ class OpenIDConnectClient
         // Determine whether this is a GET or POST
         if ($post_body != null) {
             // curl_setopt($ch, CURLOPT_POST, 1);
-	    // Alows to keep the POST method even after redirect
+            // Alows to keep the POST method even after redirect
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
 
@@ -808,12 +810,11 @@ class OpenIDConnectClient
             // Add POST-specific headers
             $headers[] = "Content-Type: {$content_type}";
             $headers[] = 'Content-Length: ' . strlen($post_body);
-
         }
 
         // If we set some heaers include them
-        if(count($headers) > 0) {
-          curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        if (count($headers) > 0) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         }
 
         // Set URL to download
@@ -825,10 +826,10 @@ class OpenIDConnectClient
 
         // Include header in result? (0 = yes, 1 = no)
         curl_setopt($ch, CURLOPT_HEADER, 0);
-	
-	// Allows to follow redirect
+        
+        // Allows to follow redirect
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-	    
+        
         /**
          * Set cert
          * Otherwise ignore SSL peer verification
@@ -837,16 +838,16 @@ class OpenIDConnectClient
             curl_setopt($ch, CURLOPT_CAINFO, $this->certPath);
         }
         
-        if($this->verifyHost) {
+        if ($this->verifyHost) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         } else {
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         }
         
-        if($this->verifyPeer) {
+        if ($this->verifyPeer) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         } else {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);        
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         }
         
         // Should cURL return or print out the data? (true = return, false = print)
@@ -1001,7 +1002,8 @@ class OpenIDConnectClient
 
         // Throw some errors if we encounter them
         if ($json_response === false) {
-            throw new OpenIDConnectClientException("Error registering: JSON response received from the server was invalid.");
+            throw new OpenIDConnectClientException("Error registering: 
+                JSON response received from the server was invalid.");
         } elseif (isset($json_response->{'error_description'})) {
             throw new OpenIDConnectClientException($json_response->{'error_description'});
         }
@@ -1014,9 +1016,8 @@ class OpenIDConnectClient
             $this->setClientSecret($json_response->{'client_secret'});
         } else {
             throw new OpenIDConnectClientException("Error registering:
-                                                    Please contact the OpenID Connect provider and obtain a Client ID and Secret directly from them");
+                Please contact the OpenID Connect provider and obtain a Client ID and Secret directly from them");
         }
-
     }
 
     /**
@@ -1056,7 +1057,7 @@ class OpenIDConnectClient
      */
     public function canVerifySignatures()
     {
-      return class_exists('\phpseclib\Crypt\RSA') || class_exists('Crypt_RSA');
+        return class_exists('\phpseclib\Crypt\RSA') || class_exists('Crypt_RSA');
     }
 
     /**
@@ -1135,7 +1136,7 @@ class OpenIDConnectClient
     {
         return $this->tokenResponse;
     }
-	
+    
     /**
      * Stores nonce
      *
@@ -1149,7 +1150,7 @@ class OpenIDConnectClient
     }
     
     /**
-     * Get stored nonce 
+     * Get stored nonce
      *
      * @return string
      */
@@ -1157,9 +1158,9 @@ class OpenIDConnectClient
     {
         return $_SESSION['openid_connect_nonce'];
     }
-	
+    
     /**
-     * Cleanup nonce 
+     * Cleanup nonce
      *
      * @return void
      */
@@ -1181,7 +1182,7 @@ class OpenIDConnectClient
     }
     
     /**
-     * Get stored state 
+     * Get stored state
      *
      * @return string
      */
@@ -1191,7 +1192,7 @@ class OpenIDConnectClient
     }
     
     /**
-     * Cleanup state 
+     * Cleanup state
      *
      * @return void
      */
