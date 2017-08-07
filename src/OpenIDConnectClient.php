@@ -21,6 +21,8 @@
  *
  */
 
+namespace Jumbojett;
+
 /**
  * Use session to manage a nonce
  */

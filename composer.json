@@ -11,7 +11,12 @@
         "phing/phing": "^2.16",
         "squizlabs/php_codesniffer": "^2.0"
     },
-    "autoload": {
-        "classmap": ["OpenIDConnectClient.php"]
+    "archive" : {
+        "exclude" : [
+            ".*"
+        ]
+    },
+    "autoload" : {
+         "classmap": [ "src/"]
     }
 }
