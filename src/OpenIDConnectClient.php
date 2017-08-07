@@ -64,7 +64,7 @@ function b64url2b64($base64url)
     // "Shouldn't" be necessary, but why not
     $padding = strlen($base64url) % 4;
     if ($padding > 0) {
-	$base64url .= str_repeat("=", 4 - $padding);
+        $base64url .= str_repeat("=", 4 - $padding);
     }
     return strtr($base64url, '-_', '+/');
 }
@@ -146,12 +146,12 @@ class OpenIDConnectClient
      */
     private $refreshToken;
 
-    /** 
+    /**
      * @var string if we acquire an id token it will be stored here
      */
     private $idToken;
 
-    /** 
+    /**
      * @var string stores the token response
      */
     private $tokenResponse;
@@ -231,7 +231,6 @@ class OpenIDConnectClient
 
         // If we have an authorization code then proceed to request a token
         if (isset($_REQUEST["code"])) {
-
             $code = $_REQUEST["code"];
             $token_json = $this->requestTokens($code);
 
@@ -247,9 +246,9 @@ class OpenIDConnectClient
             if ($_REQUEST['state'] != $this->getState()) {
                 throw new OpenIDConnectClientException("Unable to determine state");
             }
-		
-	    // Cleanup state
-	    $this->unsetState();
+        
+            // Cleanup state
+            $this->unsetState();
 
             if (!property_exists($token_json, 'id_token')) {
                 throw new OpenIDConnectClientException("User did not authorize openid scope.");
@@ -259,11 +258,12 @@ class OpenIDConnectClient
 
             // Verify the signature
             if ($this->canVerifySignatures()) {
-		if (!$this->getProviderConfigValue('jwks_uri')) {
-                    throw new OpenIDConnectClientException ("Unable to verify signature due to no jwks_uri being defined");
+                if (!$this->getProviderConfigValue('jwks_uri')) {
+                    throw new OpenIDConnectClientException(
+                            "Unable to verify signature due to no jwks_uri being defined");
                 }
                 if (!$this->verifyJWTsignature($token_json->id_token)) {
-                    throw new OpenIDConnectClientException ("Unable to verify signature");
+                    throw new OpenIDConnectClientException("Unable to verify signature");
                 }
             } else {
                 user_error("Warning: JWT signature verification unavailable.");
@@ -271,11 +271,10 @@ class OpenIDConnectClient
 
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims, $token_json->access_token)) {
-
                 // Clean up the session a little
                 $this->unsetNonce();
 
-		// Save the full response
+                // Save the full response
                 $this->tokenResponse = $token_json;
 
                 // Save the id token
@@ -285,21 +284,18 @@ class OpenIDConnectClient
                 $this->accessToken = $token_json->access_token;
 
                 // Save the refresh token, if we got one
-                if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
+                if (isset($token_json->refresh_token))
+                    $this->refreshToken = $token_json->refresh_token;
 
                 // Success!
                 return true;
-
             } else {
-                throw new OpenIDConnectClientException ("Unable to verify JWT claims");
+                throw new OpenIDConnectClientException("Unable to verify JWT claims");
             }
-
         } else {
-
             $this->requestAuthorization();
             return false;
         }
-
     }
 
     /**
@@ -318,16 +314,16 @@ class OpenIDConnectClient
         $signout_endpoint = $this->getProviderConfigValue("end_session_endpoint");
 
         $signout_params = null;
-        if($redirect == null){
-          $signout_params = array('id_token_hint' => $accessToken);
-        }
-        else {
-          $signout_params = array(
+        if ($redirect == null) {
+            $signout_params = array('id_token_hint' => $accessToken);
+        } else {
+            $signout_params = array(
                 'id_token_hint' => $accessToken,
                 'post_logout_redirect_uri' => $redirect);
         }
 
-        $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, null, '&');
+        $signout_endpoint .= (strpos($signout_endpoint, '?') === false ? '?' : '&') .
+                http_build_query($signout_params, null, '&');
         $this->redirect($signout_endpoint);
     }
 
@@ -358,39 +354,36 @@ class OpenIDConnectClient
      */
     private function getProviderConfigValue($param, $default = null)
     {
-
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
         if (!isset($this->providerConfig[$param])) {
-	    if(!$this->wellKnown){
-            	$well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/openid-configuration";
-            	$this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
-	    }
+            if (!$this->wellKnown) {
+                $well_known_config_url = rtrim($this->getProviderURL(), "/") . "/.well-known/openid-configuration";
+                $this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
+            }
 
-	    $value = false;
-	    if(isset($this->wellKnown->{$param})){
+            $value = false;
+            if (isset($this->wellKnown->{$param})) {
                 $value = $this->wellKnown->{$param};
-            }	
-	    
+            }
             if ($value) {
                 $this->providerConfig[$param] = $value;
-            } elseif(isset($default)) {
+            } elseif (isset($default)) {
                 // Uses default value if provided
                 $this->providerConfig[$param] = $default;
             } else {
-                throw new OpenIDConnectClientException("The provider {$param} has not been set. Make sure your provider has a well known configuration available.");
+                throw new OpenIDConnectClientException("The provider {$param} has not been set.".
+                        " Make sure your provider has a well known configuration available.");
             }
-
         }
 
         return $this->providerConfig[$param];
     }
 
-
     /**
      * @param $url Sets redirect URL for auth flow
      */
-    public function setRedirectURL ($url)
+    public function setRedirectURL($url)
     {
         if (filter_var($url, FILTER_VALIDATE_URL) !== false) {
             $this->redirectURL = $url;
@@ -423,13 +416,13 @@ class OpenIDConnectClient
          * Support of 'ProxyReverse' configurations.
          */
 
-        if (isset($_SERVER["HTTP_UPGRADE_INSECURE_REQUESTS"]) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] == 1)) { 
-            $protocol = 'https'; 
-        } else { 
+        if (isset($_SERVER["HTTP_UPGRADE_INSECURE_REQUESTS"]) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] == 1)) {
+            $protocol = 'https';
+        } else {
             $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO']
-                ?: @$_SERVER['REQUEST_SCHEME'] 
-                ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http"); 
-        } 
+                ?: @$_SERVER['REQUEST_SCHEME']
+                ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http");
+        }
 
         $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT'])
               ?: @intval($_SERVER["SERVER_PORT"])
@@ -441,7 +434,8 @@ class OpenIDConnectClient
 
         $port = (443 == $port) || (80 == $port) ? '' : ':' . $port;
 
-        return sprintf('%s://%s%s/%s', $protocol, $host, $port, @trim(reset(explode("?", $_SERVER['REQUEST_URI'])), '/'));
+        return sprintf('%s://%s%s/%s', $protocol, $host, $port, 
+                @trim(reset(explode("?", $_SERVER['REQUEST_URI'])), '/'));
     }
 
     /**
