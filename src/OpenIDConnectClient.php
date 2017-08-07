@@ -447,7 +447,7 @@ class OpenIDConnectClient
      */
     protected function generateRandString()
     {
-        return md5(uniqid(rand(), TRUE));
+        return md5(uniqid(rand(), true));
     }
 
     /**
@@ -659,7 +659,7 @@ class OpenIDConnectClient
         $header = json_decode(base64url_decode($parts[0]));
         $payload = implode(".", $parts);
         $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
-        if ($jwks === NULL) {
+        if ($jwks === null) {
             throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
         }
         $verified = false;
