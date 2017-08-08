@@ -92,3 +92,5 @@ $oidc->setVerifyPeer(false);
   
 ## Contributing ###
  - All pull requests, once merged, should be added to the changelog.md file.
+ - OpenID-Connect's source code is formatted according to the PSR-2 standard.
+
