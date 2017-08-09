@@ -7,6 +7,10 @@
         "ext-json": "*",
         "ext-curl": "*"
     },
+    "require-dev": {
+        "phing/phing": "^2.16",
+        "squizlabs/php_codesniffer": "^2.0"
+    },
     "archive" : {
         "exclude" : [
             ".*"

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jumbojett/openid-connect-php" default="phpcs">
+    <php expression="include('vendor/autoload.php')"/>
+    <target name="phpcs">
+        <phpcodesniffer standard="PSR2" description="Run PSR2 standards over the codebase" haltonerror="true">
+            <fileset dir="src">
+                <include name="**/*.php"/>
+            </fileset>
+           <formatter type="full" usefile="false"/>
+        </phpcodesniffer>
+    </target>
+</project>
