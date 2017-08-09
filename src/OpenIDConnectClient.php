@@ -71,7 +71,7 @@ function b64url2b64($base64url) {
 /**
  * OpenIDConnect Exception Class
  */
-class OpenIDConnectClientException extends Exception
+class OpenIDConnectClientException extends \Exception
 {
 
 }
