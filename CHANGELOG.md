@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+* Timeout is configurable via setTimeout method. This addresses issue #94.
 
 ### Changed
 
