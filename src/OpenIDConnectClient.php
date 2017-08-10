@@ -123,12 +123,12 @@ class OpenIDConnectClient
      * @var string full system path to the SSL certificate
      */
     private $certPath;
-    
+
     /**
      * @var bool Verify SSL peer on transactions
      */
     private $verifyPeer = true;
-    
+
     /**
      * @var bool Verify peer hostname on transactions
      */
@@ -144,12 +144,12 @@ class OpenIDConnectClient
      */
     private $refreshToken;
 
-    /** 
+    /**
      * @var string if we acquire an id token it will be stored here
      */
     private $idToken;
 
-    /** 
+    /**
      * @var string stores the token response
      */
     private $tokenResponse;
@@ -183,6 +183,11 @@ class OpenIDConnectClient
      * @var mixed holds well-known openid server properties
      */
     private $wellKnown = false;
+
+    /**
+     * @var int timeout (seconds)
+     */
+    protected $timeOut = 60;
 
     /**
      * @param $provider_url string optional
@@ -241,7 +246,7 @@ class OpenIDConnectClient
             if ($_REQUEST['state'] != $this->getState()) {
                 throw new OpenIDConnectClientException("Unable to determine state");
             }
-		
+
 	    // Cleanup state
 	    $this->unsetState();
 
@@ -274,7 +279,7 @@ class OpenIDConnectClient
 
                 // Save the id token
                 $this->idToken = $token_json->id_token;
-                
+
                 // Save the access token
                 $this->accessToken = $token_json->access_token;
 
@@ -360,8 +365,8 @@ class OpenIDConnectClient
 	    $value = false;
 	    if(isset($this->wellKnown->{$param})){
                 $value = $this->wellKnown->{$param};
-            }	
-	    
+            }
+
             if ($value) {
                 $this->providerConfig[$param] = $value;
             } elseif(isset($default)) {
@@ -411,13 +416,13 @@ class OpenIDConnectClient
          * Support of 'ProxyReverse' configurations.
          */
 
-        if (isset($_SERVER["HTTP_UPGRADE_INSECURE_REQUESTS"]) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] == 1)) { 
-            $protocol = 'https'; 
-        } else { 
+        if (isset($_SERVER["HTTP_UPGRADE_INSECURE_REQUESTS"]) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] == 1)) {
+            $protocol = 'https';
+        } else {
             $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO']
-                ?: @$_SERVER['REQUEST_SCHEME'] 
-                ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http"); 
-        } 
+                ?: @$_SERVER['REQUEST_SCHEME']
+                ?: ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? "https" : "http");
+        }
 
         $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT'])
               ?: @intval($_SERVER["SERVER_PORT"])
@@ -449,7 +454,7 @@ class OpenIDConnectClient
 
         $auth_endpoint = $this->getProviderConfigValue("authorization_endpoint");
         $response_type = "code";
-        
+
         // Generate and store a nonce in the session
         // The nonce is an arbitrary value
         $nonce = $this->setNonce($this->generateRandString());
@@ -475,7 +480,7 @@ class OpenIDConnectClient
         if (sizeof($this->responseTypes) > 0) {
             $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->responseTypes)));
         }
-        
+
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&');
 
         session_commit();
@@ -507,7 +512,7 @@ class OpenIDConnectClient
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
     }
 
-    
+
     /**
      * Requests ID and Access tokens
      *
@@ -686,7 +691,7 @@ class OpenIDConnectClient
             && ( !isset($claims->at_hash) || $claims->at_hash == $expecte_at_hash )
         );
     }
-	
+
     /**
      * @param string $str
      * @return string
@@ -807,10 +812,10 @@ class OpenIDConnectClient
 
         // Include header in result? (0 = yes, 1 = no)
         curl_setopt($ch, CURLOPT_HEADER, 0);
-	
+
 	// Allows to follow redirect
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-	    
+
         /**
          * Set cert
          * Otherwise ignore SSL peer verification
@@ -818,24 +823,24 @@ class OpenIDConnectClient
         if (isset($this->certPath)) {
             curl_setopt($ch, CURLOPT_CAINFO, $this->certPath);
         }
-        
+
         if($this->verifyHost) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         } else {
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         }
-        
+
         if($this->verifyPeer) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         } else {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);        
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         }
-        
+
         // Should cURL return or print out the data? (true = return, false = print)
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
         // Timeout in seconds
-        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeOut);
 
         // Download the given URL, and return output
         $output = curl_exec($ch);
@@ -896,14 +901,14 @@ class OpenIDConnectClient
     {
         return $this->certPath;
     }
-    
+
     /**
      * @param bool $verifyPeer
      */
     public function setVerifyPeer($verifyPeer) {
         $this->verifyPeer = $verifyPeer;
     }
-    
+
     /**
      * @param bool $verifyHost
      */
@@ -1093,7 +1098,7 @@ class OpenIDConnectClient
     public function getTokenResponse() {
         return $this->tokenResponse;
     }
-	
+
     /**
      * Stores nonce
      *
@@ -1104,18 +1109,18 @@ class OpenIDConnectClient
         $_SESSION['openid_connect_nonce'] = $nonce;
         return $nonce;
     }
-    
+
     /**
-     * Get stored nonce 
+     * Get stored nonce
      *
      * @return string
      */
     protected function getNonce() {
         return $_SESSION['openid_connect_nonce'];
     }
-	
+
     /**
-     * Cleanup nonce 
+     * Cleanup nonce
      *
      * @return void
      */
@@ -1133,18 +1138,18 @@ class OpenIDConnectClient
         $_SESSION['openid_connect_state'] = $state;
         return $state;
     }
-    
+
     /**
-     * Get stored state 
+     * Get stored state
      *
      * @return string
      */
     protected function getState() {
         return $_SESSION['openid_connect_state'];
     }
-    
+
     /**
-     * Cleanup state 
+     * Cleanup state
      *
      * @return void
      */
@@ -1160,5 +1165,20 @@ class OpenIDConnectClient
     public function getResponseCode()
     {
         return $this->responseCode;
+    }
+
+    /**
+     * Set timeout (seconds)
+     *
+     * @param int $timeout
+     */
+    public function setTimeout($timeout)
+    {
+        $this->timeOut = $timeout;
+    }
+
+    public function getTimeout()
+    {
+        return $this->timeOut;
     }
 }
