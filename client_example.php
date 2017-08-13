@@ -23,6 +23,8 @@
 
 require "../../autoload.php";
 
+use Jumbojett\OpenIDConnectClient;
+
 $oidc = new OpenIDConnectClient('http://myproviderURL.com/',
                                 'ClientIDHere',
                                 'ClientSecretHere');
