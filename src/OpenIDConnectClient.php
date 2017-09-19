@@ -306,8 +306,8 @@ class OpenIDConnectClient
      * Connect provider that the end-user has logged out of the relying party site
      * (the client application).
      *
-     * @param $accessToken ID token (obtained at login)
-     * @param $redirect URL to which the RP is requesting that the End-User's User Agent
+     * @param string $accessToken ID token (obtained at login)
+     * @param string $redirect URL to which the RP is requesting that the End-User's User Agent
      * be redirected after a logout has been performed. The value MUST have been previously
      * registered with the OP. Value can be null.
      *
@@ -347,7 +347,7 @@ class OpenIDConnectClient
      * Get's anything that we need configuration wise including endpoints, and other values
      *
      * @param $param
-     * @param $default optional
+     * @param string $default optional
      * @throws OpenIDConnectClientException
      * @return string
      *
@@ -383,7 +383,7 @@ class OpenIDConnectClient
 
 
     /**
-     * @param $url Sets redirect URL for auth flow
+     * @param string $url Sets redirect URL for auth flow
      */
     public function setRedirectURL ($url) {
         if (filter_var($url, FILTER_VALIDATE_URL) !== false) {
