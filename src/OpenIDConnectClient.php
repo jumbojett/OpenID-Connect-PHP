@@ -513,6 +513,42 @@ class OpenIDConnectClient
     }
 
 
+ /**
+     * Requests a resource owner token
+     * (Defined in https://tools.ietf.org/html/rfc6749#section-4.3)
+     * 
+     * @param $bClientAuth boolean Indicates that the Client ID and Secret be used for client authentication
+     */
+    public function requestResourceOwnerToken($bClientAuth =  FALSE) {
+        $token_endpoint = $this->getProviderConfigValue("token_endpoint");
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported");
+
+        $headers = [];
+
+        $grant_type = "password";
+
+        $post_data = array(
+            'grant_type'    => $grant_type,
+            'username'      => $this->authParams['username'],
+            'password'      => $this->authParams['password'],
+            'scope'         => implode(' ', $this->scopes)
+        );
+
+        //For client authentication include the client values
+        if($bClientAuth) {
+            $post_data['client_id']     = $this->clientID;
+            $post_data['client_secret'] = $this->clientSecret;
+        }
+
+        // Convert token params to string format
+        $post_params = http_build_query($post_data, null, '&');
+
+        return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
+    }
+
+
+
+
     /**
      * Requests ID and Access tokens
      *
