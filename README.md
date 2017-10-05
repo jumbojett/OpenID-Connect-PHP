@@ -76,6 +76,27 @@ $clientCredentialsToken = $oidc->requestClientCredentialsToken()->access_token;
 
 ```
 
+## Example 5: Request Resource Owners Token (with client auth) ##
+
+```php
+use Jumbojett\OpenIDConnectClient;
+
+$oidc = new OpenIDConnectClient('https://id.provider.com',
+                                'ClientIDHere',
+                                'ClientSecretHere');
+$oidc->providerConfigParam(array('token_endpoint'=>'https://id.provider.com/connect/token'));
+$oidc->addScope('my_scope');
+
+//Add username and password
+$oidc->addAuthParam(array('username'=>'<Username>'));
+$oidc->addAuthParam(array('password'=>'<Password>'));
+
+//Perform the auth and return the token (to validate check if the access_token property is there and a valid JWT) :
+$token = $oidc->requestResourceOwnerToken(TRUE)->access_token;
+
+```
+
+
 ## Development Environments ##
 In some cases you may need to disable SSL security on on your development systems.
 Note: This is not recommended on production systems.
