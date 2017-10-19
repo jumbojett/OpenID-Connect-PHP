@@ -672,6 +672,27 @@ class OpenIDConnectClient
 	}
         return $rsa->verify($payload, $signature);
     }
+	
+    /**
+     * @param string $hashtype
+     * @param object $key
+     * @throws OpenIDConnectClientException
+     * @return bool
+     */
+    private function verifyHMACJWTsignature($hashtype, $key, $payload, $signature)
+    {
+        if (!function_exists('hash_hmac')) {
+            throw new OpenIDConnectClientException('hash_hmac support unavailable.');
+        }
+
+        $expected=hash_hmac($hashtype, $payload, $key, true);
+
+        if (function_exists('hash_equals')) {
+            return hash_equals($signature, $expected);
+        } else {
+            return self::hashEquals($signature, $expected);
+        }
+    }
 
     /**
      * @param $jwt string encoded JWT
@@ -698,6 +719,12 @@ class OpenIDConnectClient
                                                      $this->get_key_for_header($jwks->keys, $header),
                                                      $payload, $signature);
             break;
+	case 'HS256':
+        case 'HS512':
+        case 'HS384':
+            $hashtype = 'SHA' . substr($header->alg, 2);
+            $verified = $this->verifyHMACJWTsignature($hashtype, $this->getClientSecret(), $payload, $signature);
+            break;		
         default:
             throw new OpenIDConnectClientException('No support for signature type: ' . $header->alg);
         }
@@ -1216,5 +1243,40 @@ class OpenIDConnectClient
     public function getTimeout()
     {
         return $this->timeOut;
+    }
+	
+    /**
+     * Safely calculate length of binary string
+     * @param string
+     * @return int
+     */
+    private static function safeLength($str)
+    {
+        if (function_exists('mb_strlen')) {
+            return mb_strlen($str, '8bit');
+        }
+        return strlen($str);
+    }
+
+    /**
+     * Where has_equals is not available, this provides a timing-attack safe string comparison
+     * @param $str1
+     * @param $str2
+     * @return bool
+     */
+    private static function hashEquals($str1, $str2)
+    {
+        $len1=static::safeLength($str1);
+        $len2=static::safeLength($str2);
+
+        //compare strings without any early abort...
+        $len = min($len1, $len2);
+        $status = 0;
+        for ($i = 0; $i < $len; $i++) {
+            $status |= (ord($str1[$i]) ^ ord($str2[$i]));
+        }
+        //if strings were different lengths, we fail
+        $status |= ($len1 ^ $len2);
+        return ($status === 0);
     }
 }
