@@ -493,7 +493,6 @@ class OpenIDConnectClient
      */
     public function requestClientCredentialsToken() {
         $token_endpoint = $this->getProviderConfigValue("token_endpoint");
-        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported");
 
         $headers = [];
 
@@ -521,7 +520,6 @@ class OpenIDConnectClient
      */
     public function requestResourceOwnerToken($bClientAuth =  FALSE) {
         $token_endpoint = $this->getProviderConfigValue("token_endpoint");
-        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported");
 
         $headers = [];
 
