@@ -190,6 +190,12 @@ class OpenIDConnectClient
     protected $timeOut = 60;
 
     /**
+     * @const By default, signature verification is not enforced in authenticate method. However by passing FORCE_SIGNATURE_VERIFICATION it can be enforced.
+     */
+    const FORCE_SIGNATURE_VERIFICATION = true;
+    const OPTIONAL_SIGNATURE_VERIFICATION = false;
+	
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -217,6 +223,8 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param bool $signature_verification By default, autheticate will check signature only if RSA library is available AND jwks_uri is proveded.
+     * When this parameter is set to FORCE_SIGNATURE_VERIFICATION, absence of the library or an jwks_uri will throw an Exception.
      * @return bool
      * @throws OpenIDConnectClientException
      */
@@ -257,15 +265,23 @@ class OpenIDConnectClient
             $claims = $this->decodeJWT($token_json->id_token, 1);
 
             // Verify the signature
-            if ($this->canVerifySignatures()) {
-		if (!$this->getProviderConfigValue('jwks_uri')) {
-                    throw new OpenIDConnectClientException ("Unable to verify signature due to no jwks_uri being defined");
-                }
-                if (!$this->verifyJWTsignature($token_json->id_token)) {
-                    throw new OpenIDConnectClientException ("Unable to verify signature");
-                }
+            if ($this->canVerifySignatures()){
+            	try {
+            		if (!$this->verifyJWTsignature($token_json->id_token)){
+            			throw new OpenIDConnectClientException ("Unable to verify signature");
+            		}
+            	} catch (OpenIDConnectClientException $ex){
+            		// if signature verification is forced, throw an exception
+            		if ($signature_verification == self::FORCE_SIGNATURE_VERIFICATION){
+            			throw $ex;
+            		} else { // otherwise: just raise a warning
+            			user_error('Signature verification skipped: '.$ex->getMessage());
+            		}
+            	}
+            } elseif ($signature_verification == self::FORCE_SIGNATURE_VERIFICATION){
+            	throw new OpenIDConnectClientException ("Signature verification enforced, but JWT signature verification unavailable!");
             } else {
-                user_error("Warning: JWT signature verification unavailable.");
+            	user_error('Warning: Sigature verification skipped due to missing RSA library.');
             }
 
             // If this is a valid claim
