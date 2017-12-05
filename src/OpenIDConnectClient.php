@@ -190,6 +190,11 @@ class OpenIDConnectClient
     protected $timeOut = 60;
 
     /**
+     * @var bool Verify JWT signature
+     */
+    private $verifyJWT = true;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -257,7 +262,7 @@ class OpenIDConnectClient
             $claims = $this->decodeJWT($token_json->id_token, 1);
 
             // Verify the signature
-            if ($this->canVerifySignatures()) {
+            if ($this->verifyJWT && $this->canVerifySignatures()) {
 		if (!$this->getProviderConfigValue('jwks_uri')) {
                     throw new OpenIDConnectClientException ("Unable to verify signature due to no jwks_uri being defined");
                 }
@@ -731,9 +736,14 @@ class OpenIDConnectClient
 
     /**
      * @param object $claims
+     * @param string $accessToken
      * @return bool
      */
     private function verifyJWTclaims($claims, $accessToken = null) {
+        if (!$this->verifyJWT) {
+            return true;
+        }
+
 	if(isset($claims->at_hash) && isset($accessToken)){
             if(isset($this->getAccessTokenHeader()->alg) && $this->getAccessTokenHeader()->alg != 'none'){
                 $bit = substr($this->getAccessTokenHeader()->alg, 2, 3);
