@@ -104,6 +104,7 @@ Note: This is not recommended on production systems.
 ```php
 $oidc->setVerifyHost(false);
 $oidc->setVerifyPeer(false);
+$oidc->setVerifyJWT(false);
 ```
 
 ### Todo ###
