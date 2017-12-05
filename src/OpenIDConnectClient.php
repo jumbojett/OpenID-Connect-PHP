@@ -1287,4 +1287,12 @@ class OpenIDConnectClient
         $status |= ($len1 ^ $len2);
         return ($status === 0);
     }
+
+    /**
+     * @param bool $verifyJWT
+     */
+    public function setVerifyJWT($verifyJWT) {
+        $this->verifyJWT = $verifyJWT;
+    }
+
 }
