@@ -92,7 +92,8 @@ $oidc->addAuthParam(array('username'=>'<Username>'));
 $oidc->addAuthParam(array('password'=>'<Password>'));
 
 //Perform the auth and return the token (to validate check if the access_token property is there and a valid JWT) :
-$token = $oidc->requestResourceOwnerToken(TRUE)->access_token;
+$headers = ['Authorization: Basic ' . base64_encode(.'ClientIDHere' .':'. 'ClientSecretHere'.)];
+$token = $oidc->requestResourceOwnerToken(TRUE, headers)->access_token;
 
 ```
 

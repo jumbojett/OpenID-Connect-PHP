@@ -517,11 +517,10 @@ class OpenIDConnectClient
      * (Defined in https://tools.ietf.org/html/rfc6749#section-4.3)
      * 
      * @param $bClientAuth boolean Indicates that the Client ID and Secret be used for client authentication
+  *  * @param $authHeaders array() Extra headers to be send with the request. Format as 'NameHeader: ValueHeader'
      */
-    public function requestResourceOwnerToken($bClientAuth =  FALSE) {
-        $token_endpoint = $this->getProviderConfigValue("token_endpoint");
-
-        $headers = [];
+    public function requestResourceOwnerToken($bClientAuth =  FALSE, $authHeaders = array()) {
+        $token_endpoint = $this->getProviderConfigValue("token_endpoint");        
 
         $grant_type = "password";
 
@@ -536,6 +535,12 @@ class OpenIDConnectClient
         if($bClientAuth) {
             $post_data['client_id']     = $this->clientID;
             $post_data['client_secret'] = $this->clientSecret;
+        }
+        
+        if( is_array($authHeaders) && !empty($authHeaders) ){
+            $headers = $authHeaders;
+        }else{
+            $headers = [];
         }
 
         // Convert token params to string format
