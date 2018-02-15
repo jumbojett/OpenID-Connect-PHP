@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+### Added
+* 
+
+### Changed
+*
+
+### Removed
+*
+
+
+## [0.4]
 ### Added
 * Timeout is configurable via setTimeout method. This addresses issue #94.
 * Add the ability to authenticate using the Resource Owner flow (with or without the Client ID and ClientSecret). This addresses issue #98
