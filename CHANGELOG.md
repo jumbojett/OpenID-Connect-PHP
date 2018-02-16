@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-* 
+*
 
 ### Changed
 *
@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 *
 
+## [0.4.1]
+## Changed
+* Documentation updates for include path.
 
 ## [0.4]
 ### Added

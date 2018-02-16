@@ -18,7 +18,7 @@ composer require jumbojett/openid-connect-php
 ```
  2. Include composer autoloader
 ```php
-require '/vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 ```
 
 ## Example 1: Basic Client ##
