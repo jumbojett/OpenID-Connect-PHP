@@ -1061,7 +1061,7 @@ class OpenIDConnectClient
      * @return string
      * @throws OpenIDConnectClientException
      */
-    public function getWellKnownIssuer($appendSlash) {
+    public function getWellKnownIssuer($appendSlash = false) {
 
         return $this->getWellKnownConfigValue('issuer') . ($appendSlash ? '/' : '');
     }
