@@ -436,28 +436,43 @@ class OpenIDConnectClient
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
         if (!isset($this->providerConfig[$param])) {
-	    if(!$this->wellKnown){
-            	$well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/openid-configuration";
-            	$this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
-	    }
-
-	    $value = false;
-	    if(isset($this->wellKnown->{$param})){
-                $value = $this->wellKnown->{$param};
-            }
-
-            if ($value) {
-                $this->providerConfig[$param] = $value;
-            } elseif(isset($default)) {
-                // Uses default value if provided
-                $this->providerConfig[$param] = $default;
-            } else {
-                throw new OpenIDConnectClientException("The provider {$param} has not been set. Make sure your provider has a well known configuration available.");
-            }
-
+            $this->providerConfig[$param] = $this->getWellKnownConfigValue($param, $default);
         }
 
         return $this->providerConfig[$param];
+    }
+
+    /**
+     * Get's anything that we need configuration wise including endpoints, and other values
+     *
+     * @param $param
+     * @param string $default optional
+     * @throws OpenIDConnectClientException
+     * @return string
+     *
+     */
+    private function getWellKnownConfigValue($param, $default = null) {
+
+        // If the configuration value is not available, attempt to fetch it from a well known config endpoint
+        // This is also known as auto "discovery"
+        if(!$this->wellKnown) {
+            $well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/openid-configuration";
+            $this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
+        }
+
+        $value = false;
+        if(isset($this->wellKnown->{$param})){
+            $value = $this->wellKnown->{$param};
+        }
+
+        if ($value) {
+            return $value;
+        } elseif(isset($default)) {
+            // Uses default value if provided
+            return $default;
+        } else {
+            throw new OpenIDConnectClientException("The provider {$param} could not be fetched. Make sure your provider has a well known configuration available.");
+        }
     }
 
 
@@ -836,7 +851,7 @@ class OpenIDConnectClient
             $len = ((int)$bit)/16;
             $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
-        return (($claims->iss == $this->getProviderURL())
+        return (($claims->iss == $this->getProviderURL() || $claims->iss == $this->getWellKnownIssuer() || $claims->iss == $this->getWellKnownIssuer(true))
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
             && ($claims->nonce == $this->getNonce())
             && ( !isset($claims->exp) || $claims->exp >= time())
@@ -1040,6 +1055,15 @@ class OpenIDConnectClient
         curl_close($ch);
 
         return $output;
+    }
+
+    /**
+     * @return string
+     * @throws OpenIDConnectClientException
+     */
+    public function getWellKnownIssuer($appendSlash) {
+
+        return $this->getWellKnownConfigValue('issuer') . ($appendSlash ? '/' : '');
     }
 
     /**
