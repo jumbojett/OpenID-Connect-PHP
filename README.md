@@ -96,6 +96,24 @@ $token = $oidc->requestResourceOwnerToken(TRUE)->access_token;
 
 ```
 
+## Example 6: Basic client for implicit flow e.g. with Azure AD B2C (see http://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth) ##
+
+```php
+use Jumbojett\OpenIDConnectClient;
+
+$oidc = new OpenIDConnectClient('https://id.provider.com',
+                                'ClientIDHere',
+                                'ClientSecretHere');
+$oidc->setResponseTypes(array('id_token'));
+$oidc->addScope(array('openid'));
+$oidc->setAllowImplicitFlow(true);
+$oidc->addAuthParam(array('response_mode' => 'form_post'));
+$oidc->setCertPath('/path/to/my.cert');
+$oidc->authenticate();
+$sub = $oidc->getVerifiedClaims('sub');
+
+```
+
 
 ## Development Environments ##
 In some cases you may need to disable SSL security on on your development systems.

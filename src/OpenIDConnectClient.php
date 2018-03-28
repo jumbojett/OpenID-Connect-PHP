@@ -195,6 +195,16 @@ class OpenIDConnectClient
     private $additionalJwks = array();
 
     /**
+     * @var array holds verified jwt claims
+     */
+    private $verifiedClaims = array();
+
+    /**
+     * @var bool Allow OAuth 2 implicit flow; see http://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth
+     */
+    private $allowImplicitFlow = false;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -288,6 +298,9 @@ class OpenIDConnectClient
                 // Save the access token
                 $this->accessToken = $token_json->access_token;
 
+                // Save the verified claims
+                $this->verifiedClaims = $claims;
+
                 // Save the refresh token, if we got one
                 if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
 
@@ -297,7 +310,61 @@ class OpenIDConnectClient
             } else {
                 throw new OpenIDConnectClientException ("Unable to verify JWT claims");
             }
+        } elseif ($this->allowImplicitFlow && isset($_REQUEST["id_token"])) {
+            // if we have no code but an id_token use that
+            $id_token = $_REQUEST["id_token"];
 
+            $accessToken = null;
+            if (isset($_REQUEST["access_token"])) {
+                $accessToken = $_REQUEST["access_token"];
+            }
+
+            // Do an OpenID Connect session check
+            if ($_REQUEST['state'] != $this->getState()) {
+                throw new OpenIDConnectClientException("Unable to determine state");
+            }
+
+            // Cleanup state
+            $this->unsetState();
+
+            $claims = $this->decodeJWT($id_token, 1);
+
+            // Verify the signature
+            if ($this->canVerifySignatures()) {
+                if (!$this->getProviderConfigValue('jwks_uri')) {
+                    throw new OpenIDConnectClientException ("Unable to verify signature due to no jwks_uri being defined");
+                }
+                if (!$this->verifyJWTsignature($id_token)) {
+                    throw new OpenIDConnectClientException ("Unable to verify signature");
+                }
+            } else {
+                user_error("Warning: JWT signature verification unavailable.");
+            }
+
+            // If this is a valid claim
+            if ($this->verifyJWTclaims($claims, $accessToken)) {
+
+                // Clean up the session a little
+                $this->unsetNonce();
+
+                // Save the id token
+                $this->idToken = $token_json->id_token;
+
+                // Save the verified claims
+                $this->verifiedClaims = $claims;
+
+                // Save the access token
+                if ($accessToken) $this->accessToken = $access_token;
+
+                // Save the refresh token, if we got one
+                if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
+
+                // Success!
+                return true;
+
+            } else {
+                throw new OpenIDConnectClientException ("Unable to verify JWT claims");
+            }
         } else {
 
             $this->requestAuthorization();
@@ -851,6 +918,36 @@ class OpenIDConnectClient
     }
 
     /**
+     *
+     * @param $attribute string optional
+     *
+     * Attribute        Type    Description
+     * exp            int    Expires at
+     * nbf            int    Not before
+     * ver        string    Version
+     * iss        string    Issuer
+     * sub        string    Subject
+     * aud        string    Audience
+     * nonce            string    nonce
+     * iat            int    Issued At
+     * auth_time            int    Authenatication time
+     * oid            string    Object id
+     *
+     * @return mixed
+     *
+     */
+    public function getVerifiedClaims($attribute = null) {
+
+        if($attribute === null) {
+            return $this->verifiedClaims;
+        } else if (array_key_exists($attribute, $this->verifiedClaims)) {
+            return $this->verifiedClaims->$attribute;
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * @param $url
      * @param null $post_body string If this is set the post type will be POST
      * @param array() $headers Extra headers to be send with the request. Format as 'NameHeader: ValueHeader'
@@ -1016,6 +1113,21 @@ class OpenIDConnectClient
     public function getVerifyPeer()
     {
         return $this->verifyPeer;
+    }
+
+    /**
+     * @param bool $allowImplicitFlow
+     */
+    public function setAllowImplicitFlow($allowImplicitFlow) {
+        $this->allowImplicitFlow = $allowImplicitFlow;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAllowImplicitFlow()
+    {
+        return $this->allowImplicitFlow;
     }
 
     /**
