@@ -190,6 +190,11 @@ class OpenIDConnectClient
     protected $timeOut = 60;
 
     /**
+     * @var array holds response types
+     */
+    private $additionalJwks = array();
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -341,6 +346,13 @@ class OpenIDConnectClient
      */
     public function addAuthParam($param) {
         $this->authParams = array_merge($this->authParams, (array)$param);
+    }
+
+    /**
+     * @param $jwk object - example: (object) array('kid' => ..., 'nbf' => ..., 'use' => 'sig', 'kty' => "RSA", 'e' => "", 'n' => "")
+     */
+    protected function addAdditionalJwk($jwk) {
+        $this->additionalJwks[] = $jwk;
     }
 
     /**
@@ -626,6 +638,19 @@ class OpenIDConnectClient
                      return $key;
                  }
              }
+         }
+         if ($this->additionalJwks) {
+            foreach ($this->additionalJwks as $key) {
+                if ($key->kty == 'RSA') {
+                    if (!isset($header->kid) || $key->kid == $header->kid) {
+                        return $key;
+                    }
+                } else {
+                    if ($key->alg == $header->alg && $key->kid == $header->kid) {
+                        return $key;
+                    }
+                }
+            }
          }
          if (isset($header->kid)) {
              throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' . $header->alg . ', ' . $header->kid . ')');
