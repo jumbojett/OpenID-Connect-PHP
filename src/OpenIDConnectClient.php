@@ -744,13 +744,16 @@ class OpenIDConnectClient
             $len = ((int)$bit)/16;
             $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
-        return (($claims->iss == $this->getProviderURL())
-            && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
-            && ($claims->nonce == $this->getNonce())
-            && ( !isset($claims->exp) || $claims->exp >= time())
-            && ( !isset($claims->nbf) || $claims->nbf <= time())
-            && ( !isset($claims->at_hash) || $claims->at_hash == $expecte_at_hash )
-        );
+	
+	// checking each condition separate and returning false if check fails is way more readable.
+	// trimming trailing slahes helps to avoid problems with http://ecample.com not matching http://example.com/
+	if (rtrim($claims->iss,'/') != rtrim($this->getProviderURL(),'/')) return false;
+	if (($claims->aud != $this->clientID) && (!in_array($this->clientID, $claims->aud))) return false;
+	if ($claims->nonce != $this->getNonce()) return false;
+	if (isset($claims->exp) && $claims->exp < time()) return false;
+        if (isset($claims->nbf) && $claims->nbf > time()) return false;
+        if (isset($claims->at_hash) && $claims->at_hash != $expected_at_hash) return false;
+        return true;
     }
 
     /**
