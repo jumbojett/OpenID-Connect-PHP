@@ -348,7 +348,7 @@ class OpenIDConnectClient
                 $this->unsetNonce();
 
                 // Save the id token
-                $this->idToken = $token_json->id_token;
+                $this->idToken = $id_token;
 
                 // Save the verified claims
                 $this->verifiedClaims = $claims;
