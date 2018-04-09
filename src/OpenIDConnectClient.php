@@ -190,6 +190,21 @@ class OpenIDConnectClient
     protected $timeOut = 60;
 
     /**
+     * @var array holds response types
+     */
+    private $additionalJwks = array();
+
+    /**
+     * @var array holds verified jwt claims
+     */
+    private $verifiedClaims = array();
+
+    /**
+     * @var bool Allow OAuth 2 implicit flow; see http://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth
+     */
+    private $allowImplicitFlow = false;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -283,6 +298,9 @@ class OpenIDConnectClient
                 // Save the access token
                 $this->accessToken = $token_json->access_token;
 
+                // Save the verified claims
+                $this->verifiedClaims = $claims;
+
                 // Save the refresh token, if we got one
                 if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
 
@@ -292,7 +310,61 @@ class OpenIDConnectClient
             } else {
                 throw new OpenIDConnectClientException ("Unable to verify JWT claims");
             }
+        } elseif ($this->allowImplicitFlow && isset($_REQUEST["id_token"])) {
+            // if we have no code but an id_token use that
+            $id_token = $_REQUEST["id_token"];
 
+            $accessToken = null;
+            if (isset($_REQUEST["access_token"])) {
+                $accessToken = $_REQUEST["access_token"];
+            }
+
+            // Do an OpenID Connect session check
+            if ($_REQUEST['state'] != $this->getState()) {
+                throw new OpenIDConnectClientException("Unable to determine state");
+            }
+
+            // Cleanup state
+            $this->unsetState();
+
+            $claims = $this->decodeJWT($id_token, 1);
+
+            // Verify the signature
+            if ($this->canVerifySignatures()) {
+                if (!$this->getProviderConfigValue('jwks_uri')) {
+                    throw new OpenIDConnectClientException ("Unable to verify signature due to no jwks_uri being defined");
+                }
+                if (!$this->verifyJWTsignature($id_token)) {
+                    throw new OpenIDConnectClientException ("Unable to verify signature");
+                }
+            } else {
+                user_error("Warning: JWT signature verification unavailable.");
+            }
+
+            // If this is a valid claim
+            if ($this->verifyJWTclaims($claims, $accessToken)) {
+
+                // Clean up the session a little
+                $this->unsetNonce();
+
+                // Save the id token
+                $this->idToken = $id_token;
+
+                // Save the verified claims
+                $this->verifiedClaims = $claims;
+
+                // Save the access token
+                if ($accessToken) $this->accessToken = $access_token;
+
+                // Save the refresh token, if we got one
+                if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
+
+                // Success!
+                return true;
+
+            } else {
+                throw new OpenIDConnectClientException ("Unable to verify JWT claims");
+            }
         } else {
 
             $this->requestAuthorization();
@@ -344,6 +416,13 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param $jwk object - example: (object) array('kid' => ..., 'nbf' => ..., 'use' => 'sig', 'kty' => "RSA", 'e' => "", 'n' => "")
+     */
+    protected function addAdditionalJwk($jwk) {
+        $this->additionalJwks[] = $jwk;
+    }
+
+    /**
      * Get's anything that we need configuration wise including endpoints, and other values
      *
      * @param $param
@@ -357,28 +436,43 @@ class OpenIDConnectClient
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
         if (!isset($this->providerConfig[$param])) {
-	    if(!$this->wellKnown){
-            	$well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/openid-configuration";
-            	$this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
-	    }
-
-	    $value = false;
-	    if(isset($this->wellKnown->{$param})){
-                $value = $this->wellKnown->{$param};
-            }
-
-            if ($value) {
-                $this->providerConfig[$param] = $value;
-            } elseif(isset($default)) {
-                // Uses default value if provided
-                $this->providerConfig[$param] = $default;
-            } else {
-                throw new OpenIDConnectClientException("The provider {$param} has not been set. Make sure your provider has a well known configuration available.");
-            }
-
+            $this->providerConfig[$param] = $this->getWellKnownConfigValue($param, $default);
         }
 
         return $this->providerConfig[$param];
+    }
+
+    /**
+     * Get's anything that we need configuration wise including endpoints, and other values
+     *
+     * @param $param
+     * @param string $default optional
+     * @throws OpenIDConnectClientException
+     * @return string
+     *
+     */
+    private function getWellKnownConfigValue($param, $default = null) {
+
+        // If the configuration value is not available, attempt to fetch it from a well known config endpoint
+        // This is also known as auto "discovery"
+        if(!$this->wellKnown) {
+            $well_known_config_url = rtrim($this->getProviderURL(),"/") . "/.well-known/openid-configuration";
+            $this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
+        }
+
+        $value = false;
+        if(isset($this->wellKnown->{$param})){
+            $value = $this->wellKnown->{$param};
+        }
+
+        if ($value) {
+            return $value;
+        } elseif(isset($default)) {
+            // Uses default value if provided
+            return $default;
+        } else {
+            throw new OpenIDConnectClientException("The provider {$param} could not be fetched. Make sure your provider has a well known configuration available.");
+        }
     }
 
 
@@ -627,6 +721,19 @@ class OpenIDConnectClient
                  }
              }
          }
+         if ($this->additionalJwks) {
+            foreach ($this->additionalJwks as $key) {
+                if ($key->kty == 'RSA') {
+                    if (!isset($header->kid) || $key->kid == $header->kid) {
+                        return $key;
+                    }
+                } else {
+                    if ($key->alg == $header->alg && $key->kid == $header->kid) {
+                        return $key;
+                    }
+                }
+            }
+         }
          if (isset($header->kid)) {
              throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' . $header->alg . ', ' . $header->kid . ')');
          } else {
@@ -744,7 +851,7 @@ class OpenIDConnectClient
             $len = ((int)$bit)/16;
             $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
-        return (($claims->iss == $this->getProviderURL())
+        return (($claims->iss == $this->getProviderURL() || $claims->iss == $this->getWellKnownIssuer() || $claims->iss == $this->getWellKnownIssuer(true))
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
             && ($claims->nonce == $this->getNonce())
             && ( !isset($claims->exp) || $claims->exp >= time())
@@ -820,6 +927,36 @@ class OpenIDConnectClient
             return $this->userInfo;
         } else if (array_key_exists($attribute, $this->userInfo)) {
             return $this->userInfo->$attribute;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     *
+     * @param $attribute string optional
+     *
+     * Attribute        Type    Description
+     * exp            int    Expires at
+     * nbf            int    Not before
+     * ver        string    Version
+     * iss        string    Issuer
+     * sub        string    Subject
+     * aud        string    Audience
+     * nonce            string    nonce
+     * iat            int    Issued At
+     * auth_time            int    Authenatication time
+     * oid            string    Object id
+     *
+     * @return mixed
+     *
+     */
+    public function getVerifiedClaims($attribute = null) {
+
+        if($attribute === null) {
+            return $this->verifiedClaims;
+        } else if (array_key_exists($attribute, $this->verifiedClaims)) {
+            return $this->verifiedClaims->$attribute;
         } else {
             return null;
         }
@@ -924,6 +1061,15 @@ class OpenIDConnectClient
      * @return string
      * @throws OpenIDConnectClientException
      */
+    public function getWellKnownIssuer($appendSlash = false) {
+
+        return $this->getWellKnownConfigValue('issuer') . ($appendSlash ? '/' : '');
+    }
+
+    /**
+     * @return string
+     * @throws OpenIDConnectClientException
+     */
     public function getProviderURL() {
 
         if (!isset($this->providerConfig['issuer'])) {
@@ -991,6 +1137,21 @@ class OpenIDConnectClient
     public function getVerifyPeer()
     {
         return $this->verifyPeer;
+    }
+
+    /**
+     * @param bool $allowImplicitFlow
+     */
+    public function setAllowImplicitFlow($allowImplicitFlow) {
+        $this->allowImplicitFlow = $allowImplicitFlow;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAllowImplicitFlow()
+    {
+        return $this->allowImplicitFlow;
     }
 
     /**
