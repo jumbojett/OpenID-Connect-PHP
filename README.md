@@ -18,7 +18,7 @@ composer require jumbojett/openid-connect-php
 ```
  2. Include composer autoloader
 ```php
-require '/vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 ```
 
 ## Example 1: Basic Client ##
@@ -93,6 +93,24 @@ $oidc->addAuthParam(array('password'=>'<Password>'));
 
 //Perform the auth and return the token (to validate check if the access_token property is there and a valid JWT) :
 $token = $oidc->requestResourceOwnerToken(TRUE)->access_token;
+
+```
+
+## Example 6: Basic client for implicit flow e.g. with Azure AD B2C (see http://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth) ##
+
+```php
+use Jumbojett\OpenIDConnectClient;
+
+$oidc = new OpenIDConnectClient('https://id.provider.com',
+                                'ClientIDHere',
+                                'ClientSecretHere');
+$oidc->setResponseTypes(array('id_token'));
+$oidc->addScope(array('openid'));
+$oidc->setAllowImplicitFlow(true);
+$oidc->addAuthParam(array('response_mode' => 'form_post'));
+$oidc->setCertPath('/path/to/my.cert');
+$oidc->authenticate();
+$sub = $oidc->getVerifiedClaims('sub');
 
 ```
 

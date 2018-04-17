@@ -21,13 +21,15 @@
  *
  */
 
-require "../../autoload.php";
+require __DIR__ . '/vendor/autoload.php';
 
 use Jumbojett\OpenIDConnectClient;
 
-$oidc = new OpenIDConnectClient('http://myproviderURL.com/',
-                                'ClientIDHere',
-                                'ClientSecretHere');
+$oidc = new OpenIDConnectClient(
+    'http://myproviderURL.com/',
+    'ClientIDHere',
+    'ClientSecretHere'
+);
 
 $oidc->authenticate();
 $name = $oidc->requestUserInfo('given_name');
