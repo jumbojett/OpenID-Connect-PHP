@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 *
 
 ### Changed
-*
+* refreshToken method update #124
 
 ### Removed
 *
