@@ -698,7 +698,11 @@ class OpenIDConnectClient
         $token_params = http_build_query($token_params, null, '&');
 
         $json = json_decode($this->fetchURL($token_endpoint, $token_params));
-        $this->refreshToken = $json->refresh_token;
+        $this->accessToken = $json->access_token;
+
+        if (isset($json->refresh_token)) {
+            $this->refreshToken = $json->refresh_token;
+        }
 
         return $json;
     }
