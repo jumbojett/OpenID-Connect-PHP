@@ -211,8 +211,14 @@ class OpenIDConnectClient
      * @param $client_secret string optional
      *
      */
-    public function __construct($provider_url = null, $client_id = null, $client_secret = null) {
+    public function __construct($provider_url = null, $client_id = null, $client_secret = null, $issuer = null) {
         $this->setProviderURL($provider_url);
+		if ($issuer == null) {
+			$this->setIssuer($provider_url);
+		} else {
+			$this->setIssuer($issuer);
+		}
+		
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
     }
@@ -221,9 +227,16 @@ class OpenIDConnectClient
      * @param $provider_url
      */
     public function setProviderURL($provider_url) {
-        $this->providerConfig['issuer'] = $provider_url;
+        $this->providerConfig['providerUrl'] = $provider_url;
     }
 
+	/**
+     * @param $provider_url
+     */
+    public function setIssuer($issuer) {
+        $this->providerConfig['issuer'] = $issuer;
+    }
+	
     /**
      * @param $response_types
      */
@@ -855,7 +868,7 @@ class OpenIDConnectClient
             $len = ((int)$bit)/16;
             $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
-        return (($claims->iss == $this->getProviderURL() || $claims->iss == $this->getWellKnownIssuer() || $claims->iss == $this->getWellKnownIssuer(true))
+        return (($claims->iss == $this->getIssuer() || $claims->iss == $this->getWellKnownIssuer() || $claims->iss == $this->getWellKnownIssuer(true))
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
             && ($claims->nonce == $this->getNonce())
             && ( !isset($claims->exp) || $claims->exp >= time())
@@ -1074,15 +1087,23 @@ class OpenIDConnectClient
      * @return string
      * @throws OpenIDConnectClientException
      */
-    public function getProviderURL() {
+    public function getIssuer() {
 
         if (!isset($this->providerConfig['issuer'])) {
-            throw new OpenIDConnectClientException("The provider URL has not been set");
+            throw new OpenIDConnectClientException("The issuer has not been set");
         } else {
             return $this->providerConfig['issuer'];
         }
     }
 
+	public function getProviderURL() {
+        if (!isset($this->providerConfig['providerUrl'])) {
+            throw new OpenIDConnectClientException("The provider URL has not been set");
+        } else {
+            return $this->providerConfig['providerUrl'];
+        }
+    }
+	
     /**
      * @param $url
      */
