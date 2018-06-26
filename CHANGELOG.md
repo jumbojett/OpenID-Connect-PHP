@@ -8,9 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 * Add `setVerifyJWT` to disable JWT validation (useful for development)
+* Fix save access_token from request in implicit flow authentication #129
+* verifyJWTsignature() method private -> public #126
+* Support for providers where provider/login URL is not the same as the issuer URL. #125
+* Support for providers that has a different login URL from the issuer URL, for instance Azure Active Directory. Here, the provider URL is on the format: https://login.windows.net/(tenant-id), while the issuer claim actually is on the format: https://sts.windows.net/(tenant-id).
 
 ### Changed
-*
+* refreshToken method update #124
 
 ### Removed
 *

@@ -216,8 +216,14 @@ class OpenIDConnectClient
      * @param $client_secret string optional
      *
      */
-    public function __construct($provider_url = null, $client_id = null, $client_secret = null) {
+    public function __construct($provider_url = null, $client_id = null, $client_secret = null, $issuer = null) {
         $this->setProviderURL($provider_url);
+		if ($issuer == null) {
+			$this->setIssuer($provider_url);
+		} else {
+			$this->setIssuer($issuer);
+		}
+		
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
     }
@@ -226,9 +232,16 @@ class OpenIDConnectClient
      * @param $provider_url
      */
     public function setProviderURL($provider_url) {
-        $this->providerConfig['issuer'] = $provider_url;
+        $this->providerConfig['providerUrl'] = $provider_url;
     }
 
+	/**
+     * @param $provider_url
+     */
+    public function setIssuer($issuer) {
+        $this->providerConfig['issuer'] = $issuer;
+    }
+	
     /**
      * @param $response_types
      */
@@ -359,7 +372,7 @@ class OpenIDConnectClient
                 $this->verifiedClaims = $claims;
 
                 // Save the access token
-                if ($accessToken) $this->accessToken = $access_token;
+                if ($accessToken) $this->accessToken = $accessToken;
 
                 // Save the refresh token, if we got one
                 if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
@@ -703,7 +716,11 @@ class OpenIDConnectClient
         $token_params = http_build_query($token_params, null, '&');
 
         $json = json_decode($this->fetchURL($token_endpoint, $token_params));
-        $this->refreshToken = $json->refresh_token;
+        $this->accessToken = $json->access_token;
+
+        if (isset($json->refresh_token)) {
+            $this->refreshToken = $json->refresh_token;
+        }
 
         return $json;
     }
@@ -809,7 +826,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      * @return bool
      */
-    private function verifyJWTsignature($jwt) {
+    public function verifyJWTsignature($jwt) {
         $parts = explode(".", $jwt);
         $signature = base64url_decode(array_pop($parts));
         $header = json_decode(base64url_decode($parts[0]));
@@ -861,7 +878,7 @@ class OpenIDConnectClient
             $len = ((int)$bit)/16;
             $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
-        return (($claims->iss == $this->getProviderURL() || $claims->iss == $this->getWellKnownIssuer() || $claims->iss == $this->getWellKnownIssuer(true))
+        return (($claims->iss == $this->getIssuer() || $claims->iss == $this->getWellKnownIssuer() || $claims->iss == $this->getWellKnownIssuer(true))
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
             && ($claims->nonce == $this->getNonce())
             && ( !isset($claims->exp) || $claims->exp >= time())
@@ -1080,15 +1097,23 @@ class OpenIDConnectClient
      * @return string
      * @throws OpenIDConnectClientException
      */
-    public function getProviderURL() {
+    public function getIssuer() {
 
         if (!isset($this->providerConfig['issuer'])) {
-            throw new OpenIDConnectClientException("The provider URL has not been set");
+            throw new OpenIDConnectClientException("The issuer has not been set");
         } else {
             return $this->providerConfig['issuer'];
         }
     }
 
+	public function getProviderURL() {
+        if (!isset($this->providerConfig['providerUrl'])) {
+            throw new OpenIDConnectClientException("The provider URL has not been set");
+        } else {
+            return $this->providerConfig['providerUrl'];
+        }
+    }
+	
     /**
      * @param $url
      */
