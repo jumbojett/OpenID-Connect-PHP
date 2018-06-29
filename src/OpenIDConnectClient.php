@@ -205,6 +205,12 @@ class OpenIDConnectClient
     private $allowImplicitFlow = false;
 
     /**
+     * @var string $claims Allow Requesting Claims using the "claims" Request Parameter
+     * @see http://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter
+     */
+    private $claims = null;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -221,6 +227,19 @@ class OpenIDConnectClient
 		
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
+    }
+
+    /**
+     * @param string $claims
+     * @throws OpenIDConnectClientException
+     */
+    public function setClaims($claims)
+    {
+        $jsonTest = json_decode($claims);
+        if($jsonTest === null) {
+            throw new OpenIDConnectClientException("Claims is not json!");
+        }
+        $this->claims = $claims;
     }
 
     /**
@@ -577,6 +596,11 @@ class OpenIDConnectClient
             'state' => $state,
             'scope' => 'openid'
         ));
+
+        // If the client has been registered with additional claims
+        if (!is_null($this->claims)) {
+            $auth_params['claims'] = $this->claims;
+        }
 
         // If the client has been registered with additional scopes
         if (sizeof($this->scopes) > 0) {
