@@ -23,24 +23,13 @@
 
 namespace Jumbojett;
 
+use phpseclib\Crypt\RSA;
+
 /**
  * Use session to manage a nonce
  */
 if (!isset($_SESSION)) {
     @session_start();
-}
-
-/**
- *
- * JWT signature verification support by Jonathan Reed <jdreed@mit.edu>
- * Licensed under the same license as the rest of this file.
- *
- * phpseclib is required to validate the signatures of some tokens.
- * It can be downloaded from: http://phpseclib.sourceforge.net/
- */
-
-if (!class_exists('\phpseclib\Crypt\RSA') && !class_exists('Crypt_RSA')) {
-    user_error('Unable to find phpseclib Crypt/RSA.php.  Ensure phpseclib is installed and in include_path before you include this file');
 }
 
 /**
@@ -213,11 +202,16 @@ class OpenIDConnectClient
     private $claims = null;
 
     /**
+     * @var string $redirectURL
+     */
+    private $redirectURL;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
      * @param $client_secret string optional
-     *
+     * @param null $issuer
      */
     public function __construct($provider_url = null, $client_id = null, $client_secret = null, $issuer = null)
     {
@@ -254,7 +248,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @param $provider_url
+     * @param $issuer
      */
     public function setIssuer($issuer)
     {
@@ -421,7 +415,7 @@ class OpenIDConnectClient
      * @param string $redirect URL to which the RP is requesting that the End-User's User Agent
      * be redirected after a logout has been performed. The value MUST have been previously
      * registered with the OP. Value can be null.
-     *
+     * @throws OpenIDConnectClientException
      */
     public function signOut($accessToken, $redirect)
     {
@@ -470,8 +464,7 @@ class OpenIDConnectClient
      * @param $param
      * @param string $default optional
      * @throws OpenIDConnectClientException
-     * @return string
-     *
+     * @return mixed
      */
     private function getProviderConfigValue($param, $default = null)
     {
@@ -492,7 +485,6 @@ class OpenIDConnectClient
      * @param string $default optional
      * @throws OpenIDConnectClientException
      * @return string
-     *
      */
     private function getWellKnownConfigValue($param, $default = null)
     {
@@ -590,6 +582,7 @@ class OpenIDConnectClient
     /**
      * Start Here
      * @return void
+     * @throws OpenIDConnectClientException
      */
     private function requestAuthorization()
     {
@@ -636,7 +629,7 @@ class OpenIDConnectClient
 
     /**
      * Requests a client credentials token
-     *
+     * @throws OpenIDConnectClientException
      */
     public function requestClientCredentialsToken()
     {
@@ -665,6 +658,8 @@ class OpenIDConnectClient
      * (Defined in https://tools.ietf.org/html/rfc6749#section-4.3)
      *
      * @param $bClientAuth boolean Indicates that the Client ID and Secret be used for client authentication
+     * @return string
+     * @throws OpenIDConnectClientException
      */
     public function requestResourceOwnerToken($bClientAuth = FALSE)
     {
@@ -699,6 +694,7 @@ class OpenIDConnectClient
      *
      * @param $code
      * @return mixed
+     * @throws OpenIDConnectClientException
      */
     private function requestTokens($code)
     {
@@ -733,8 +729,9 @@ class OpenIDConnectClient
     /**
      * Requests Access token with refresh token
      *
-     * @param $code
+     * @param $refresh_token
      * @return mixed
+     * @throws OpenIDConnectClientException
      */
     public function refreshToken($refresh_token)
     {
@@ -804,9 +801,11 @@ class OpenIDConnectClient
 
     /**
      * @param string $hashtype
-     * @param object $key
-     * @throws OpenIDConnectClientException
+     * @param string $key
+     * @param $payload
+     * @param $signature
      * @return bool
+     * @throws OpenIDConnectClientException
      */
     private function verifyRSAJWTsignature($hashtype, $key, $payload, $signature)
     {
@@ -830,10 +829,10 @@ class OpenIDConnectClient
             $rsa->loadKey($public_key_xml, Crypt_RSA::PUBLIC_FORMAT_XML);
             $rsa->signatureMode = Crypt_RSA::SIGNATURE_PKCS1;
         } else {
-            $rsa = new \phpseclib\Crypt\RSA();
+            $rsa = new RSA();
             $rsa->setHash($hashtype);
-            $rsa->loadKey($public_key_xml, \phpseclib\Crypt\RSA::PUBLIC_FORMAT_XML);
-            $rsa->signatureMode = \phpseclib\Crypt\RSA::SIGNATURE_PKCS1;
+            $rsa->loadKey($public_key_xml, RSA::PUBLIC_FORMAT_XML);
+            $rsa->signatureMode = RSA::SIGNATURE_PKCS1;
         }
         return $rsa->verify($payload, $signature);
     }
@@ -841,8 +840,10 @@ class OpenIDConnectClient
     /**
      * @param string $hashtype
      * @param object $key
-     * @throws OpenIDConnectClientException
+     * @param $payload
+     * @param $signature
      * @return bool
+     * @throws OpenIDConnectClientException
      */
     private function verifyHMACJWTsignature($hashtype, $key, $payload, $signature)
     {
@@ -874,7 +875,7 @@ class OpenIDConnectClient
         if ($jwks === NULL) {
             throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
         }
-        $verified = false;
+
         switch ($header->alg) {
             case 'RS256':
             case 'RS384':
@@ -899,7 +900,9 @@ class OpenIDConnectClient
 
     /**
      * @param object $claims
+     * @param null $accessToken
      * @return bool
+     * @throws OpenIDConnectClientException
      */
     private function verifyJWTclaims($claims, $accessToken = null)
     {
@@ -971,6 +974,7 @@ class OpenIDConnectClient
      * updated_time    string    Time the End-User's information was last updated, represented as a RFC 3339 [RFC3339] datetime. For example, 2011-01-03T23:58:42+0000.
      *
      * @return mixed
+     * @throws OpenIDConnectClientException
      *
      */
     public function requestUserInfo($attribute = null)
@@ -998,7 +1002,6 @@ class OpenIDConnectClient
     }
 
     /**
-     *
      * @param $attribute string optional
      *
      * Attribute        Type    Description
@@ -1125,12 +1128,12 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param $appendSlash
      * @return string
      * @throws OpenIDConnectClientException
      */
     public function getWellKnownIssuer($appendSlash = false)
     {
-
         return $this->getWellKnownConfigValue('issuer') . ($appendSlash ? '/' : '');
     }
 
@@ -1140,7 +1143,6 @@ class OpenIDConnectClient
      */
     public function getIssuer()
     {
-
         if (!isset($this->providerConfig['issuer'])) {
             throw new OpenIDConnectClientException("The issuer has not been set");
         } else {
@@ -1148,6 +1150,10 @@ class OpenIDConnectClient
         }
     }
 
+    /**
+     * @return mixed
+     * @throws OpenIDConnectClientException
+     */
     public function getProviderURL()
     {
         if (!isset($this->providerConfig['providerUrl'])) {
@@ -1331,7 +1337,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return string
+     * @return mixed
      */
     public function getClientSecret()
     {
@@ -1385,7 +1391,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return array
+     * @return string
      */
     public function getAccessTokenHeader()
     {
@@ -1393,7 +1399,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return array
+     * @return string
      */
     public function getAccessTokenPayload()
     {
@@ -1401,7 +1407,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return array
+     * @return string
      */
     public function getIdTokenHeader()
     {
@@ -1409,7 +1415,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return array
+     * @return string
      */
     public function getIdTokenPayload()
     {
@@ -1417,7 +1423,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return array
+     * @return string
      */
     public function getTokenResponse()
     {
