@@ -372,7 +372,7 @@ class OpenIDConnectClient
                 $this->verifiedClaims = $claims;
 
                 // Save the access token
-                if ($accessToken) $this->accessToken = $access_token;
+                if ($accessToken) $this->accessToken = $accessToken;
 
                 // Save the refresh token, if we got one
                 if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
