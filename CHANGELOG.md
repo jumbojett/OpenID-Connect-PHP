@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
+* 
+
+### Changed
+* 
+
+### Removed
+*
+
+## [0.6.0]
+
+### Added
 * Added five minutes leeway due to clock skew between openidconnect server and client.
 * Fix save access_token from request in implicit flow authentication #129
 * verifyJWTsignature() method private -> public #126
