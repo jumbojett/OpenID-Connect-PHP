@@ -190,6 +190,11 @@ class OpenIDConnectClient
     protected $timeOut = 60;
 
     /**
+     * @var int leeway (seconds)
+     */
+    private $leeway = 300;
+	
+    /**
      * @var array holds response types
      */
     private $additionalJwks = array();
@@ -881,8 +886,8 @@ class OpenIDConnectClient
         return (($claims->iss == $this->getIssuer() || $claims->iss == $this->getWellKnownIssuer() || $claims->iss == $this->getWellKnownIssuer(true))
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
             && ($claims->nonce == $this->getNonce())
-            && ( !isset($claims->exp) || $claims->exp >= time())
-            && ( !isset($claims->nbf) || $claims->nbf <= time())
+            && ( !isset($claims->exp) || $claims->exp >= time() - $this->leeway)
+            && ( !isset($claims->nbf) || $claims->nbf <= time() + $this->leeway)
             && ( !isset($claims->at_hash) || $claims->at_hash == $expecte_at_hash )
         );
     }
