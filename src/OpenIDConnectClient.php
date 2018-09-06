@@ -786,7 +786,7 @@ class OpenIDConnectClient
             "  <Modulus>" . b64url2b64($key->n) . "</Modulus>\r\n" .
             "  <Exponent>" . b64url2b64($key->e) . "</Exponent>\r\n" .
             "</RSAKeyValue>";
-	if(class_exists('Crypt_RSA')) {
+	if(class_exists('Crypt_RSA', false)) {
         	$rsa = new Crypt_RSA();
 		$rsa->setHash($hashtype);
         	$rsa->loadKey($public_key_xml, Crypt_RSA::PUBLIC_FORMAT_XML);
