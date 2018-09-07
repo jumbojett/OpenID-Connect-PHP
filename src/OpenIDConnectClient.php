@@ -716,8 +716,11 @@ class OpenIDConnectClient
         $token_params = http_build_query($token_params, null, '&');
 
         $json = json_decode($this->fetchURL($token_endpoint, $token_params));
-        $this->accessToken = $json->access_token;
-
+	    
+        if (isset($json->access_token)) {
+            $this->accessToken = $json->access_token;
+        }
+	    
         if (isset($json->refresh_token)) {
             $this->refreshToken = $json->refresh_token;
         }
@@ -786,7 +789,7 @@ class OpenIDConnectClient
             "  <Modulus>" . b64url2b64($key->n) . "</Modulus>\r\n" .
             "  <Exponent>" . b64url2b64($key->e) . "</Exponent>\r\n" .
             "</RSAKeyValue>";
-	if(class_exists('Crypt_RSA')) {
+	if(class_exists('Crypt_RSA', false)) {
         	$rsa = new Crypt_RSA();
 		$rsa->setHash($hashtype);
         	$rsa->loadKey($public_key_xml, Crypt_RSA::PUBLIC_FORMAT_XML);
