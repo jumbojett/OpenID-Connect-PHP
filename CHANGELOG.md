@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * 
 
 ### Changed
-* 
+* disabled autoload for Crypt_RSA + makre refreshToken() method tolerant for errors #137
 
 ### Removed
 *
