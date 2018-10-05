@@ -193,7 +193,7 @@ class OpenIDConnectClient
      * @var int leeway (seconds)
      */
     private $leeway = 300;
-	
+
     /**
      * @var array holds response types
      */
@@ -223,7 +223,7 @@ class OpenIDConnectClient
 		} else {
 			$this->setIssuer($issuer);
 		}
-		
+
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
     }
@@ -241,7 +241,7 @@ class OpenIDConnectClient
     public function setIssuer($issuer) {
         $this->providerConfig['issuer'] = $issuer;
     }
-	
+
     /**
      * @param $response_types
      */
@@ -627,7 +627,7 @@ class OpenIDConnectClient
  /**
      * Requests a resource owner token
      * (Defined in https://tools.ietf.org/html/rfc6749#section-4.3)
-     * 
+     *
      * @param $bClientAuth boolean Indicates that the Client ID and Secret be used for client authentication
      */
     public function requestResourceOwnerToken($bClientAuth =  FALSE) {
@@ -716,11 +716,11 @@ class OpenIDConnectClient
         $token_params = http_build_query($token_params, null, '&');
 
         $json = json_decode($this->fetchURL($token_endpoint, $token_params));
-	    
+
         if (isset($json->access_token)) {
             $this->accessToken = $json->access_token;
         }
-	    
+
         if (isset($json->refresh_token)) {
             $this->refreshToken = $json->refresh_token;
         }
@@ -741,7 +741,7 @@ class OpenIDConnectClient
                      return $key;
                  }
              } else {
-                 if ($key->alg == $header->alg && $key->kid == $header->kid) {
+                 if (isset($key->alg) && $key->alg == $header->alg && $key->kid == $header->kid) {
                      return $key;
                  }
              }
@@ -753,7 +753,7 @@ class OpenIDConnectClient
                         return $key;
                     }
                 } else {
-                    if ($key->alg == $header->alg && $key->kid == $header->kid) {
+                    if (isset($key->alg) && $key->alg == $header->alg && $key->kid == $header->kid) {
                         return $key;
                     }
                 }
@@ -802,7 +802,7 @@ class OpenIDConnectClient
 	}
         return $rsa->verify($payload, $signature);
     }
-	
+
     /**
      * @param string $hashtype
      * @param object $key
@@ -854,7 +854,7 @@ class OpenIDConnectClient
         case 'HS384':
             $hashtype = 'SHA' . substr($header->alg, 2);
             $verified = $this->verifyHMACJWTsignature($hashtype, $this->getClientSecret(), $payload, $signature);
-            break;		
+            break;
         default:
             throw new OpenIDConnectClientException('No support for signature type: ' . $header->alg);
         }
@@ -1111,7 +1111,7 @@ class OpenIDConnectClient
             return $this->providerConfig['providerUrl'];
         }
     }
-	
+
     /**
      * @param $url
      */
@@ -1436,7 +1436,7 @@ class OpenIDConnectClient
     {
         return $this->timeOut;
     }
-	
+
     /**
      * Safely calculate length of binary string
      * @param string
