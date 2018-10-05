@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-* 
+* Ensure key_alg is set when getting key #139
 
 ### Changed
 * disabled autoload for Crypt_RSA + makre refreshToken() method tolerant for errors #137
