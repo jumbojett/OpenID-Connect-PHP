@@ -180,6 +180,11 @@ class OpenIDConnectClient
     private $authParams = array();
 
     /**
+     * @var array holds additional registration parameters for example post_logout_redirect_uris
+     */
+    private $registrationParams = array();
+
+    /**
      * @var mixed holds well-known openid server properties
      */
     private $wellKnown = false;
@@ -431,6 +436,13 @@ class OpenIDConnectClient
      */
     public function addAuthParam($param) {
         $this->authParams = array_merge($this->authParams, (array)$param);
+    }
+
+    /**
+     * @param $param - example: post_logout_redirect_uris=[http://example.com/successful-logout]
+     */
+    public function addRegistrationParam($param) {
+        $this->registrationParams = array_merge($this->registrationParams, (array)$param);
     }
 
     /**
@@ -1222,10 +1234,10 @@ class OpenIDConnectClient
 
         $registration_endpoint = $this->getProviderConfigValue('registration_endpoint');
 
-        $send_object = (object)array(
+        $send_object = (object ) array_merge($this->registrationParams, array(
             'redirect_uris' => array($this->getRedirectURL()),
             'client_name' => $this->getClientName()
-        );
+        ));
 
         $response = $this->fetchURL($registration_endpoint, json_encode($send_object));
 
