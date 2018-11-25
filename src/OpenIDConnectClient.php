@@ -842,15 +842,30 @@ class OpenIDConnectClient
      * @return bool
      */
     public function verifyJWTsignature($jwt) {
+        if (!\is_string($jwt)) {
+            throw new OpenIDConnectClientException('Error token is not a string');
+        }
         $parts = explode(".", $jwt);
+        if (!isset($parts[0])) {
+            throw new OpenIDConnectClientException('Error missing part 0 in token');
+        }
         $signature = base64url_decode(array_pop($parts));
+        if (false === $signature || '' === $signature) {
+            throw new OpenIDConnectClientException('Error decoding signature from token');
+        }
         $header = json_decode(base64url_decode($parts[0]));
+        if (null === $header || !\is_object($header)) {
+            throw new OpenIDConnectClientException('Error decoding JSON from token header');
+        }
         $payload = implode(".", $parts);
         $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
         if ($jwks === NULL) {
             throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
         }
         $verified = false;
+        if (!isset($header->alg)) {
+            throw new OpenIDConnectClientException('Error missing signature type in token header');
+        }
         switch ($header->alg) {
         case 'RS256':
         case 'RS384':

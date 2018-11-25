@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-* 
+* Fix `verifyJWTsignature()`: verify JWT to prevent php errors and warnings on invalid token
+*
 
 ### Changed
 * 
