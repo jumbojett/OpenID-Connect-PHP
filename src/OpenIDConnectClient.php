@@ -24,13 +24,6 @@
 namespace Jumbojett;
 
 /**
- * Use session to manage a nonce
- */
-if (!isset($_SESSION)) {
-    @session_start();
-}
-
-/**
  *
  * JWT signature verification support by Jonathan Reed <jdreed@mit.edu>
  * Licensed under the same license as the rest of this file.
@@ -607,7 +600,7 @@ class OpenIDConnectClient
 
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&');
 
-        session_commit();
+        $this->commitSession();
         $this->redirect($auth_endpoint);
     }
 
@@ -1388,7 +1381,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function setNonce($nonce) {
-        $_SESSION['openid_connect_nonce'] = $nonce;
+        $this->setSessionKey('openid_connect_nonce', $nonce);
         return $nonce;
     }
 
@@ -1398,7 +1391,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getNonce() {
-        return $_SESSION['openid_connect_nonce'];
+        return $this->getSessionKey('openid_connect_nonce');
     }
 
     /**
@@ -1407,7 +1400,7 @@ class OpenIDConnectClient
      * @return void
      */
     protected function unsetNonce() {
-        unset($_SESSION['openid_connect_nonce']);
+        $this->unsetSessionKey('openid_connect_nonce');
     }
 
     /**
@@ -1417,7 +1410,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function setState($state) {
-        $_SESSION['openid_connect_state'] = $state;
+        $this->setSessionKey('openid_connect_state', $state);
         return $state;
     }
 
@@ -1427,7 +1420,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getState() {
-        return $_SESSION['openid_connect_state'];
+        return $this->getSessionKey('openid_connect_state');
     }
 
     /**
@@ -1436,7 +1429,7 @@ class OpenIDConnectClient
      * @return void
      */
     protected function unsetState() {
-        unset($_SESSION['openid_connect_state']);
+        $this->unsetSessionKey('openid_connect_state');
     }
 
     /**
@@ -1497,5 +1490,38 @@ class OpenIDConnectClient
         //if strings were different lengths, we fail
         $status |= ($len1 ^ $len2);
         return ($status === 0);
+    }
+
+    /**
+     * Use session to manage a nonce
+     */
+    protected function startSession() {
+        if (!isset($_SESSION)) {
+            @session_start();
+        }
+    }
+
+    protected function commitSession() {
+        $this->startSession();
+
+        session_commit();
+    }
+
+    protected function getSessionKey($key) {
+        $this->startSession();
+
+        return $_SESSION[$key];
+    }
+
+    protected function setSessionKey($key, $value) {
+        $this->startSession();
+
+        $_SESSION[$key] = $value;
+    }
+
+    protected function unsetSessionKey($key) {
+        $this->startSession();
+
+        unset($_SESSION[$key]);
     }
 }
