@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 *
 
 ### Changed
-* 
+* Decouple session manipulation, it's allow use of other session libraries #134
 
 ### Removed
 *
