@@ -7,15 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-* Fix `verifyJWTsignature()`: verify JWT to prevent php errors and warnings on invalid token
+* 
+
+### Changed
+* 
+
+### Removed
 *
+
+## [0.8.0]
+
+### Added
+* Fix `verifyJWTsignature()`: verify JWT to prevent php errors and warnings on invalid token
 
 ### Changed
 * Decouple session manipulation, it's allow use of other session libraries #134
 * Broaden version requirements of the phpseclib/phpseclib package. #144
-
-### Removed
-*
 
 ## [0.7.0]
 
