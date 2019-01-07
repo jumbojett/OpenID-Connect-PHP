@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-* 
+* Added `setVerifyJWT` to disable JWT validation (useful for development)
 
 ### Changed
 * 
