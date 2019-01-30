@@ -962,8 +962,10 @@ class OpenIDConnectClient
 
         $user_info_endpoint .= "?schema=" . $schema;
 
-        //The accessToken has to be send in the Authorization header, so we create a new array with only this header.
-        $headers = array("Authorization: Bearer {$this->accessToken}");
+        //The accessToken has to be sent in the Authorization header.
+	// Accept json to indicate response type
+        $headers = ["Authorization: Bearer {$this->accessToken}", 
+                    "Accept: application/json"];
 
         $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
 
