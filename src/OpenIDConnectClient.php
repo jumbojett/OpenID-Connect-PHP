@@ -378,9 +378,6 @@ class OpenIDConnectClient
                 // Save the access token
                 if ($accessToken) $this->accessToken = $accessToken;
 
-                // Save the refresh token, if we got one
-                if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
-
                 // Success!
                 return true;
 
@@ -869,7 +866,6 @@ class OpenIDConnectClient
         if ($jwks === NULL) {
             throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
         }
-        $verified = false;
         if (!isset($header->alg)) {
             throw new OpenIDConnectClientException('Error missing signature type in token header');
         }
