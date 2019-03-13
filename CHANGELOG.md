@@ -11,7 +11,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * ~Updated OpenIDConnectClient to conditionally verify nonce #146~
 
 ### Changed
-* 
+* Bugfix/code cleanup #152
+  * Cleanup PHPDoc #46e5b59
+  * Replace unnecessary double quotes with single quotes #2a76b57
+  * Use original function names instead of aliases #1f37892
+  * Remove unnecessary default values #5ab801e
+  * Explicit declare field $redirectURL #9187c0b
+  * Remove unused code #1e65384
+  * Fix indent #e9cdf56
+  * Cleanup conditional code flow for better readability #107f3fb
 
 ### Removed
 *
