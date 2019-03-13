@@ -157,7 +157,7 @@ class OpenIDConnectClient
     /**
      * @var int|null Response code from the server
      */
-    private $responseCode = null;
+    private $responseCode;
 
     /**
      * @var array holds response types
@@ -1363,7 +1363,7 @@ class OpenIDConnectClient
      * @return object
      */
     public function getAccessTokenHeader() {
-        return $this->decodeJWT($this->accessToken, 0);
+        return $this->decodeJWT($this->accessToken);
     }
 
     /**
@@ -1377,7 +1377,7 @@ class OpenIDConnectClient
      * @return object
      */
     public function getIdTokenHeader() {
-        return $this->decodeJWT($this->idToken, 0);
+        return $this->decodeJWT($this->idToken);
     }
 
     /**
