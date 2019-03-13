@@ -208,6 +208,10 @@ class OpenIDConnectClient
      * @var bool Allow OAuth 2 implicit flow; see http://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth
      */
     private $allowImplicitFlow = false;
+    /**
+     * @var string
+     */
+    private $redirectURL;
 
     /**
      * @param $provider_url string optional
