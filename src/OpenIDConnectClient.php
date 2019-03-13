@@ -324,15 +324,19 @@ class OpenIDConnectClient
                 $this->verifiedClaims = $claims;
 
                 // Save the refresh token, if we got one
-                if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
+                if (isset($token_json->refresh_token)) {
+                    $this->refreshToken = $token_json->refresh_token;
+                }
 
                 // Success!
                 return true;
 
-            } else {
-                throw new OpenIDConnectClientException ('Unable to verify JWT claims');
             }
-        } elseif ($this->allowImplicitFlow && isset($_REQUEST['id_token'])) {
+
+            throw new OpenIDConnectClientException ('Unable to verify JWT claims');
+        }
+
+        if ($this->allowImplicitFlow && isset($_REQUEST['id_token'])) {
             // if we have no code but an id_token use that
             $id_token = $_REQUEST['id_token'];
 
@@ -376,19 +380,20 @@ class OpenIDConnectClient
                 $this->verifiedClaims = $claims;
 
                 // Save the access token
-                if ($accessToken) $this->accessToken = $accessToken;
+                if ($accessToken) {
+                    $this->accessToken = $accessToken;
+                }
 
                 // Success!
                 return true;
 
-            } else {
-                throw new OpenIDConnectClientException ('Unable to verify JWT claims');
             }
-        } else {
 
-            $this->requestAuthorization();
-            return false;
+            throw new OpenIDConnectClientException ('Unable to verify JWT claims');
         }
+
+        $this->requestAuthorization();
+        return false;
 
     }
 
@@ -494,12 +499,14 @@ class OpenIDConnectClient
 
         if ($value) {
             return $value;
-        } elseif(isset($default)) {
+        }
+
+        if (isset($default)) {
             // Uses default value if provided
             return $default;
-        } else {
-            throw new OpenIDConnectClientException("The provider {$param} could not be fetched. Make sure your provider has a well known configuration available.");
         }
+
+        throw new OpenIDConnectClientException("The provider {$param} could not be fetched. Make sure your provider has a well known configuration available.");
     }
 
 
@@ -774,9 +781,9 @@ class OpenIDConnectClient
         }
         if (isset($header->kid)) {
             throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' . $header->alg . ', ' . $header->kid . ')');
-        } else {
-            throw new OpenIDConnectClientException('Unable to find a key for RSA');
         }
+
+        throw new OpenIDConnectClientException('Unable to find a key for RSA');
     }
 
 
@@ -792,7 +799,7 @@ class OpenIDConnectClient
         if (!class_exists('\phpseclib\Crypt\RSA') && !class_exists('Crypt_RSA')) {
             throw new OpenIDConnectClientException('Crypt_RSA support unavailable.');
         }
-        if (!(property_exists($key, 'n') and property_exists($key, 'e'))) {
+        if (!(property_exists($key, 'n') && property_exists($key, 'e'))) {
             throw new OpenIDConnectClientException('Malformed key object');
         }
 
@@ -835,9 +842,9 @@ class OpenIDConnectClient
 
         if (function_exists('hash_equals')) {
             return hash_equals($signature, $expected);
-        } else {
-            return self::hashEquals($signature, $expected);
         }
+
+        return self::hashEquals($signature, $expected);
     }
 
     /**
@@ -909,7 +916,7 @@ class OpenIDConnectClient
             $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
         return (($claims->iss == $this->getIssuer() || $claims->iss == $this->getWellKnownIssuer() || $claims->iss == $this->getWellKnownIssuer(true))
-            && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)))
+            && (($claims->aud == $this->clientID) || in_array($this->clientID, $claims->aud))
             && ($claims->nonce == $this->getNonce())
             && ( !isset($claims->exp) || $claims->exp >= time() - $this->leeway)
             && ( !isset($claims->nbf) || $claims->nbf <= time() + $this->leeway)
@@ -985,11 +992,13 @@ class OpenIDConnectClient
 
         if($attribute === null) {
             return $this->userInfo;
-        } else if (array_key_exists($attribute, $this->userInfo)) {
-            return $this->userInfo->$attribute;
-        } else {
-            return null;
         }
+
+        if (array_key_exists($attribute, $this->userInfo)) {
+            return $this->userInfo->$attribute;
+        }
+
+        return null;
     }
 
     /**
@@ -1015,11 +1024,13 @@ class OpenIDConnectClient
 
         if($attribute === null) {
             return $this->verifiedClaims;
-        } else if (array_key_exists($attribute, $this->verifiedClaims)) {
-            return $this->verifiedClaims->$attribute;
-        } else {
-            return null;
         }
+
+        if (array_key_exists($attribute, $this->verifiedClaims)) {
+            return $this->verifiedClaims->$attribute;
+        }
+
+        return null;
     }
 
     /**
@@ -1135,9 +1146,9 @@ class OpenIDConnectClient
 
         if (!isset($this->providerConfig['issuer'])) {
             throw new OpenIDConnectClientException('The issuer has not been set');
-        } else {
-            return $this->providerConfig['issuer'];
         }
+
+        return $this->providerConfig['issuer'];
     }
 
     /**
@@ -1147,9 +1158,9 @@ class OpenIDConnectClient
     public function getProviderURL() {
         if (!isset($this->providerConfig['providerUrl'])) {
             throw new OpenIDConnectClientException('The provider URL has not been set');
-        } else {
-            return $this->providerConfig['providerUrl'];
         }
+
+        return $this->providerConfig['providerUrl'];
     }
 
     /**
@@ -1274,7 +1285,9 @@ class OpenIDConnectClient
         // Throw some errors if we encounter them
         if ($json_response === false) {
             throw new OpenIDConnectClientException('Error registering: JSON response received from the server was invalid.');
-        } elseif (isset($json_response->{'error_description'})) {
+        }
+
+        if (isset($json_response->{'error_description'})) {
             throw new OpenIDConnectClientException($json_response->{'error_description'});
         }
 
