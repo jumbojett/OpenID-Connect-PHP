@@ -593,12 +593,12 @@ class OpenIDConnectClient
         ));
 
         // If the client has been registered with additional scopes
-        if (sizeof($this->scopes) > 0) {
+        if (count($this->scopes) > 0) {
             $auth_params = array_merge($auth_params, array('scope' => implode(' ', $this->scopes)));
         }
 
         // If the client has been registered with additional response types
-        if (sizeof($this->responseTypes) > 0) {
+        if (count($this->responseTypes) > 0) {
             $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->responseTypes)));
         }
 
@@ -1527,7 +1527,7 @@ class OpenIDConnectClient
     protected function commitSession() {
         $this->startSession();
 
-        session_commit();
+        session_write_close();
     }
 
     protected function getSessionKey($key) {
