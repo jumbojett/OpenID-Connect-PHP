@@ -213,6 +213,8 @@ class OpenIDConnectClient
      */
     private $redirectURL;
 
+    private $enc_type = PHP_QUERY_RFC1738;
+
     /**
      * @param $provider_url string optional
      *
@@ -422,7 +424,7 @@ class OpenIDConnectClient
                 'post_logout_redirect_uri' => $redirect);
         }
 
-        $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, null, '&');
+        $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, null, '&', $this->$enc_type);
         $this->redirect($signout_endpoint);
     }
 
@@ -610,7 +612,7 @@ class OpenIDConnectClient
             $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->responseTypes)));
         }
 
-        $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&');
+        $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&', $this->$enc_type);
 
         $this->commitSession();
         $this->redirect($auth_endpoint);
@@ -636,7 +638,7 @@ class OpenIDConnectClient
         );
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&');
+        $post_params = http_build_query($post_data, null, '&', $this->$enc_type);
 
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
     }
@@ -671,7 +673,7 @@ class OpenIDConnectClient
         }
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&');
+        $post_params = http_build_query($post_data, null, '&', $this->$enc_type);
 
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
     }
@@ -707,7 +709,7 @@ class OpenIDConnectClient
         }
 
         // Convert token params to string format
-        $token_params = http_build_query($token_params, null, '&');
+        $token_params = http_build_query($token_params, null, '&', $this->$enc_type);
 
         return json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
 
@@ -733,7 +735,7 @@ class OpenIDConnectClient
         );
 
         // Convert token params to string format
-        $token_params = http_build_query($token_params, null, '&');
+        $token_params = http_build_query($token_params, null, '&', $this->$enc_type);
 
         $json = json_decode($this->fetchURL($token_endpoint, $token_params));
 
@@ -1559,5 +1561,23 @@ class OpenIDConnectClient
         $this->startSession();
 
         unset($_SESSION[$key]);
+    }
+
+    public function setUrlEncoding($curEncoding)
+    {
+        switch ($curEncoding)
+        {
+            case PHP_QUERY_RFC1738:
+                $this->enc_type = PHP_QUERY_RFC1738;
+                break;
+
+            case PHP_QUERY_RFC3986:
+                $this->enc_type = PHP_QUERY_RFC3986;
+                break;
+
+        	default:
+                break;
+        }
+
     }
 }
