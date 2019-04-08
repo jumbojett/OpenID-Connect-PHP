@@ -114,6 +114,21 @@ $sub = $oidc->getVerifiedClaims('sub');
 
 ```
 
+## Example 7: Introspection of an access token (see https://tools.ietf.org/html/rfc7662) ##
+
+```php
+use Jumbojett\OpenIDConnectClient;
+
+$oidc = new OpenIDConnectClient('https://id.provider.com',
+                                'ClientIDHere',
+                                'ClientSecretHere');
+$data = $oidc->introspectToken('an.access-token.as.given');
+if (!$data->active) {
+    // the token is no longer usable
+}
+
+```
+
 
 ## Development Environments ##
 In some cases you may need to disable SSL security on on your development systems.
