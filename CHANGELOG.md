@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 * Adding a header to indicate JSON as the return type for userinfo endpoint #151
 * ~Updated OpenIDConnectClient to conditionally verify nonce #146~
+* Add possibility to change enc_type parameter for http_build_query #155
 
 ### Changed
 * Bugfix/code cleanup #152
