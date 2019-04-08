@@ -1307,6 +1307,33 @@ class OpenIDConnectClient
     }
 
     /**
+     * Introspect a given token - either access token or refresh token.
+     * @see https://tools.ietf.org/html/rfc7662
+     *
+     * @param string $token
+     * @param string $token_type_hint
+     * @return mixed
+     * @throws OpenIDConnectClientException
+     */
+    public function introspectToken($token, $token_type_hint = '') {
+        $introspection_endpoint = $this->getProviderConfigValue('introspection_endpoint');
+
+        $post_data = array(
+            'token'    => $token,
+        );
+        if ($token_type_hint) {
+            $post_data['token_type_hint'] = $token_type_hint;
+        }
+
+        // Convert token params to string format
+        $post_params = http_build_query($post_data, null, '&');
+        $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret),
+            'Accept: application/json'];
+
+        return json_decode($this->fetchURL($introspection_endpoint, $post_params, $headers));
+    }
+
+    /**
      * @return string
      */
     public function getClientName() {
