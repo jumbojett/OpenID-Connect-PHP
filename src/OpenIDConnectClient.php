@@ -1312,10 +1312,12 @@ class OpenIDConnectClient
      *
      * @param string $token
      * @param string $token_type_hint
+     * @param string|null $clientId
+     * @param string|null $clientSecret
      * @return mixed
      * @throws OpenIDConnectClientException
      */
-    public function introspectToken($token, $token_type_hint = '') {
+    public function introspectToken($token, $token_type_hint = '', $clientId = null, $clientSecret = null) {
         $introspection_endpoint = $this->getProviderConfigValue('introspection_endpoint');
 
         $post_data = array(
@@ -1324,10 +1326,12 @@ class OpenIDConnectClient
         if ($token_type_hint) {
             $post_data['token_type_hint'] = $token_type_hint;
         }
+        $clientId = $clientId !== null ? $clientId : $this->clientID;
+        $clientSecret = $clientSecret !== null ? $clientSecret : $this->clientSecret;
 
         // Convert token params to string format
         $post_params = http_build_query($post_data, null, '&');
-        $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret),
+        $headers = ['Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret),
             'Accept: application/json'];
 
         return json_decode($this->fetchURL($introspection_endpoint, $post_params, $headers));
