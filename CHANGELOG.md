@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * ~Updated OpenIDConnectClient to conditionally verify nonce #146~
 * Add possibility to change enc_type parameter for http_build_query #155
 * Adding OAuth 2.0 Token Introspection #156
+* Add optional parameters clientId/clientSecret for introspection #157
 
 ### Changed
 * Bugfix/code cleanup #152
