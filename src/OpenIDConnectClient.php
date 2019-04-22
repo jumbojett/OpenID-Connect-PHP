@@ -552,6 +552,12 @@ class OpenIDConnectClient
             $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO']
                 ?: @$_SERVER['REQUEST_SCHEME']
                     ?: ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https' : 'http');
+         
+            // with a proxy, and only for Safari, protocol can end up being 'http, https' - which is invalid
+		    if ( strstr( $protocol, ',' ) ) { 
+                $protocol = 'https'; 
+            }
+            
         }
 
         $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT'])
