@@ -1338,6 +1338,37 @@ class OpenIDConnectClient
     }
 
     /**
+     * Revoke a given token - either access token or refresh token.
+     * @see https://tools.ietf.org/html/rfc7009
+     *
+     * @param string $token
+     * @param string $token_type_hint
+     * @param string|null $clientId
+     * @param string|null $clientSecret
+     * @return mixed
+     * @throws OpenIDConnectClientException
+     */
+    public function revokeToken($token, $token_type_hint = '', $clientId = null, $clientSecret = null) {
+        $revocation_endpoint = $this->getProviderConfigValue('revocation_endpoint');
+
+        $post_data = array(
+            'token'    => $token,
+        );
+        if ($token_type_hint) {
+            $post_data['token_type_hint'] = $token_type_hint;
+        }
+        $clientId = $clientId !== null ? $clientId : $this->clientID;
+        $clientSecret = $clientSecret !== null ? $clientSecret : $this->clientSecret;
+
+        // Convert token params to string format
+        $post_params = http_build_query($post_data, null, '&');
+        $headers = ['Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret),
+            'Accept: application/json'];
+
+        return json_decode($this->fetchURL($revocation_endpoint, $post_params, $headers));
+    }
+
+    /**
      * @return string
      */
     public function getClientName() {
