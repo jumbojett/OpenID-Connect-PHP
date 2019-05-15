@@ -477,26 +477,53 @@ class OpenIDConnectClient
     }
 
     /**
-     * Get's anything that we need configuration wise including endpoints, and other values
+     * Set the well known configuration from the provider. Useful if caching is required.
+     *
+     * @param object $wellKnown
+     *
+     * @return void
+     */
+    public function setWellKnownConfig($wellKnown)
+    {
+        $this->wellKnown = $wellKnown;
+    }
+
+    /**
+     * Get the well known configuration from the provider.
+     *
+     * @throws OpenIDConnectClientException
+     *
+     * @return mixed
+     */
+    public function getWellKnownConfig()
+    {
+        if(!$this->wellKnown) {
+            $this->setWellKnownConfig(
+                json_decode($this->fetchURL(rtrim($this->getProviderURL(), '/') . '/.well-known/openid-configuration'))
+            );
+        }
+
+        return $this->wellKnown;
+    }
+
+    /**
+     * Get's anything that we need configuration wise including endpoints, and other values.
      *
      * @param string $param
-     * @param string $default optional
+     * @param string $default
+     *
      * @throws OpenIDConnectClientException
+     *
      * @return string
      *
      */
-    private function getWellKnownConfigValue($param, $default = null) {
-
-        // If the configuration value is not available, attempt to fetch it from a well known config endpoint
-        // This is also known as auto "discovery"
-        if(!$this->wellKnown) {
-            $well_known_config_url = rtrim($this->getProviderURL(), '/') . '/.well-known/openid-configuration';
-            $this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
-        }
-
+    private function getWellKnownConfigValue($param, $default = null)
+    {
+        $wellKnown = $this->getWellKnownConfig();
         $value = false;
-        if(isset($this->wellKnown->{$param})){
-            $value = $this->wellKnown->{$param};
+
+        if (isset($wellKnown->{$param})){
+            $value = $wellKnown->{$param};
         }
 
         if ($value) {
@@ -510,7 +537,6 @@ class OpenIDConnectClient
 
         throw new OpenIDConnectClientException("The provider {$param} could not be fetched. Make sure your provider has a well known configuration available.");
     }
-
 
     /**
      * @param string $url Sets redirect URL for auth flow
