@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Adding OAuth 2.0 Token Introspection #156
 * Add optional parameters clientId/clientSecret for introspection #157 & #158
 * Adding OAuth 2.0 Token Revocation #160
+* Adding issuer validator #145
 
 ### Changed
 * Bugfix/code cleanup #152
