@@ -205,6 +205,11 @@ class OpenIDConnectClient
     private $verifiedClaims = array();
 
     /**
+     * @var callable validator function for issuer claim
+     */
+    private $issuerValidator;
+
+    /**
      * @var bool Allow OAuth 2 implicit flow; see http://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth
      */
     private $allowImplicitFlow = false;
@@ -232,6 +237,10 @@ class OpenIDConnectClient
 
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
+
+        $this->issuerValidator = function($iss){
+	        return ($iss == $this->getIssuer() || $iss == $this->getWellKnownIssuer() || $iss == $this->getWellKnownIssuer(true));
+        };
     }
 
     /**
@@ -917,7 +926,7 @@ class OpenIDConnectClient
             $len = ((int)$bit)/16;
             $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
-        return (($claims->iss == $this->getIssuer() || $claims->iss == $this->getWellKnownIssuer() || $claims->iss == $this->getWellKnownIssuer(true))
+        return (($this->issuerValidator->__invoke($claims->iss))
             && (($claims->aud == $this->clientID) || in_array($this->clientID, $claims->aud))
             && ($claims->nonce == $this->getNonce())
             && ( !isset($claims->exp) || $claims->exp >= time() - $this->leeway)
@@ -1223,6 +1232,17 @@ class OpenIDConnectClient
     public function getVerifyPeer()
     {
         return $this->verifyPeer;
+    }
+
+    /**
+     * Use this for custom issuer validation
+     * The given function should accept the issuer string from the JWT claim as the only argument
+     * and return true if the issuer is valid, otherwise return false
+     *
+     * @param callable $issuerValidator
+     */
+    public function setIssuerValidator($issuerValidator){
+        $this->issuerValidator = $issuerValidator;
     }
 
     /**
