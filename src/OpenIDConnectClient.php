@@ -229,7 +229,7 @@ class OpenIDConnectClient
      */
     public function __construct($provider_url = null, $client_id = null, $client_secret = null, $issuer = null) {
         $this->setProviderURL($provider_url);
-        if ($issuer == null) {
+        if ($issuer === null) {
             $this->setIssuer($provider_url);
         } else {
             $this->setIssuer($issuer);
@@ -239,7 +239,7 @@ class OpenIDConnectClient
         $this->clientSecret = $client_secret;
 
         $this->issuerValidator = function($iss){
-	        return ($iss == $this->getIssuer() || $iss == $this->getWellKnownIssuer() || $iss == $this->getWellKnownIssuer(true));
+	        return ($iss === $this->getIssuer() || $iss === $this->getWellKnownIssuer() || $iss === $this->getWellKnownIssuer(true));
         };
     }
 
@@ -291,7 +291,7 @@ class OpenIDConnectClient
             }
 
             // Do an OpenID Connect session check
-            if ($_REQUEST['state'] != $this->getState()) {
+            if ($_REQUEST['state'] !== $this->getState()) {
                 throw new OpenIDConnectClientException('Unable to determine state');
             }
 
@@ -357,7 +357,7 @@ class OpenIDConnectClient
             }
 
             // Do an OpenID Connect session check
-            if ($_REQUEST['state'] != $this->getState()) {
+            if ($_REQUEST['state'] !== $this->getState()) {
                 throw new OpenIDConnectClientException('Unable to determine state');
             }
 
@@ -424,7 +424,7 @@ class OpenIDConnectClient
         $signout_endpoint = $this->getProviderConfigValue('end_session_endpoint');
 
         $signout_params = null;
-        if($redirect == null){
+        if($redirect === null){
             $signout_params = array('id_token_hint' => $accessToken);
         }
         else {
@@ -555,12 +555,12 @@ class OpenIDConnectClient
          * Support of 'ProxyReverse' configurations.
          */
 
-        if (isset($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS']) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] == 1)) {
+        if (isset($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS']) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] === '1')) {
             $protocol = 'https';
         } else {
             $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO']
                 ?: @$_SERVER['REQUEST_SCHEME']
-                    ?: ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https' : 'http');
+                    ?: ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http');
         }
 
         $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT'])
@@ -571,7 +571,7 @@ class OpenIDConnectClient
             ?: @$_SERVER['SERVER_NAME']
                 ?: @$_SERVER['SERVER_ADDR'];
 
-        $port = (443 == $port) || (80 == $port) ? '' : ':' . $port;
+        $port = (443 === $port) || (80 === $port) ? '' : ':' . $port;
 
         return sprintf('%s://%s%s/%s', $protocol, $host, $port, @trim(reset(explode('?', $_SERVER['REQUEST_URI'])), '/'));
     }
@@ -712,7 +712,7 @@ class OpenIDConnectClient
         );
 
         # Consider Basic authentication if provider config is set this way
-        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported)) {
+        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
             $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret)];
             unset($token_params['client_secret']);
         }
@@ -767,24 +767,24 @@ class OpenIDConnectClient
      */
     private function get_key_for_header($keys, $header) {
         foreach ($keys as $key) {
-            if ($key->kty == 'RSA') {
-                if (!isset($header->kid) || $key->kid == $header->kid) {
+            if ($key->kty === 'RSA') {
+                if (!isset($header->kid) || $key->kid === $header->kid) {
                     return $key;
                 }
             } else {
-                if (isset($key->alg) && $key->alg == $header->alg && $key->kid == $header->kid) {
+                if (isset($key->alg) && $key->alg === $header->alg && $key->kid === $header->kid) {
                     return $key;
                 }
             }
         }
         if ($this->additionalJwks) {
             foreach ($this->additionalJwks as $key) {
-                if ($key->kty == 'RSA') {
-                    if (!isset($header->kid) || $key->kid == $header->kid) {
+                if ($key->kty === 'RSA') {
+                    if (!isset($header->kid) || $key->kid === $header->kid) {
                         return $key;
                     }
                 } else {
-                    if (isset($key->alg) && $key->alg == $header->alg && $key->kid == $header->kid) {
+                    if (isset($key->alg) && $key->alg === $header->alg && $key->kid === $header->kid) {
                         return $key;
                     }
                 }
@@ -917,7 +917,7 @@ class OpenIDConnectClient
      */
     private function verifyJWTclaims($claims, $accessToken = null) {
         if(isset($claims->at_hash) && isset($accessToken)){
-            if(isset($this->getAccessTokenHeader()->alg) && $this->getAccessTokenHeader()->alg != 'none'){
+            if(isset($this->getAccessTokenHeader()->alg) && $this->getAccessTokenHeader()->alg !== 'none'){
                 $bit = substr($this->getAccessTokenHeader()->alg, 2, 3);
             }else{
                 // TODO: Error case. throw exception???
@@ -927,12 +927,12 @@ class OpenIDConnectClient
             $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
         return (($this->issuerValidator->__invoke($claims->iss))
-            && (($claims->aud == $this->clientID) || in_array($this->clientID, $claims->aud))
-            && ($claims->nonce == $this->getNonce())
-            && ( !isset($claims->exp) || $claims->exp >= time() - $this->leeway)
-            && ( !isset($claims->nbf) || $claims->nbf <= time() + $this->leeway)
-            && ( !isset($claims->at_hash) || $claims->at_hash == $expecte_at_hash )
-        );
+            && (($claims->aud === $this->clientID) || in_array($this->clientID, $claims->aud, true))
+            && ($claims->nonce === $this->getNonce())
+            && ( !isset($claims->exp) || ((gettype($claims->exp) === 'integer') && ($claims->exp >= time() - $this->leeway)))
+            && ( !isset($claims->nbf) || ((gettype($claims->nbf) === 'integer') && ($claims->nbf <= time() + $this->leeway)))
+            && ( !isset($claims->at_hash) || $claims->at_hash === $expecte_at_hash )
+    );
     }
 
     /**
@@ -1058,7 +1058,7 @@ class OpenIDConnectClient
         $ch = curl_init();
 
         // Determine whether this is a GET or POST
-        if ($post_body != null) {
+        if ($post_body !== null) {
             // curl_setopt($ch, CURLOPT_POST, 1);
             // Alows to keep the POST method even after redirect
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
