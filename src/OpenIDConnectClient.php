@@ -1051,7 +1051,8 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      * @return mixed
      */
-    protected function fetchURL($url, $post_body = null, $headers = array()) {
+    //protected function fetchURL($url, $post_body = null, $headers = array()) {
+      public function fetchURL($url, $post_body = null, $headers = array()) {  // new-added change: set the public modifier
 
 
         // OK cool - then let's create a new cURL resource handle
