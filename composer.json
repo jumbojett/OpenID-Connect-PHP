@@ -6,7 +6,11 @@
         "php": ">=5.4",
         "phpseclib/phpseclib" : "~2.0",
         "ext-json": "*",
-        "ext-curl": "*"
+        "ext-curl": "*",
+        "phpunit/phpunit": "^4.8"
+    },
+    "require-dev": {
+        "roave/security-advisories": "dev-master"
     },
     "archive" : {
         "exclude" : [
@@ -15,5 +19,10 @@
     },
     "autoload" : {
          "classmap": [ "src/"]
+    },
+  "config" : {
+    "platform": {
+      "php": "5.4"
     }
+  }
 }

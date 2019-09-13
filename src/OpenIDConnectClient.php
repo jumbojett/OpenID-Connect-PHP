@@ -803,10 +803,11 @@ class OpenIDConnectClient
      * @param object $key
      * @param $payload
      * @param $signature
+     * @param $signatureType
      * @return bool
      * @throws OpenIDConnectClientException
      */
-    private function verifyRSAJWTsignature($hashtype, $key, $payload, $signature) {
+    private function verifyRSAJWTsignature($hashtype, $key, $payload, $signature, $signatureType) {
         if (!class_exists('\phpseclib\Crypt\RSA') && !class_exists('Crypt_RSA')) {
             throw new OpenIDConnectClientException('Crypt_RSA support unavailable.');
         }
@@ -824,13 +825,19 @@ class OpenIDConnectClient
         if(class_exists('Crypt_RSA', false)) {
             $rsa = new Crypt_RSA();
             $rsa->setHash($hashtype);
+            if ($signatureType === 'PSS') {
+                $rsa->setMGFHash($hashtype);
+            }
             $rsa->loadKey($public_key_xml, Crypt_RSA::PUBLIC_FORMAT_XML);
-            $rsa->signatureMode = Crypt_RSA::SIGNATURE_PKCS1;
+            $rsa->signatureMode = $signatureType === 'PSS' ? Crypt_RSA::SIGNATURE_PSS : Crypt_RSA::SIGNATURE_PKCS1;
         } else {
             $rsa = new \phpseclib\Crypt\RSA();
             $rsa->setHash($hashtype);
+            if ($signatureType === 'PSS') {
+                $rsa->setMGFHash($hashtype);
+            }
             $rsa->loadKey($public_key_xml, \phpseclib\Crypt\RSA::PUBLIC_FORMAT_XML);
-            $rsa->signatureMode = \phpseclib\Crypt\RSA::SIGNATURE_PKCS1;
+            $rsa->signatureMode = $signatureType === 'PSS' ? \phpseclib\Crypt\RSA::SIGNATURE_PSS : \phpseclib\Crypt\RSA::SIGNATURE_PKCS1;
         }
         return $rsa->verify($payload, $signature);
     }
@@ -889,13 +896,15 @@ class OpenIDConnectClient
         }
         switch ($header->alg) {
             case 'RS256':
+            case 'PS256':
             case 'RS384':
             case 'RS512':
                 $hashtype = 'sha' . substr($header->alg, 2);
+                $signatureType = $header->alg === 'PS256' ? 'PSS' : '';
 
                 $verified = $this->verifyRSAJWTsignature($hashtype,
                     $this->get_key_for_header($jwks->keys, $header),
-                    $payload, $signature);
+                    $payload, $signature, $signatureType);
                 break;
             case 'HS256':
             case 'HS512':
