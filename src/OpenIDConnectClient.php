@@ -1671,4 +1671,30 @@ class OpenIDConnectClient
         }
 
     }
+
+    /**
+     * @return array
+     */
+    public function getScopes()
+    {
+        return $this->scopes;
+    }
+
+    /**
+     * @return array
+     */
+    public function getResponseTypes()
+    {
+        return $this->responseTypes;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAuthParams()
+    {
+        return $this->authParams;
+    }
+
+    
 }
