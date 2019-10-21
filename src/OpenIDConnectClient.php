@@ -933,15 +933,15 @@ class OpenIDConnectClient
                 $bit = '256';
             }
             $len = ((int)$bit)/16;
-            $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
+            $expected_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
         return (($this->issuerValidator->__invoke($claims->iss))
             && (($claims->aud === $this->clientID) || in_array($this->clientID, $claims->aud, true))
             && ($claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((gettype($claims->exp) === 'integer') && ($claims->exp >= time() - $this->leeway)))
             && ( !isset($claims->nbf) || ((gettype($claims->nbf) === 'integer') && ($claims->nbf <= time() + $this->leeway)))
-            && ( !isset($claims->at_hash) || $claims->at_hash === $expecte_at_hash )
-    );
+            && ( !isset($claims->at_hash) || $claims->at_hash === $expected_at_hash )
+        );
     }
 
     /**
@@ -1702,5 +1702,13 @@ class OpenIDConnectClient
     public function getIssuerValidator()
     {
         return $this->issuerValidator;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLeeway()
+    {
+        return $this->leeway;
     }
 }
