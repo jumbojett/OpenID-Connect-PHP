@@ -1696,5 +1696,11 @@ class OpenIDConnectClient
         return $this->authParams;
     }
 
-    
+    /**
+     * @return callable
+     */
+    public function getIssuerValidator()
+    {
+        return $this->issuerValidator;
+    }
 }
