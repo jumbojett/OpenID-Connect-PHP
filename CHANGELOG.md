@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Adding OAuth 2.0 Token Revocation #160
 * Adding issuer validator #145
 * Adding signing algorithm PS256 #180
+* Check http staus of request user info #186
 
 ### Changed
 * Bugfix/code cleanup #152
