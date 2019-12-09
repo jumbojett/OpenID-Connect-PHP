@@ -1007,7 +1007,9 @@ class OpenIDConnectClient
             'Accept: application/json'];
 
         $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
-
+	if ($this->getResponseCode() <> 200) {
+		throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$this->getResponseCode());
+	}
         $this->userInfo = $user_json;
 
         if($attribute === null) {
