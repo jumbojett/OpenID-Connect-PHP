@@ -136,7 +136,7 @@ class OpenIDConnect extends PluggableAuth {
 			$oidc = new OpenIDConnectClient( $iss, $clientID, $clientsecret );
 
 			//for modern openid providers the user information is inside the token id
-			if ( !isset($config['userInfoFromToken']) ) {
+			if ( isset($config['userInfoFromToken']) ) {
 				$oidc->setIsUserInfoToken($config['userInfoFromToken']);
 			}
 
