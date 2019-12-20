@@ -1,0 +1,11 @@
+{
+	"private": true,
+	"scripts": {
+		"test": "grunt test"
+	},
+	"devDependencies": {
+		"grunt": "1.0.3",
+		"grunt-banana-checker": "0.4.0",
+		"grunt-jsonlint": "1.0.7"
+	}
+}

@@ -1,0 +1,48 @@
+{
+	"name": "OpenID Connect",
+	"version": "5.0",
+	"author": [
+		"[https://www.mediawiki.org/wiki/User:Cindy.cicalese Cindy Cicalese]"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:OpenID_Connect",
+	"descriptionmsg": "openidconnect-desc",
+	"type": "other",
+	"requires": {
+		"extensions": {
+			"PluggableAuth": ">= 4.0"
+		}
+	},
+	"SpecialPages": {
+		"SelectOpenIDConnectIssuer": "SelectOpenIDConnectIssuer"
+	},
+	"MessagesDirs": {
+		"OpenIDConnect": [
+			"i18n"
+		]
+	},
+	"ExtensionMessagesFiles": {
+		"SelectOpenIDConnectIssuerAlias": "i18n/SelectOpenIDConnectIssuer.alias.php"
+	},
+	"AutoloadClasses": {
+		"OpenIDConnect": "src/OpenIDConnect.php",
+		"SelectOpenIDConnectIssuer": "src/SelectOpenIDConnectIssuer.php",
+		"MigrateOIDCSubjectAndIssuerFromUserTable":
+			"maintenance/MigrateOIDCSubjectAndIssuerFromUserTable.php"
+	},
+	"Hooks": {
+		"LoadExtensionSchemaUpdates": "OpenIDConnect::loadExtensionSchemaUpdates"
+	},
+	"config": {
+		"OpenIDConnect_MigrateUsersByEmail": false,
+		"OpenIDConnect_MigrateUsersByUserName": false,
+		"OpenIDConnect_ForceLogout": false,
+		"OpenIDConnect_UseRealNameAsUserName": false,
+		"OpenIDConnect_UseEmailNameAsUserName": false,
+		"PluggableAuth_Class": "OpenIDConnect"
+	},
+	"PluggableAuthLoginSpecialPages": [
+		"SelectOpenIDConnectIssuer"
+	],
+	"load_composer_autoloader": true,
+	"manifest_version": 1
+}

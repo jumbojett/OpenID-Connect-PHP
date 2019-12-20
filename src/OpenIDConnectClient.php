@@ -219,7 +219,10 @@ class OpenIDConnectClient
     private $redirectURL;
 
     private $enc_type = PHP_QUERY_RFC1738;
-
+    /**
+     * @var bool When TRUE use the openid token internal information
+     */
+    private $isUserInfoToken = false;
     /**
      * @param $provider_url string optional
      *
@@ -262,6 +265,10 @@ class OpenIDConnectClient
      */
     public function setResponseTypes($response_types) {
         $this->responseTypes = array_merge($this->responseTypes, (array)$response_types);
+    }
+
+    public function setIsUserInfoToken($value) {
+        $this->isUserInfoToken = $value
     }
 
     /**
@@ -995,6 +1002,14 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function requestUserInfo($attribute = null) {
+        
+        if ($this->isUserInfoToken) {
+            $value = $this->getAccessTokenPayload()->{$attribute}
+            if ($value == null) {
+                $value = $this->getIdTokenPayload()->{$attribute};
+            }
+            return $value;
+        }
 
         $user_info_endpoint = $this->getProviderConfigValue('userinfo_endpoint');
         $schema = 'openid';
@@ -1008,9 +1023,9 @@ class OpenIDConnectClient
 
         $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
     	$code = (int)$this->getResponseCode();
-	if ($code >= 300 || $code <= 100) {
-		throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$code);
-	}
+        if ($code >= 300 || $code <= 100) {
+            throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$code);
+        }
         $this->userInfo = $user_json;
 
         if($attribute === null) {
