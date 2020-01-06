@@ -1362,7 +1362,7 @@ class OpenIDConnectClient
 
         // Convert token params to string format
         $post_params = http_build_query($post_data, null, '&');
-        $headers = ['Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret),
+        $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
             'Accept: application/json'];
 
         return json_decode($this->fetchURL($introspection_endpoint, $post_params, $headers));
@@ -1393,7 +1393,7 @@ class OpenIDConnectClient
 
         // Convert token params to string format
         $post_params = http_build_query($post_data, null, '&');
-        $headers = ['Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret),
+        $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
             'Accept: application/json'];
 
         return json_decode($this->fetchURL($revocation_endpoint, $post_params, $headers));
