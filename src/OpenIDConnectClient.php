@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * Copyright MITRE 2019
+ * Copyright MITRE 2020
  *
  * OpenIDConnectClient for PHP5
  * Author: Michael Jett <mjett@mitre.org>
