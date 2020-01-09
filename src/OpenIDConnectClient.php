@@ -414,7 +414,7 @@ class OpenIDConnectClient
      * (the client application).
      *
      * @param string $accessToken ID token (obtained at login)
-     * @param string $redirect URL to which the RP is requesting that the End-User's User Agent
+     * @param string|null $redirect URL to which the RP is requesting that the End-User's User Agent
      * be redirected after a logout has been performed. The value MUST have been previously
      * registered with the OP. Value can be null.
      *
@@ -968,7 +968,7 @@ class OpenIDConnectClient
 
     /**
      *
-     * @param string $attribute optional
+     * @param string|null $attribute optional
      *
      * Attribute        Type        Description
      * user_id          string      REQUIRED Identifier for the End-User at the Issuer.
@@ -1007,9 +1007,9 @@ class OpenIDConnectClient
             'Accept: application/json'];
 
         $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
-	if ($this->getResponseCode() <> 200) {
-		throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$this->getResponseCode());
-	}
+        if ($this->getResponseCode() <> 200) {
+            throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$this->getResponseCode());
+        }
         $this->userInfo = $user_json;
 
         if($attribute === null) {
@@ -1025,7 +1025,7 @@ class OpenIDConnectClient
 
     /**
      *
-     * @param string $attribute optional
+     * @param string|null $attribute optional
      *
      * Attribute        Type    Description
      * exp              int     Expires at
