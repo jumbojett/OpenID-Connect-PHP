@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Adding signing algorithm PS256 #180
 * Check http status of request user info #186
 * URL encode clientId and clientSecret when using basic authentication, according to https://tools.ietf.org/html/rfc6749#section-2.3.1 #192
+* Adjust PHPDoc to state that null is also allowed #193
 
 ### Changed
 * Bugfix/code cleanup #152
