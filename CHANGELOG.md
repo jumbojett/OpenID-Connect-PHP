@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
+* php 7.4 deprecates array_key_exists on objects, use property_exists in getVerifiedClaims and requestUserInfo
 * Adding a header to indicate JSON as the return type for userinfo endpoint #151
 * ~Updated OpenIDConnectClient to conditionally verify nonce #146~
 * Add possibility to change enc_type parameter for http_build_query #155

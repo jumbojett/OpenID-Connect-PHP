@@ -1016,7 +1016,7 @@ class OpenIDConnectClient
             return $this->userInfo;
         }
 
-        if (array_key_exists($attribute, $this->userInfo)) {
+        if (property_exists($this->userInfo, $attribute)) {
             return $this->userInfo->$attribute;
         }
 
@@ -1048,7 +1048,7 @@ class OpenIDConnectClient
             return $this->verifiedClaims;
         }
 
-        if (array_key_exists($attribute, $this->verifiedClaims)) {
+        if (property_exists($this->verifiedClaims, $attribute)) {
             return $this->verifiedClaims->$attribute;
         }
 
