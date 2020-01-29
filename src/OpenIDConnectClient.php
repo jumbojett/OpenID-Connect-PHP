@@ -21,6 +21,7 @@
  */
 
 namespace Jumbojett;
+use Psr\SimpleCache\CacheInterface;
 
 /**
  *
@@ -220,6 +221,9 @@ class OpenIDConnectClient
 
     private $enc_type = PHP_QUERY_RFC1738;
 
+    /** @var CacheInterface $cache */
+    private $cache;
+
     /**
      * @param $provider_url string optional
      *
@@ -241,6 +245,14 @@ class OpenIDConnectClient
         $this->issuerValidator = function($iss){
 	        return ($iss === $this->getIssuer() || $iss === $this->getWellKnownIssuer() || $iss === $this->getWellKnownIssuer(true));
         };
+    }
+
+    /**
+     * @param CacheInterface $cache
+     */
+    public function setCache($cache)
+    {
+        $this->cache = $cache;
     }
 
     /**
@@ -500,7 +512,7 @@ class OpenIDConnectClient
         // This is also known as auto "discovery"
         if(!$this->wellKnown) {
             $well_known_config_url = rtrim($this->getProviderURL(), '/') . '/.well-known/openid-configuration';
-            $this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
+            $this->wellKnown = json_decode($this->fetchCacheableURL($well_known_config_url));
         }
 
         $value = false;
@@ -887,7 +899,7 @@ class OpenIDConnectClient
             throw new OpenIDConnectClientException('Error decoding JSON from token header');
         }
         $payload = implode('.', $parts);
-        $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
+        $jwks = json_decode($this->fetchCacheableURL($this->getProviderConfigValue('jwks_uri')));
         if ($jwks === NULL) {
             throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
         }
@@ -1057,13 +1069,37 @@ class OpenIDConnectClient
 
     /**
      * @param string $url
+     * @param int | null $ttl
+     * @return mixed
+     * @throws OpenIDConnectClientException
+     */
+    private function fetchCacheableURL($url, $ttl = 3600)
+    {
+        try {
+            if($this->cache !== null) {
+                $key = md5($url);
+
+                if (!$this->cache->has($key)) {
+                    $this->cache->set($key, $this->fetchURL($url), $ttl);
+                }
+
+                return $this->cache->get($key);
+            }
+        } catch (\Psr\SimpleCache\InvalidArgumentException $ex){
+
+        }
+
+        return $this->fetchURL($url);
+    }
+
+    /**
+     * @param string $url
      * @param string | null $post_body string If this is set the post type will be POST
      * @param array $headers Extra headers to be send with the request. Format as 'NameHeader: ValueHeader'
-     * @throws OpenIDConnectClientException
      * @return mixed
+     * @throws OpenIDConnectClientException
      */
     protected function fetchURL($url, $post_body = null, $headers = array()) {
-
 
         // OK cool - then let's create a new cURL resource handle
         $ch = curl_init();
