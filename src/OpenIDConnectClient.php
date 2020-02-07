@@ -155,6 +155,11 @@ class OpenIDConnectClient
     private $scopes = array();
 
     /**
+     * @var string stores the login hint
+     */
+    private $loginHint;
+
+    /**
      * @var int|null Response code from the server
      */
     private $responseCode;
@@ -255,6 +260,14 @@ class OpenIDConnectClient
      */
     public function setIssuer($issuer) {
         $this->providerConfig['issuer'] = $issuer;
+    }
+
+
+    /**
+     * @param string $loginHint
+     */
+    public function setLoginHint($loginHint) {
+        $this->loginHint = $loginHint;
     }
 
     /**
@@ -619,6 +632,10 @@ class OpenIDConnectClient
         // If the client has been registered with additional response types
         if (count($this->responseTypes) > 0) {
             $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->responseTypes)));
+        }
+
+        if ($this->loginHint != '') {
+            $auth_params = array_merge($auth_params, array('login_hint' => $this->loginHint));
         }
 
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&', $this->enc_type);
