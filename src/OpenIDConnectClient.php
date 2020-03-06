@@ -613,7 +613,7 @@ class OpenIDConnectClient
 
         // If the client has been registered with additional scopes
         if (count($this->scopes) > 0) {
-            $auth_params = array_merge($auth_params, array('scope' => implode(' ', $this->scopes)));
+            $auth_params = array_merge($auth_params, array('scope' => implode(' ', array_merge($this->scopes, array('openid')))));
         }
 
         // If the client has been registered with additional response types
