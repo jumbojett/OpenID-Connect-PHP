@@ -316,6 +316,12 @@ class OpenIDConnectClient
                 user_error('Warning: JWT signature verification unavailable.');
             }
 
+            // Save the id token
+            $this->idToken = $token_json->id_token;
+
+            // Save the access token
+            $this->accessToken = $token_json->access_token;
+
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims, $token_json->access_token)) {
 
@@ -324,12 +330,6 @@ class OpenIDConnectClient
 
                 // Save the full response
                 $this->tokenResponse = $token_json;
-
-                // Save the id token
-                $this->idToken = $token_json->id_token;
-
-                // Save the access token
-                $this->accessToken = $token_json->access_token;
 
                 // Save the verified claims
                 $this->verifiedClaims = $claims;
@@ -378,14 +378,14 @@ class OpenIDConnectClient
                 user_error('Warning: JWT signature verification unavailable.');
             }
 
+            // Save the id token
+            $this->idToken = $id_token;
+
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims, $accessToken)) {
 
                 // Clean up the session a little
                 $this->unsetNonce();
-
-                // Save the id token
-                $this->idToken = $id_token;
 
                 // Save the verified claims
                 $this->verifiedClaims = $claims;
@@ -926,8 +926,8 @@ class OpenIDConnectClient
      */
     private function verifyJWTclaims($claims, $accessToken = null) {
         if(isset($claims->at_hash) && isset($accessToken)){
-            if(isset($this->getAccessTokenHeader()->alg) && $this->getAccessTokenHeader()->alg !== 'none'){
-                $bit = substr($this->getAccessTokenHeader()->alg, 2, 3);
+            if(isset($this->getIdTokenHeader()->alg) && $this->getIdTokenHeader()->alg !== 'none'){
+                $bit = substr($this->getIdTokenHeader()->alg, 2, 3);
             }else{
                 // TODO: Error case. throw exception???
                 $bit = '256';
