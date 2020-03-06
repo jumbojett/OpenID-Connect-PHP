@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * Fix indent #e9cdf56
   * Cleanup conditional code flow for better readability #107f3fb
  * Added strict type comparisons #167
+* Bugfix: required `openid` scope was omitted when additional scopes were registered using `addScope` method. This resulted in failing OpenID process.
 
 ### Removed
 *
