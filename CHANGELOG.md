@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
+*
+
+### Changed
+*
+
+### Removed
+*
+
+
+## [0.9.0]
+
+### Added
 * php 7.4 deprecates array_key_exists on objects, use property_exists in getVerifiedClaims and requestUserInfo
 * Adding a header to indicate JSON as the return type for userinfo endpoint #151
 * ~Updated OpenIDConnectClient to conditionally verify nonce #146~
@@ -32,9 +44,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * Cleanup conditional code flow for better readability #107f3fb
  * Added strict type comparisons #167
 * Bugfix: required `openid` scope was omitted when additional scopes were registered using `addScope` method. This resulted in failing OpenID process.
-
-### Removed
-*
 
 ## [0.8.0]
 
