@@ -132,7 +132,7 @@ class OpenIDConnectClient
     /**
      * @var string if we acquire an access token it will be stored here
      */
-    private $accessToken;
+    protected $accessToken;
 
     /**
      * @var string if we acquire a refresh token it will be stored here
@@ -142,7 +142,7 @@ class OpenIDConnectClient
     /**
      * @var string if we acquire an id token it will be stored here
      */
-    private $idToken;
+    protected $idToken;
 
     /**
      * @var string stores the token response
@@ -202,7 +202,7 @@ class OpenIDConnectClient
     /**
      * @var array holds verified jwt claims
      */
-    private $verifiedClaims = array();
+    protected $verifiedClaims = array();
 
     /**
      * @var callable validator function for issuer claim
@@ -218,7 +218,7 @@ class OpenIDConnectClient
      */
     private $redirectURL;
 
-    private $enc_type = PHP_QUERY_RFC1738;
+    protected $enc_type = PHP_QUERY_RFC1738;
 
     /**
      * @param $provider_url string optional
@@ -474,7 +474,7 @@ class OpenIDConnectClient
      * @return string
      *
      */
-    private function getProviderConfigValue($param, $default = null) {
+    protected function getProviderConfigValue($param, $default = null) {
 
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
@@ -695,7 +695,7 @@ class OpenIDConnectClient
      * @return mixed
      * @throws OpenIDConnectClientException
      */
-    private function requestTokens($code) {
+    protected function requestTokens($code) {
         $token_endpoint = $this->getProviderConfigValue('token_endpoint');
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
 
@@ -720,8 +720,9 @@ class OpenIDConnectClient
         // Convert token params to string format
         $token_params = http_build_query($token_params, null, '&', $this->enc_type);
 
-        return json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
+        $this->tokenResponse = json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
 
+        return $this->tokenResponse;
     }
 
     /**
@@ -922,9 +923,8 @@ class OpenIDConnectClient
      * @param object $claims
      * @param string|null $accessToken
      * @return bool
-     * @throws OpenIDConnectClientException
      */
-    private function verifyJWTclaims($claims, $accessToken = null) {
+    protected function verifyJWTclaims($claims, $accessToken = null) {
         if(isset($claims->at_hash) && isset($accessToken)){
             if(isset($this->getIdTokenHeader()->alg) && $this->getIdTokenHeader()->alg !== 'none'){
                 $bit = substr($this->getIdTokenHeader()->alg, 2, 3);
@@ -933,15 +933,15 @@ class OpenIDConnectClient
                 $bit = '256';
             }
             $len = ((int)$bit)/16;
-            $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
+            $expected_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
         return (($this->issuerValidator->__invoke($claims->iss))
             && (($claims->aud === $this->clientID) || in_array($this->clientID, $claims->aud, true))
             && ($claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((gettype($claims->exp) === 'integer') && ($claims->exp >= time() - $this->leeway)))
             && ( !isset($claims->nbf) || ((gettype($claims->nbf) === 'integer') && ($claims->nbf <= time() + $this->leeway)))
-            && ( !isset($claims->at_hash) || $claims->at_hash === $expecte_at_hash )
-    );
+            && ( !isset($claims->at_hash) || $claims->at_hash === $expected_at_hash )
+        );
     }
 
     /**
@@ -960,7 +960,7 @@ class OpenIDConnectClient
      * @param int $section the section we would like to decode
      * @return object
      */
-    private function decodeJWT($jwt, $section = 0) {
+    protected function decodeJWT($jwt, $section = 0) {
 
         $parts = explode('.', $jwt);
         return json_decode(base64url_decode($parts[$section]));
@@ -1672,5 +1672,45 @@ class OpenIDConnectClient
                 break;
         }
 
+    }
+
+    /**
+     * @return array
+     */
+    public function getScopes()
+    {
+        return $this->scopes;
+    }
+
+    /**
+     * @return array
+     */
+    public function getResponseTypes()
+    {
+        return $this->responseTypes;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAuthParams()
+    {
+        return $this->authParams;
+    }
+
+    /**
+     * @return callable
+     */
+    public function getIssuerValidator()
+    {
+        return $this->issuerValidator;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLeeway()
+    {
+        return $this->leeway;
     }
 }
