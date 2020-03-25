@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 * Fix at_hash verification #200
+* Getters for public parameters #204
 
 ### Removed
 *
