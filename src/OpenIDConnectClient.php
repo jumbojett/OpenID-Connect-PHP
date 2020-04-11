@@ -1008,7 +1008,7 @@ class OpenIDConnectClient
 
         $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
         
-        //Successo http code could change between vendor. Any 2XX will be accepted as success
+        //Success http code could change between vendor. Any 2XX will be accepted as success
         $code = (int)$this->getResponseCode();
         if ($code >= 300 || $code <= 100) {
             throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$code);
