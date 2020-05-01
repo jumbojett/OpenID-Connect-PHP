@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * Fix indent #e9cdf56
   * Cleanup conditional code flow for better readability #107f3fb
  * Added strict type comparisons #167
+ * getRedirectURL() will not log a warning for PHP 7.1+
 
 ### Removed
 *
