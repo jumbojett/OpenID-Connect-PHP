@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Getters for public parameters #204
 
 ### Removed
-*
+* Removed explicit content-length header - caused issues with proxy servers
 
 
 ## [0.9.0]

@@ -1085,7 +1085,6 @@ class OpenIDConnectClient
 
             // Add POST-specific headers
             $headers[] = "Content-Type: {$content_type}";
-            $headers[] = 'Content-Length: ' . strlen($post_body);
 
         }
 
