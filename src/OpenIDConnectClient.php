@@ -756,7 +756,7 @@ class OpenIDConnectClient
         // Convert token params to string format
         $token_params = http_build_query($token_params, null, '&', $this->enc_type);
 
-        $json = json_decode($this->fetchURL($token_endpoint, $token_params));
+        $json = json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
 
         if (isset($json->access_token)) {
             $this->accessToken = $json->access_token;
