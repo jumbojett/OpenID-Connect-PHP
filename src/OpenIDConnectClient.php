@@ -218,6 +218,11 @@ class OpenIDConnectClient
      */
     private $redirectURL;
 
+    /**
+     * @var string
+     */
+    private $stateData;
+
     protected $enc_type = PHP_QUERY_RFC1738;
 
     /**
@@ -291,12 +296,12 @@ class OpenIDConnectClient
             }
 
             // Do an OpenID Connect session check
-            if ($_REQUEST['state'] !== $this->getState()) {
+            if (!$this->checkState($_REQUEST['state'])) {
                 throw new OpenIDConnectClientException('Unable to determine state');
             }
 
             // Cleanup state
-            $this->unsetState();
+            $this->unsetState($_REQUEST['state']);
 
             if (!property_exists($token_json, 'id_token')) {
                 throw new OpenIDConnectClientException('User did not authorize openid scope.');
@@ -357,12 +362,12 @@ class OpenIDConnectClient
             }
 
             // Do an OpenID Connect session check
-            if ($_REQUEST['state'] !== $this->getState()) {
+            if (!$this->checkState($_REQUEST['state'])) {
                 throw new OpenIDConnectClientException('Unable to determine state');
             }
 
             // Cleanup state
-            $this->unsetState();
+            $this->unsetState($_REQUEST['state']);
 
             $claims = $this->decodeJWT($id_token, 1);
 
@@ -600,7 +605,7 @@ class OpenIDConnectClient
         $nonce = $this->setNonce($this->generateRandString());
 
         // State essentially acts as a session key for OIDC
-        $state = $this->setState($this->generateRandString());
+        $state = $this->setState();
 
         $auth_params = array_merge($this->authParams, array(
             'response_type' => $response_type,
@@ -1531,32 +1536,61 @@ class OpenIDConnectClient
     }
 
     /**
-     * Stores $state
+     * Checks specific $state
      *
      * @param string $state
-     * @return string
+     * @return boolean
      */
-    protected function setState($state) {
-        $this->setSessionKey('openid_connect_state', $state);
-        return $state;
+    protected function checkState($state) {
+      $stateValue = $this->getSessionKey('openid_connect_state_'.$state);
+      if (isset($stateValue)) {
+        $stateValue = json_decode($stateValue);
+        $this->stateData = $stateValue->{'data'};
+        return true;
+      }
+      return false;
     }
 
     /**
-     * Get stored state
+     * Stores specific $state
      *
      * @return string
      */
-    protected function getState() {
-        return $this->getSessionKey('openid_connect_state');
+    protected function setState() {
+      $stateValue = ($this->getStateData()) ? $this->getStateData() : $this->generateRandString();
+      $stateJson = json_encode(array('data' => $stateValue));
+      $state = base64_encode($stateJson);
+      $this->setSessionKey('openid_connect_state_' . $state, $stateJson);
+      return $state;
     }
 
     /**
-     * Cleanup state
+     * Cleanup specific state
      *
+     * @param string $state
      * @return void
      */
-    protected function unsetState() {
-        $this->unsetSessionKey('openid_connect_state');
+    protected function unsetState($state) {
+      $this->unsetSessionKey('openid_connect_state_' . $state);
+    }
+
+    /**
+     * Stores state data
+     *
+     * @param string $data
+     * @return void
+     */
+    public function setStateData($data) {
+      $this->stateData = $data;
+    }
+
+    /**
+     * Get stored state data
+     *
+     * @return string
+     */
+    public function getStateData() {
+      return $this->stateData;
     }
 
     /**
