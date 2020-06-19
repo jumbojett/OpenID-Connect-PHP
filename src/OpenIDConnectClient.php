@@ -715,6 +715,7 @@ class OpenIDConnectClient
         if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
             $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             unset($token_params['client_secret']);
+	        unset($token_params['client_id']);
         }
 
         // Convert token params to string format
