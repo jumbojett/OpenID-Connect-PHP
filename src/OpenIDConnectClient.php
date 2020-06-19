@@ -323,7 +323,7 @@ class OpenIDConnectClient
             $this->accessToken = $token_json->access_token;
 
             // If this is a valid claim
-            if ($this->verifyJWTclaims($claims, $token_json->access_token)) {
+            if ($this->verifyJWTclaims($claims, $token_json->access_token, $this->decodeJWT($token_json->id_token, 0))) {
 
                 // Clean up the session a little
                 $this->unsetNonce();
@@ -382,7 +382,7 @@ class OpenIDConnectClient
             $this->idToken = $id_token;
 
             // If this is a valid claim
-            if ($this->verifyJWTclaims($claims, $accessToken)) {
+            if ($this->verifyJWTclaims($claims, $accessToken, $this->decodeJWT($id_token, 0))) {
 
                 // Clean up the session a little
                 $this->unsetNonce();
@@ -923,12 +923,13 @@ class OpenIDConnectClient
     /**
      * @param object $claims
      * @param string|null $accessToken
+     * @param object|null $idTokenHeader
      * @return bool
      */
-    protected function verifyJWTclaims($claims, $accessToken = null) {
-        if(isset($claims->at_hash) && isset($accessToken)){
-            if(isset($this->getIdTokenHeader()->alg) && $this->getIdTokenHeader()->alg !== 'none'){
-                $bit = substr($this->getIdTokenHeader()->alg, 2, 3);
+    protected function verifyJWTclaims($claims, $accessToken = null, $idTokenHeader = null) {
+        if(isset($claims->at_hash) && isset($accessToken) && isset($idTokenHeader)){
+            if(isset($idTokenHeader->alg) && $idTokenHeader->alg != 'none'){
+                $bit = substr($idTokenHeader->alg, 2, 3);
             }else{
                 // TODO: Error case. throw exception???
                 $bit = '256';
