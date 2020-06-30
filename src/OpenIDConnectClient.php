@@ -175,6 +175,11 @@ class OpenIDConnectClient
     private $authParams = array();
 
     /**
+     * @var array holds token request parameters
+     */
+    private $tokenParams = array();
+
+    /**
      * @var array holds additional registration parameters for example post_logout_redirect_uris
      */
     private $registrationParams = array();
@@ -452,6 +457,13 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param array $param - example: code_verifier='xyz'
+     */
+    public function addTokenParam($param) {
+        $this->tokenParams = array_merge($this->tokenParams, (array)$param);
+    }
+
+    /**
      * @param array $param - example: post_logout_redirect_uris=[http://example.com/successful-logout]
      */
     public function addRegistrationParam($param) {
@@ -703,13 +715,13 @@ class OpenIDConnectClient
 
         $grant_type = 'authorization_code';
 
-        $token_params = array(
+        $token_params = array_merge($this->tokenParams, array(
             'grant_type' => $grant_type,
             'code' => $code,
             'redirect_uri' => $this->getRedirectURL(),
             'client_id' => $this->clientID,
             'client_secret' => $this->clientSecret
-        );
+        ));
 
         # Consider Basic authentication if provider config is set this way
         if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
