@@ -1141,7 +1141,7 @@ class OpenIDConnectClient
         $this->responseCode = $info['http_code'];
 
         if ($output === false) {
-            throw new OpenIDConnectClientException('Curl error: ' . curl_error($ch));
+            throw new OpenIDConnectClientException('Curl error: (' . curl_errno($ch) . ') ' . curl_error($ch));
         }
 
         // Close the cURL resource, and free system resources
