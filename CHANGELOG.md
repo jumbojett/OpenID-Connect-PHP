@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-*
+* Add support for MS Azure Active Directory B2C user flows 
 
 ### Changed
 * Fix at_hash verification #200
