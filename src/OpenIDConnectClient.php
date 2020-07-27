@@ -580,9 +580,18 @@ class OpenIDConnectClient
      * Used for arbitrary value generation for nonces and state
      *
      * @return string
+     * @throws OpenIDConnectClientException
      */
     protected function generateRandString() {
-        return md5(uniqid(rand(), TRUE));
+        // Error and Exception need to be catched in this order, see https://github.com/paragonie/random_compat/blob/master/README.md
+        // random_compat polyfill library should be removed if support for PHP versions < 7 is dropped
+        try {
+            return \bin2hex(\random_bytes(16));
+        } catch (Error $e) {
+            throw new OpenIDConnectClientException('Random token generation failed.');
+        } catch (Exception $e) {
+            throw new OpenIDConnectClientException('Random token generation failed.');
+        };
     }
 
     /**
