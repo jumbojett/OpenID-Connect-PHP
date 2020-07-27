@@ -185,6 +185,12 @@ class OpenIDConnectClient
     private $wellKnown = false;
 
     /**
+     * @var mixed holds well-known opendid configuration parameters, like policy for MS Azure AD B2C User Flow  
+     * @see https://docs.microsoft.com/en-us/azure/active-directory-b2c/user-flow-overview 
+     */
+    private $wellKnownConfigParameters = array();
+
+    /**
      * @var int timeout (seconds)
      */
     protected $timeOut = 60;
@@ -500,6 +506,9 @@ class OpenIDConnectClient
         // This is also known as auto "discovery"
         if(!$this->wellKnown) {
             $well_known_config_url = rtrim($this->getProviderURL(), '/') . '/.well-known/openid-configuration';
+            if (count($this->wellKnownConfigParameters) > 0){
+                $well_known_config_url .= '?' .  http_build_query($this->wellKnownConfigParameters) ;
+            }
             $this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
         }
 
@@ -518,6 +527,16 @@ class OpenIDConnectClient
         }
 
         throw new OpenIDConnectClientException("The provider {$param} could not be fetched. Make sure your provider has a well known configuration available.");
+    }
+
+    /**
+     * Set optionnal parameters for .well-known/openid-configuration 
+     *
+     * @param string $param
+     *
+     */
+    public function setWellKnownConfigParameters(array $params = []){
+        $this->wellKnownConfigParameters=$params;
     }
 
 
