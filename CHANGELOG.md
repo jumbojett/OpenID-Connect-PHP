@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Fix at_hash verification #200
 * Getters for public parameters #204
 * Removed client ID query parameter when making a token request using Basic Auth
+* Added scope parameter to refresh token request
 
 ### Removed
 * Removed explicit content-length header - caused issues with proxy servers
