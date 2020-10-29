@@ -129,6 +129,20 @@ if (!$data->active) {
 
 ```
 
+## Example 8: PKCE Client ##
+
+```php
+use Jumbojett\OpenIDConnectClient;
+
+$oidc = new OpenIDConnectClient('https://id.provider.com',
+                                'ClientIDHere',
+                                null);
+$oidc->setCodeChallengeMethod('S256');
+$oidc->authenticate();
+$name = $oidc->requestUserInfo('given_name');
+
+```
+
 
 ## Development Environments ##
 In some cases you may need to disable SSL security on on your development systems.

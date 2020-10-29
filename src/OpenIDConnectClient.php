@@ -227,6 +227,17 @@ class OpenIDConnectClient
     protected $enc_type = PHP_QUERY_RFC1738;
 
     /**
+     * @var string holds code challenge method for PKCE mode
+     * @see https://tools.ietf.org/html/rfc7636
+     */
+    private $codeChallengeMethod = false;
+
+    /**
+     * @var array holds PKCE supported algorithms
+     */
+    private $pkceAlgs = array('S256' => 'sha256', 'plain' => false);
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -640,6 +651,21 @@ class OpenIDConnectClient
             $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->responseTypes)));
         }
 
+        // If the client supports Proof Key for Code Exchange (PKCE)
+        if (!empty($this->getCodeChallengeMethod()) && in_array($this->getCodeChallengeMethod(), $this->getProviderConfigValue('code_challenge_methods_supported'))) {
+            $codeVerifier = bin2hex(random_bytes(64));
+            $this->setCodeVerifier($codeVerifier);
+            if (!empty($this->pkceAlgs[$this->getCodeChallengeMethod()])) {
+                $codeChallenge = rtrim(strtr(base64_encode(hash($this->pkceAlgs[$this->getCodeChallengeMethod()], $codeVerifier, true)), '+/', '-_'), '=');
+            } else {
+                $codeChallenge = $codeVerifier;
+            }
+            $auth_params = array_merge($auth_params, array(
+                'code_challenge' => $codeChallenge,
+                'code_challenge_method' => $this->getCodeChallengeMethod()
+            ));
+        }
+
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&', $this->enc_type);
 
         $this->commitSession();
@@ -735,6 +761,15 @@ class OpenIDConnectClient
             $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             unset($token_params['client_secret']);
 	        unset($token_params['client_id']);
+        }
+
+        if (!empty($this->getCodeVerifier())) {
+            $headers = [];
+            unset($token_params['client_secret']);
+            $token_params = array_merge($token_params, array(
+                'client_id' => $this->clientID,
+                'code_verifier' => $this->getCodeVerifier()
+            ));
         }
 
         // Convert token params to string format
@@ -1580,6 +1615,35 @@ class OpenIDConnectClient
     }
 
     /**
+     * Stores $codeVerifier
+     *
+     * @param string $codeVerifier
+     * @return string
+     */
+    protected function setCodeVerifier($codeVerifier) {
+        $this->setSessionKey('openid_connect_code_verifier', $codeVerifier);
+        return $codeVerifier;
+    }
+
+    /**
+     * Get stored codeVerifier
+     *
+     * @return string
+     */
+    protected function getCodeVerifier() {
+        return $this->getSessionKey('openid_connect_code_verifier');
+    }
+
+    /**
+     * Cleanup state
+     *
+     * @return void
+     */
+    protected function unsetCodeVerifier() {
+        $this->unsetSessionKey('openid_connect_code_verifier');
+    }
+
+    /**
      * Get the response code from last action/curl request.
      *
      * @return int
@@ -1731,5 +1795,19 @@ class OpenIDConnectClient
     public function getLeeway()
     {
         return $this->leeway;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCodeChallengeMethod() {
+        return $this->codeChallengeMethod;
+    }
+
+    /**
+     * @param string $codeChallengeMethod
+     */
+    public function setCodeChallengeMethod($codeChallengeMethod) {
+        $this->codeChallengeMethod = $codeChallengeMethod;
     }
 }
