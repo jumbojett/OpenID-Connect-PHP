@@ -227,6 +227,11 @@ class OpenIDConnectClient
     protected $enc_type = PHP_QUERY_RFC1738;
 
     /**
+     * @var bool When TRUE use the openid token internal information
+     */
+    private $isUserInfoToken = false;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -268,6 +273,13 @@ class OpenIDConnectClient
      */
     public function setResponseTypes($response_types) {
         $this->responseTypes = array_merge($this->responseTypes, (array)$response_types);
+    }
+
+    /**
+     * @param $value set if the OpenId Token has the user information
+     */
+    public function setIsUserInfoToken($value) {
+        $this->isUserInfoToken = $value
     }
 
     /**
@@ -1015,7 +1027,15 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function requestUserInfo($attribute = null) {
-
+        
+        if ($this->isUserInfoToken) {
+            $value = $this->getAccessTokenPayload()->{$attribute}
+            if ($value == null) {
+                $value = $this->getIdTokenPayload()->{$attribute};
+            }
+            return $v
+        }
+        
         $user_info_endpoint = $this->getProviderConfigValue('userinfo_endpoint');
         $schema = 'openid';
 
@@ -1027,8 +1047,11 @@ class OpenIDConnectClient
             'Accept: application/json'];
 
         $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
-        if ($this->getResponseCode() <> 200) {
-            throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$this->getResponseCode());
+        
+        //Success http code could change between vendor. Any 2XX will be accepted as success
+        $code = (int)$this->getResponseCode();
+        if ($code >= 300 || $code <= 100) {
+            throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$code);
         }
         $this->userInfo = $user_json;
 
