@@ -763,7 +763,7 @@ class OpenIDConnectClient
 	        unset($token_params['client_id']);
         }
 
-        if (!empty($this->getCodeVerifier())) {
+        if (!empty($this->getCodeChallengeMethod()) && !empty($this->getCodeVerifier())) {
             $headers = [];
             unset($token_params['client_secret']);
             $token_params = array_merge($token_params, array(
