@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-* Support for [PKCE](https://tools.ietf.org/html/rfc7636). Currentlly the supported methods are 'plain' and 'S256'.
+* Support for [PKCE](https://tools.ietf.org/html/rfc7636). Currently the supported methods are 'plain' and 'S256'.
 
 ## [0.9.1]
 
