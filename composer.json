@@ -5,6 +5,7 @@
     "require": {
         "php": ">=5.4",
         "phpseclib/phpseclib" : "~2.0",
+        "paragonie/random_compat":"2.0.19",
         "ext-json": "*",
         "ext-curl": "*",
         "paragonie/random_compat": ">=2"
