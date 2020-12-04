@@ -225,6 +225,9 @@ class OpenIDConnectClient
      */
     private $redirectURL;
 
+    /**
+     * @var int defines which URL-encoding http_build_query() uses
+     */
     protected $encType = PHP_QUERY_RFC1738;
 
     /**
