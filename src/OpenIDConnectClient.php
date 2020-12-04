@@ -1694,7 +1694,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * Where has_equals is not available, this provides a timing-attack safe string comparison
+     * Where hash_equals is not available, this provides a timing-attack safe string comparison
      * @param string $str1
      * @param string $str2
      * @return bool
