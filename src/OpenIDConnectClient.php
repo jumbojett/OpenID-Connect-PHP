@@ -225,7 +225,7 @@ class OpenIDConnectClient
      */
     private $redirectURL;
 
-    protected $enc_type = PHP_QUERY_RFC1738;
+    protected $encType = PHP_QUERY_RFC1738;
 
     /**
      * @var string holds code challenge method for PKCE mode
@@ -450,7 +450,7 @@ class OpenIDConnectClient
                 'post_logout_redirect_uri' => $redirect];
         }
 
-        $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, null, '&', $this->enc_type);
+        $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, null, '&', $this->encType);
         $this->redirect($signout_endpoint);
     }
 
@@ -675,7 +675,7 @@ class OpenIDConnectClient
             ]);
         }
 
-        $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&', $this->enc_type);
+        $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&', $this->encType);
 
         $this->commitSession();
         $this->redirect($auth_endpoint);
@@ -701,7 +701,7 @@ class OpenIDConnectClient
         ];
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&', $this->enc_type);
+        $post_params = http_build_query($post_data, null, '&', $this->encType);
 
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
     }
@@ -735,7 +735,7 @@ class OpenIDConnectClient
         }
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&', $this->enc_type);
+        $post_params = http_build_query($post_data, null, '&', $this->encType);
 
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
     }
@@ -781,7 +781,7 @@ class OpenIDConnectClient
         }
 
         // Convert token params to string format
-        $token_params = http_build_query($token_params, null, '&', $this->enc_type);
+        $token_params = http_build_query($token_params, null, '&', $this->encType);
 
         $this->tokenResponse = json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
 
@@ -808,7 +808,7 @@ class OpenIDConnectClient
         ];
 
         // Convert token params to string format
-        $token_params = http_build_query($token_params, null, '&', $this->enc_type);
+        $token_params = http_build_query($token_params, null, '&', $this->encType);
 
         $json = json_decode($this->fetchURL($token_endpoint, $token_params));
 
@@ -829,7 +829,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      * @return object
      */
-    private function get_key_for_header($keys, $header) {
+    private function getKeyForHeader($keys, $header) {
         foreach ($keys as $key) {
             if ($key->kty === 'RSA') {
                 if (!isset($header->kid) || $key->kid === $header->kid) {
@@ -967,7 +967,7 @@ class OpenIDConnectClient
                 $signatureType = $header->alg === 'PS256' ? 'PSS' : '';
 
                 $verified = $this->verifyRSAJWTsignature($hashtype,
-                    $this->get_key_for_header($jwks->keys, $header),
+                    $this->getKeyForHeader($jwks->keys, $header),
                     $payload, $signature, $signatureType);
                 break;
             case 'HS256':
@@ -1739,11 +1739,11 @@ class OpenIDConnectClient
         switch ($curEncoding)
         {
             case PHP_QUERY_RFC1738:
-                $this->enc_type = PHP_QUERY_RFC1738;
+                $this->encType = PHP_QUERY_RFC1738;
                 break;
 
             case PHP_QUERY_RFC3986:
-                $this->enc_type = PHP_QUERY_RFC3986;
+                $this->encType = PHP_QUERY_RFC3986;
                 break;
 
         	default:
