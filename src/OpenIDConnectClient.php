@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * Copyright MITRE 2019
+ * Copyright MITRE 2020
  *
  * OpenIDConnectClient for PHP5
  * Author: Michael Jett <mjett@mitre.org>
@@ -132,7 +132,7 @@ class OpenIDConnectClient
     /**
      * @var string if we acquire an access token it will be stored here
      */
-    private $accessToken;
+    protected $accessToken;
 
     /**
      * @var string if we acquire a refresh token it will be stored here
@@ -142,7 +142,7 @@ class OpenIDConnectClient
     /**
      * @var string if we acquire an id token it will be stored here
      */
-    private $idToken;
+    protected $idToken;
 
     /**
      * @var string stores the token response
@@ -185,6 +185,12 @@ class OpenIDConnectClient
     private $wellKnown = false;
 
     /**
+     * @var mixed holds well-known opendid configuration parameters, like policy for MS Azure AD B2C User Flow  
+     * @see https://docs.microsoft.com/en-us/azure/active-directory-b2c/user-flow-overview 
+     */
+    private $wellKnownConfigParameters = array();
+
+    /**
      * @var int timeout (seconds)
      */
     protected $timeOut = 60;
@@ -202,7 +208,7 @@ class OpenIDConnectClient
     /**
      * @var array holds verified jwt claims
      */
-    private $verifiedClaims = array();
+    protected $verifiedClaims = array();
 
     /**
      * @var callable validator function for issuer claim
@@ -218,7 +224,18 @@ class OpenIDConnectClient
      */
     private $redirectURL;
 
-    private $enc_type = PHP_QUERY_RFC1738;
+    protected $enc_type = PHP_QUERY_RFC1738;
+
+    /**
+     * @var string holds code challenge method for PKCE mode
+     * @see https://tools.ietf.org/html/rfc7636
+     */
+    private $codeChallengeMethod = false;
+
+    /**
+     * @var array holds PKCE supported algorithms
+     */
+    private $pkceAlgs = array('S256' => 'sha256', 'plain' => false);
 
     /**
      * @param $provider_url string optional
@@ -316,6 +333,12 @@ class OpenIDConnectClient
                 user_error('Warning: JWT signature verification unavailable.');
             }
 
+            // Save the id token
+            $this->idToken = $token_json->id_token;
+
+            // Save the access token
+            $this->accessToken = $token_json->access_token;
+
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims, $token_json->access_token)) {
 
@@ -324,12 +347,6 @@ class OpenIDConnectClient
 
                 // Save the full response
                 $this->tokenResponse = $token_json;
-
-                // Save the id token
-                $this->idToken = $token_json->id_token;
-
-                // Save the access token
-                $this->accessToken = $token_json->access_token;
 
                 // Save the verified claims
                 $this->verifiedClaims = $claims;
@@ -378,14 +395,14 @@ class OpenIDConnectClient
                 user_error('Warning: JWT signature verification unavailable.');
             }
 
+            // Save the id token
+            $this->idToken = $id_token;
+
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims, $accessToken)) {
 
                 // Clean up the session a little
                 $this->unsetNonce();
-
-                // Save the id token
-                $this->idToken = $id_token;
 
                 // Save the verified claims
                 $this->verifiedClaims = $claims;
@@ -414,7 +431,7 @@ class OpenIDConnectClient
      * (the client application).
      *
      * @param string $accessToken ID token (obtained at login)
-     * @param string $redirect URL to which the RP is requesting that the End-User's User Agent
+     * @param string|null $redirect URL to which the RP is requesting that the End-User's User Agent
      * be redirected after a logout has been performed. The value MUST have been previously
      * registered with the OP. Value can be null.
      *
@@ -474,7 +491,7 @@ class OpenIDConnectClient
      * @return string
      *
      */
-    private function getProviderConfigValue($param, $default = null) {
+    protected function getProviderConfigValue($param, $default = null) {
 
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
@@ -500,6 +517,9 @@ class OpenIDConnectClient
         // This is also known as auto "discovery"
         if(!$this->wellKnown) {
             $well_known_config_url = rtrim($this->getProviderURL(), '/') . '/.well-known/openid-configuration';
+            if (count($this->wellKnownConfigParameters) > 0){
+                $well_known_config_url .= '?' .  http_build_query($this->wellKnownConfigParameters) ;
+            }
             $this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
         }
 
@@ -518,6 +538,16 @@ class OpenIDConnectClient
         }
 
         throw new OpenIDConnectClientException("The provider {$param} could not be fetched. Make sure your provider has a well known configuration available.");
+    }
+
+    /**
+     * Set optionnal parameters for .well-known/openid-configuration 
+     *
+     * @param string $param
+     *
+     */
+    public function setWellKnownConfigParameters(array $params = []){
+        $this->wellKnownConfigParameters=$params;
     }
 
 
@@ -580,9 +610,18 @@ class OpenIDConnectClient
      * Used for arbitrary value generation for nonces and state
      *
      * @return string
+     * @throws OpenIDConnectClientException
      */
     protected function generateRandString() {
-        return md5(uniqid(rand(), TRUE));
+        // Error and Exception need to be catched in this order, see https://github.com/paragonie/random_compat/blob/master/README.md
+        // random_compat polyfill library should be removed if support for PHP versions < 7 is dropped
+        try {
+            return \bin2hex(\random_bytes(16));
+        } catch (Error $e) {
+            throw new OpenIDConnectClientException('Random token generation failed.');
+        } catch (Exception $e) {
+            throw new OpenIDConnectClientException('Random token generation failed.');
+        };
     }
 
     /**
@@ -613,12 +652,27 @@ class OpenIDConnectClient
 
         // If the client has been registered with additional scopes
         if (count($this->scopes) > 0) {
-            $auth_params = array_merge($auth_params, array('scope' => implode(' ', $this->scopes)));
+            $auth_params = array_merge($auth_params, array('scope' => implode(' ', array_merge($this->scopes, array('openid')))));
         }
 
         // If the client has been registered with additional response types
         if (count($this->responseTypes) > 0) {
             $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->responseTypes)));
+        }
+
+        // If the client supports Proof Key for Code Exchange (PKCE)
+        if (!empty($this->getCodeChallengeMethod()) && in_array($this->getCodeChallengeMethod(), $this->getProviderConfigValue('code_challenge_methods_supported'))) {
+            $codeVerifier = bin2hex(random_bytes(64));
+            $this->setCodeVerifier($codeVerifier);
+            if (!empty($this->pkceAlgs[$this->getCodeChallengeMethod()])) {
+                $codeChallenge = rtrim(strtr(base64_encode(hash($this->pkceAlgs[$this->getCodeChallengeMethod()], $codeVerifier, true)), '+/', '-_'), '=');
+            } else {
+                $codeChallenge = $codeVerifier;
+            }
+            $auth_params = array_merge($auth_params, array(
+                'code_challenge' => $codeChallenge,
+                'code_challenge_method' => $this->getCodeChallengeMethod()
+            ));
         }
 
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&', $this->enc_type);
@@ -695,7 +749,7 @@ class OpenIDConnectClient
      * @return mixed
      * @throws OpenIDConnectClientException
      */
-    private function requestTokens($code) {
+    protected function requestTokens($code) {
         $token_endpoint = $this->getProviderConfigValue('token_endpoint');
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
 
@@ -713,15 +767,26 @@ class OpenIDConnectClient
 
         # Consider Basic authentication if provider config is set this way
         if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
-            $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret)];
+            $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             unset($token_params['client_secret']);
+	        unset($token_params['client_id']);
+        }
+
+        if (!empty($this->getCodeChallengeMethod()) && !empty($this->getCodeVerifier())) {
+            $headers = [];
+            unset($token_params['client_secret']);
+            $token_params = array_merge($token_params, array(
+                'client_id' => $this->clientID,
+                'code_verifier' => $this->getCodeVerifier()
+            ));
         }
 
         // Convert token params to string format
         $token_params = http_build_query($token_params, null, '&', $this->enc_type);
 
-        return json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
+        $this->tokenResponse = json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
 
+        return $this->tokenResponse;
     }
 
     /**
@@ -803,10 +868,11 @@ class OpenIDConnectClient
      * @param object $key
      * @param $payload
      * @param $signature
+     * @param $signatureType
      * @return bool
      * @throws OpenIDConnectClientException
      */
-    private function verifyRSAJWTsignature($hashtype, $key, $payload, $signature) {
+    private function verifyRSAJWTsignature($hashtype, $key, $payload, $signature, $signatureType) {
         if (!class_exists('\phpseclib\Crypt\RSA') && !class_exists('Crypt_RSA')) {
             throw new OpenIDConnectClientException('Crypt_RSA support unavailable.');
         }
@@ -824,13 +890,19 @@ class OpenIDConnectClient
         if(class_exists('Crypt_RSA', false)) {
             $rsa = new Crypt_RSA();
             $rsa->setHash($hashtype);
+            if ($signatureType === 'PSS') {
+                $rsa->setMGFHash($hashtype);
+            }
             $rsa->loadKey($public_key_xml, Crypt_RSA::PUBLIC_FORMAT_XML);
-            $rsa->signatureMode = Crypt_RSA::SIGNATURE_PKCS1;
+            $rsa->signatureMode = $signatureType === 'PSS' ? Crypt_RSA::SIGNATURE_PSS : Crypt_RSA::SIGNATURE_PKCS1;
         } else {
             $rsa = new \phpseclib\Crypt\RSA();
             $rsa->setHash($hashtype);
+            if ($signatureType === 'PSS') {
+                $rsa->setMGFHash($hashtype);
+            }
             $rsa->loadKey($public_key_xml, \phpseclib\Crypt\RSA::PUBLIC_FORMAT_XML);
-            $rsa->signatureMode = \phpseclib\Crypt\RSA::SIGNATURE_PKCS1;
+            $rsa->signatureMode = $signatureType === 'PSS' ? \phpseclib\Crypt\RSA::SIGNATURE_PSS : \phpseclib\Crypt\RSA::SIGNATURE_PKCS1;
         }
         return $rsa->verify($payload, $signature);
     }
@@ -889,13 +961,15 @@ class OpenIDConnectClient
         }
         switch ($header->alg) {
             case 'RS256':
+            case 'PS256':
             case 'RS384':
             case 'RS512':
                 $hashtype = 'sha' . substr($header->alg, 2);
+                $signatureType = $header->alg === 'PS256' ? 'PSS' : '';
 
                 $verified = $this->verifyRSAJWTsignature($hashtype,
                     $this->get_key_for_header($jwks->keys, $header),
-                    $payload, $signature);
+                    $payload, $signature, $signatureType);
                 break;
             case 'HS256':
             case 'HS512':
@@ -913,26 +987,25 @@ class OpenIDConnectClient
      * @param object $claims
      * @param string|null $accessToken
      * @return bool
-     * @throws OpenIDConnectClientException
      */
-    private function verifyJWTclaims($claims, $accessToken = null) {
+    protected function verifyJWTclaims($claims, $accessToken = null) {
         if(isset($claims->at_hash) && isset($accessToken)){
-            if(isset($this->getAccessTokenHeader()->alg) && $this->getAccessTokenHeader()->alg !== 'none'){
-                $bit = substr($this->getAccessTokenHeader()->alg, 2, 3);
+            if(isset($this->getIdTokenHeader()->alg) && $this->getIdTokenHeader()->alg !== 'none'){
+                $bit = substr($this->getIdTokenHeader()->alg, 2, 3);
             }else{
                 // TODO: Error case. throw exception???
                 $bit = '256';
             }
             $len = ((int)$bit)/16;
-            $expecte_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
+            $expected_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
         return (($this->issuerValidator->__invoke($claims->iss))
             && (($claims->aud === $this->clientID) || in_array($this->clientID, $claims->aud, true))
             && ($claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((gettype($claims->exp) === 'integer') && ($claims->exp >= time() - $this->leeway)))
             && ( !isset($claims->nbf) || ((gettype($claims->nbf) === 'integer') && ($claims->nbf <= time() + $this->leeway)))
-            && ( !isset($claims->at_hash) || $claims->at_hash === $expecte_at_hash )
-    );
+            && ( !isset($claims->at_hash) || $claims->at_hash === $expected_at_hash )
+        );
     }
 
     /**
@@ -951,7 +1024,7 @@ class OpenIDConnectClient
      * @param int $section the section we would like to decode
      * @return object
      */
-    private function decodeJWT($jwt, $section = 0) {
+    protected function decodeJWT($jwt, $section = 0) {
 
         $parts = explode('.', $jwt);
         return json_decode(base64url_decode($parts[$section]));
@@ -959,27 +1032,27 @@ class OpenIDConnectClient
 
     /**
      *
-     * @param string $attribute optional
+     * @param string|null $attribute optional
      *
-     * Attribute        Type    Description
-     * user_id            string    REQUIRED Identifier for the End-User at the Issuer.
-     * name            string    End-User's full name in displayable form including all name parts, ordered according to End-User's locale and preferences.
-     * given_name        string    Given name or first name of the End-User.
-     * family_name        string    Surname or last name of the End-User.
-     * middle_name        string    Middle name of the End-User.
-     * nickname        string    Casual name of the End-User that may or may not be the same as the given_name. For instance, a nickname value of Mike might be returned alongside a given_name value of Michael.
-     * profile            string    URL of End-User's profile page.
-     * picture            string    URL of the End-User's profile picture.
-     * website            string    URL of End-User's web page or blog.
-     * email            string    The End-User's preferred e-mail address.
-     * verified        boolean    True if the End-User's e-mail address has been verified; otherwise false.
-     * gender            string    The End-User's gender: Values defined by this specification are female and male. Other values MAY be used when neither of the defined values are applicable.
-     * birthday        string    The End-User's birthday, represented as a date string in MM/DD/YYYY format. The year MAY be 0000, indicating that it is omitted.
-     * zoneinfo        string    String from zoneinfo [zoneinfo] time zone database. For example, Europe/Paris or America/Los_Angeles.
-     * locale            string    The End-User's locale, represented as a BCP47 [RFC5646] language tag. This is typically an ISO 639-1 Alpha-2 [ISO639‑1] language code in lowercase and an ISO 3166-1 Alpha-2 [ISO3166‑1] country code in uppercase, separated by a dash. For example, en-US or fr-CA. As a compatibility note, some implementations have used an underscore as the separator rather than a dash, for example, en_US; Implementations MAY choose to accept this locale syntax as well.
-     * phone_number    string    The End-User's preferred telephone number. E.164 [E.164] is RECOMMENDED as the format of this Claim. For example, +1 (425) 555-1212 or +56 (2) 687 2400.
-     * address            JSON object    The End-User's preferred address. The value of the address member is a JSON [RFC4627] structure containing some or all of the members defined in Section 2.4.2.1.
-     * updated_time    string    Time the End-User's information was last updated, represented as a RFC 3339 [RFC3339] datetime. For example, 2011-01-03T23:58:42+0000.
+     * Attribute        Type        Description
+     * user_id          string      REQUIRED Identifier for the End-User at the Issuer.
+     * name             string      End-User's full name in displayable form including all name parts, ordered according to End-User's locale and preferences.
+     * given_name       string      Given name or first name of the End-User.
+     * family_name      string      Surname or last name of the End-User.
+     * middle_name      string      Middle name of the End-User.
+     * nickname         string      Casual name of the End-User that may or may not be the same as the given_name. For instance, a nickname value of Mike might be returned alongside a given_name value of Michael.
+     * profile          string      URL of End-User's profile page.
+     * picture          string      URL of the End-User's profile picture.
+     * website          string      URL of End-User's web page or blog.
+     * email            string      The End-User's preferred e-mail address.
+     * verified         boolean     True if the End-User's e-mail address has been verified; otherwise false.
+     * gender           string      The End-User's gender: Values defined by this specification are female and male. Other values MAY be used when neither of the defined values are applicable.
+     * birthday         string      The End-User's birthday, represented as a date string in MM/DD/YYYY format. The year MAY be 0000, indicating that it is omitted.
+     * zoneinfo         string      String from zoneinfo [zoneinfo] time zone database. For example, Europe/Paris or America/Los_Angeles.
+     * locale           string      The End-User's locale, represented as a BCP47 [RFC5646] language tag. This is typically an ISO 639-1 Alpha-2 [ISO639‑1] language code in lowercase and an ISO 3166-1 Alpha-2 [ISO3166‑1] country code in uppercase, separated by a dash. For example, en-US or fr-CA. As a compatibility note, some implementations have used an underscore as the separator rather than a dash, for example, en_US; Implementations MAY choose to accept this locale syntax as well.
+     * phone_number     string      The End-User's preferred telephone number. E.164 [E.164] is RECOMMENDED as the format of this Claim. For example, +1 (425) 555-1212 or +56 (2) 687 2400.
+     * address          JSON object The End-User's preferred address. The value of the address member is a JSON [RFC4627] structure containing some or all of the members defined in Section 2.4.2.1.
+     * updated_time     string      Time the End-User's information was last updated, represented as a RFC 3339 [RFC3339] datetime. For example, 2011-01-03T23:58:42+0000.
      *
      * @return mixed
      *
@@ -998,14 +1071,16 @@ class OpenIDConnectClient
             'Accept: application/json'];
 
         $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
-
+        if ($this->getResponseCode() <> 200) {
+            throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$this->getResponseCode());
+        }
         $this->userInfo = $user_json;
 
         if($attribute === null) {
             return $this->userInfo;
         }
 
-        if (array_key_exists($attribute, $this->userInfo)) {
+        if (property_exists($this->userInfo, $attribute)) {
             return $this->userInfo->$attribute;
         }
 
@@ -1014,19 +1089,19 @@ class OpenIDConnectClient
 
     /**
      *
-     * @param string $attribute optional
+     * @param string|null $attribute optional
      *
      * Attribute        Type    Description
-     * exp            int    Expires at
-     * nbf            int    Not before
-     * ver        string    Version
-     * iss        string    Issuer
-     * sub        string    Subject
-     * aud        string    Audience
-     * nonce            string    nonce
-     * iat            int    Issued At
-     * auth_time            int    Authenatication time
-     * oid            string    Object id
+     * exp              int     Expires at
+     * nbf              int     Not before
+     * ver              string  Version
+     * iss              string  Issuer
+     * sub              string  Subject
+     * aud              string  Audience
+     * nonce            string  nonce
+     * iat              int     Issued At
+     * auth_time        int     Authenatication time
+     * oid              string  Object id
      *
      * @return mixed
      *
@@ -1037,7 +1112,7 @@ class OpenIDConnectClient
             return $this->verifiedClaims;
         }
 
-        if (array_key_exists($attribute, $this->verifiedClaims)) {
+        if (property_exists($this->verifiedClaims, $attribute)) {
             return $this->verifiedClaims->$attribute;
         }
 
@@ -1074,7 +1149,6 @@ class OpenIDConnectClient
 
             // Add POST-specific headers
             $headers[] = "Content-Type: {$content_type}";
-            $headers[] = 'Content-Length: ' . strlen($post_body);
 
         }
 
@@ -1130,7 +1204,7 @@ class OpenIDConnectClient
         $this->responseCode = $info['http_code'];
 
         if ($output === false) {
-            throw new OpenIDConnectClientException('Curl error: ' . curl_error($ch));
+            throw new OpenIDConnectClientException('Curl error: (' . curl_errno($ch) . ') ' . curl_error($ch));
         }
 
         // Close the cURL resource, and free system resources
@@ -1351,7 +1425,7 @@ class OpenIDConnectClient
 
         // Convert token params to string format
         $post_params = http_build_query($post_data, null, '&');
-        $headers = ['Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret),
+        $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
             'Accept: application/json'];
 
         return json_decode($this->fetchURL($introspection_endpoint, $post_params, $headers));
@@ -1382,7 +1456,7 @@ class OpenIDConnectClient
 
         // Convert token params to string format
         $post_params = http_build_query($post_data, null, '&');
-        $headers = ['Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret),
+        $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
             'Accept: application/json'];
 
         return json_decode($this->fetchURL($revocation_endpoint, $post_params, $headers));
@@ -1550,6 +1624,35 @@ class OpenIDConnectClient
     }
 
     /**
+     * Stores $codeVerifier
+     *
+     * @param string $codeVerifier
+     * @return string
+     */
+    protected function setCodeVerifier($codeVerifier) {
+        $this->setSessionKey('openid_connect_code_verifier', $codeVerifier);
+        return $codeVerifier;
+    }
+
+    /**
+     * Get stored codeVerifier
+     *
+     * @return string
+     */
+    protected function getCodeVerifier() {
+        return $this->getSessionKey('openid_connect_code_verifier');
+    }
+
+    /**
+     * Cleanup state
+     *
+     * @return void
+     */
+    protected function unsetCodeVerifier() {
+        $this->unsetSessionKey('openid_connect_code_verifier');
+    }
+
+    /**
      * Get the response code from last action/curl request.
      *
      * @return int
@@ -1661,5 +1764,59 @@ class OpenIDConnectClient
                 break;
         }
 
+    }
+
+    /**
+     * @return array
+     */
+    public function getScopes()
+    {
+        return $this->scopes;
+    }
+
+    /**
+     * @return array
+     */
+    public function getResponseTypes()
+    {
+        return $this->responseTypes;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAuthParams()
+    {
+        return $this->authParams;
+    }
+
+    /**
+     * @return callable
+     */
+    public function getIssuerValidator()
+    {
+        return $this->issuerValidator;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLeeway()
+    {
+        return $this->leeway;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCodeChallengeMethod() {
+        return $this->codeChallengeMethod;
+    }
+
+    /**
+     * @param string $codeChallengeMethod
+     */
+    public function setCodeChallengeMethod($codeChallengeMethod) {
+        $this->codeChallengeMethod = $codeChallengeMethod;
     }
 }

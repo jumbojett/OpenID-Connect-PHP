@@ -4,9 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [0.9.2]
 
 ### Added
+* Support for [PKCE](https://tools.ietf.org/html/rfc7636). Currently the supported methods are 'plain' and 'S256'.
+
+## [0.9.1]
+
+### Added
+* Add support for MS Azure Active Directory B2C user flows 
+
+### Changed
+* Fix at_hash verification #200
+* Getters for public parameters #204
+* Removed client ID query parameter when making a token request using Basic Auth
+* Use of `random_bytes()` for token generation instead of `uniqid()`; polyfill for PHP < 7.0 provided.
+
+### Removed
+* Removed explicit content-length header - caused issues with proxy servers
+
+
+## [0.9.0]
+
+### Added
+* php 7.4 deprecates array_key_exists on objects, use property_exists in getVerifiedClaims and requestUserInfo
 * Adding a header to indicate JSON as the return type for userinfo endpoint #151
 * ~Updated OpenIDConnectClient to conditionally verify nonce #146~
 * Add possibility to change enc_type parameter for http_build_query #155
@@ -14,6 +35,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Add optional parameters clientId/clientSecret for introspection #157 & #158
 * Adding OAuth 2.0 Token Revocation #160
 * Adding issuer validator #145
+* Adding signing algorithm PS256 #180
+* Check http status of request user info #186
+* URL encode clientId and clientSecret when using basic authentication, according to https://tools.ietf.org/html/rfc6749#section-2.3.1 #192
+* Adjust PHPDoc to state that null is also allowed #193
 
 ### Changed
 * Bugfix/code cleanup #152
@@ -26,9 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * Fix indent #e9cdf56
   * Cleanup conditional code flow for better readability #107f3fb
  * Added strict type comparisons #167
-
-### Removed
-*
+* Bugfix: required `openid` scope was omitted when additional scopes were registered using `addScope` method. This resulted in failing OpenID process.
 
 ## [0.8.0]
 
