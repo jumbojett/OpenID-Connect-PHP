@@ -56,9 +56,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  * Added strict type comparisons #167
 * Bugfix: required `openid` scope was omitted when additional scopes were registered using `addScope` method. This resulted in failing OpenID process.
 
-### Removed
-*
-
 ## [0.8.0]
 
 ### Added

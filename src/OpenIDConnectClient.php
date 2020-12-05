@@ -603,7 +603,7 @@ class OpenIDConnectClient
 
         $port = (443 === $port) || (80 === $port) ? '' : ':' . $port;
 	    
-	$uriSplit = explode("?", $_SERVER['REQUEST_URI']);
+		$uriSplit = explode("?", $_SERVER['REQUEST_URI']);
 
         return sprintf('%s://%s%s/%s', $protocol, $host, $port, @trim(reset($uriSplit), '/'));
     }
