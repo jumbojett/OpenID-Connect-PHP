@@ -227,6 +227,11 @@ class OpenIDConnectClient
     protected $enc_type = PHP_QUERY_RFC1738;
 
     /**
+     * @var bool Enable or disable upgrading to HTTPS by paying attention to HTTP header HTTP_UPGRADE_INSECURE_REQUESTS
+     */
+    protected $httpUpgradeInsecureRequests = true;
+
+    /**
      * @var string holds code challenge method for PKCE mode
      * @see https://tools.ietf.org/html/rfc7636
      */
@@ -585,7 +590,7 @@ class OpenIDConnectClient
          * Support of 'ProxyReverse' configurations.
          */
 
-        if (isset($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS']) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] === '1')) {
+        if ($this->httpUpgradeInsecureRequests && isset($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS']) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] === '1')) {
             $protocol = 'https';
         } else {
             $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO']
@@ -1292,6 +1297,16 @@ class OpenIDConnectClient
         $this->verifyHost = $verifyHost;
     }
 
+
+    /**
+     * Controls whether http header HTTP_UPGRADE_INSECURE_REQUESTS should be considered
+     * defaults to true
+     * @param bool $httpUpgradeInsecureRequests
+     */
+    public function setHttpUpgradeInsecureRequests($httpUpgradeInsecureRequests) {
+        $this->httpUpgradeInsecureRequests = $httpUpgradeInsecureRequests;
+    }
+
     /**
      * @return bool
      */
@@ -1306,6 +1321,14 @@ class OpenIDConnectClient
     public function getVerifyPeer()
     {
         return $this->verifyPeer;
+    }
+
+    /**
+     * @return bool 
+     */
+    public function getHttpUpgradeInsecureRequests()
+    {
+        return $this->httpUpgradeInsecureRequests;
     }
 
     /**
