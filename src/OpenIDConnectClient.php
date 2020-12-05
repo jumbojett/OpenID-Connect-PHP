@@ -617,9 +617,9 @@ class OpenIDConnectClient
         // random_compat polyfill library should be removed if support for PHP versions < 7 is dropped
         try {
             return \bin2hex(\random_bytes(16));
-        } catch (Error $e) {
+        } catch (\Error $e) {
             throw new OpenIDConnectClientException('Random token generation failed.');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             throw new OpenIDConnectClientException('Random token generation failed.');
         };
     }
@@ -675,7 +675,7 @@ class OpenIDConnectClient
             ));
         }
 
-        $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&', $this->enc_type);
+        $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, '', '&', $this->enc_type);
 
         $this->commitSession();
         $this->redirect($auth_endpoint);
@@ -701,7 +701,7 @@ class OpenIDConnectClient
         );
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&', $this->enc_type);
+        $post_params = http_build_query($post_data, '', '&', $this->enc_type);
 
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
     }
@@ -736,7 +736,7 @@ class OpenIDConnectClient
         }
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&', $this->enc_type);
+        $post_params = http_build_query($post_data, '', '&', $this->enc_type);
 
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
     }
@@ -782,7 +782,7 @@ class OpenIDConnectClient
         }
 
         // Convert token params to string format
-        $token_params = http_build_query($token_params, null, '&', $this->enc_type);
+        $token_params = http_build_query($token_params, '', '&', $this->enc_type);
 
         $this->tokenResponse = json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
 
@@ -809,7 +809,7 @@ class OpenIDConnectClient
         );
 
         // Convert token params to string format
-        $token_params = http_build_query($token_params, null, '&', $this->enc_type);
+        $token_params = http_build_query($token_params, '', '&', $this->enc_type);
 
         $json = json_decode($this->fetchURL($token_endpoint, $token_params));
 
@@ -826,7 +826,7 @@ class OpenIDConnectClient
 
     /**
      * @param array $keys
-     * @param array $header
+     * @param object $header
      * @throws OpenIDConnectClientException
      * @return object
      */
@@ -1424,7 +1424,7 @@ class OpenIDConnectClient
         $clientSecret = $clientSecret !== null ? $clientSecret : $this->clientSecret;
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&');
+        $post_params = http_build_query($post_data, '', '&');
         $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
             'Accept: application/json'];
 
@@ -1455,7 +1455,7 @@ class OpenIDConnectClient
         $clientSecret = $clientSecret !== null ? $clientSecret : $this->clientSecret;
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&');
+        $post_params = http_build_query($post_data, '', '&');
         $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
             'Accept: application/json'];
 
