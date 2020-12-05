@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+* getRedirectURL() will not log a warning for PHP 7.1+
+
 ## [0.9.2]
 
 ### Added
