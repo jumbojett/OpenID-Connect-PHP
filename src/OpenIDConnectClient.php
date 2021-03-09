@@ -1733,7 +1733,10 @@ class OpenIDConnectClient
     protected function getSessionKey($key) {
         $this->startSession();
 
-        return $_SESSION[$key];
+        if (array_key_exists($key, $_SESSION)) {
+            return $_SESSION[$key];
+        }
+        return false;
     }
 
     protected function setSessionKey($key, $value) {
