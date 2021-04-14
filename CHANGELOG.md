@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 * Support for form-encoded body parameter when using requestUserInfo function [rfc6750#2.2](https://tools.ietf.org/html/rfc6750#section-2.2).
 
-
 ## [0.9.2]
 
 ### Added
