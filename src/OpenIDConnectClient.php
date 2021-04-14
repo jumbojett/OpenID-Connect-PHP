@@ -1033,6 +1033,7 @@ class OpenIDConnectClient
     /**
      *
      * @param string|null $attribute optional
+     * @param boolean $usePostData optional
      *
      * Attribute        Type        Description
      * user_id          string      REQUIRED Identifier for the End-User at the Issuer.
@@ -1058,10 +1059,11 @@ class OpenIDConnectClient
      *
      * @throws OpenIDConnectClientException
      */
-    public function requestUserInfo($attribute = null) {
+    public function requestUserInfo($attribute = null, $usePostData = false) {
 
         $user_info_endpoint = $this->getProviderConfigValue('userinfo_endpoint');
         $schema = 'openid';
+        $post_data = null;
 
         $user_info_endpoint .= '?schema=' . $schema;
 
@@ -1070,7 +1072,12 @@ class OpenIDConnectClient
         $headers = ["Authorization: Bearer {$this->accessToken}",
             'Accept: application/json'];
 
-        $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
+        if ($usePostData) {
+            $headers = null;
+            $post_data = http_build_query(['access_token' => $this->accessToken,],null,'&');
+        }
+
+        $user_json = json_decode($this->fetchURL($user_info_endpoint,$post_data,$headers));
         if ($this->getResponseCode() <> 200) {
             throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$this->getResponseCode());
         }
