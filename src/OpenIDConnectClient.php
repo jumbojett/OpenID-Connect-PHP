@@ -86,7 +86,7 @@ class OpenIDConnectExceptionFactory
     private static $codes = array(
         self::UNABLE_VERIFY_SIGNATURE => 'Unable to verify signature',
         self::TOKEN_IS_NOT_STRING => 'Error token is not a string',
-        self::TOKEN_PART_MISSING => 'Error missing part 0 in token',
+        self::TOKEN_PART_MISSING => 'Error missing part %s in token',
         self::UNABLE_DECODE_TOKEN => 'Error decoding signature from token',
         self::UNABLE_DECODE_JSON_HEADER => 'Error decoding JSON from token header',
         self::UNABLE_DECODE_JSON_JWKS_URI => 'Error decoding JSON from jwks_uri',
