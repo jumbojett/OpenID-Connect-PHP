@@ -219,6 +219,12 @@ class OpenIDConnectClient
      * @var bool Allow OAuth 2 implicit flow; see http://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth
      */
     private $allowImplicitFlow = false;
+
+    /**
+     * @var callable redirect function
+     */
+    private $redirectFn;
+
     /**
      * @var string
      */
@@ -550,6 +556,16 @@ class OpenIDConnectClient
         $this->wellKnownConfigParameters=$params;
     }
 
+    /**
+     * Use this for custom redirection
+     * The given function should accept the redirect URL as the only argument,
+     * send the appropriate headers and call exit to terminate execution.
+     *
+     * @param callable $fn
+     */
+    public function setRedirectFn($fn) {
+        $this->redirectFn = $fn;
+    }
 
     /**
      * @param string $url Sets redirect URL for auth flow
@@ -1252,6 +1268,9 @@ class OpenIDConnectClient
      * @param string $url
      */
     public function redirect($url) {
+        if ($this->redirectFn) {
+            call_user_func($this->redirectFn, $url);
+        }
         header('Location: ' . $url);
         exit;
     }
