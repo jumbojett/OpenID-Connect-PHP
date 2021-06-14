@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## master
+
+### Added
+* Support for Pushed Authorization Requests (draft-ietf-oauth-par-08)
+
 ## [0.9.2]
 
 ### Added
