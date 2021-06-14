@@ -675,10 +675,51 @@ class OpenIDConnectClient
             ));
         }
 
+        $par_data = $this->pushAuthorizationRequest($auth_params);
+        if ($par_data) {
+            $auth_params = array(
+                'client_id' => $this->clientID,
+                'request_uri' => $par_data->request_uri
+            );
+        }
+
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&', $this->enc_type);
 
         $this->commitSession();
         $this->redirect($auth_endpoint);
+    }
+
+    /**
+     * Push authorization request
+     *
+     * @param array $auth_params
+     * @return mixed
+     */
+    private function pushAuthorizationRequest($auth_params) {
+        $par_endpoint = $this->getProviderConfigValue('pushed_authorization_request_endpoint');
+        if (!$par_endpoint) {
+            return NULL;
+        }
+        $endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
+
+        $headers = [];
+
+        # Consider Basic authentication if provider config is set this way
+        if (in_array('client_secret_basic', $endpoint_auth_methods_supported, true)) {
+            $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret)),
+                'Accept: application/json'];
+
+            unset($auth_params['client_secret']);
+        }
+
+        $par_params = http_build_query($auth_params, NULL, '&');
+        $response = json_decode($this->fetchURL($par_endpoint, $par_params, $headers));
+
+        if (!isset($response->request_uri)) {
+            return NULL;
+        }
+
+        return $response;
     }
 
     /**
