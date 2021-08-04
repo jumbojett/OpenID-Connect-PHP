@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-* Support for [phpseclib/phpseclib](https://phpseclib.com/) version **3**.
+* Support for [phpseclib/phpseclib](https://phpseclib.com/) version **3**. #260
+* Support client_secret on token endpoint with PKCE. #293
 
 ## [0.9.5]
 
