@@ -790,6 +790,39 @@ class OpenIDConnectClient
     }
 
     /**
+     * Request RFC8693 Token Exchange
+     * https://datatracker.ietf.org/doc/html/rfc8693
+     *
+     * @param string $subjectToken
+     * @param string $subjectTokenType
+     * @param string $audience
+     * @return mixed
+     * @throws OpenIDConnectClientException
+     */
+    public function requestTokenExchange($subjectToken, $subjectTokenType, $audience = '') {
+        $token_endpoint = $this->getProviderConfigValue('token_endpoint');
+        $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
+        $grant_type = 'urn:ietf:params:oauth:grant-type:token-exchange';
+
+        $post_data = array(
+            'grant_type'    => $grant_type,
+            'subject_token_type' => $subjectTokenType,
+            'subject_token' => $subjectToken,
+            'scope'         => implode(' ', $this->scopes)
+        );
+
+        if (!empty($audience)) {
+            $post_data['audience'] = $audience;
+        }
+
+        // Convert token params to string format
+        $post_params = http_build_query($post_data, null, '&', $this->enc_type);
+
+        return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
+    }
+
+
+    /**
      * Requests Access token with refresh token
      *
      * @param string $refresh_token
