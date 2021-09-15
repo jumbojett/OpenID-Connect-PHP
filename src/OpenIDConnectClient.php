@@ -801,18 +801,28 @@ class OpenIDConnectClient
      */
     public function requestTokenExchange($subjectToken, $subjectTokenType, $audience = '') {
         $token_endpoint = $this->getProviderConfigValue('token_endpoint');
-        $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
+        $headers = [];
         $grant_type = 'urn:ietf:params:oauth:grant-type:token-exchange';
 
         $post_data = array(
             'grant_type'    => $grant_type,
             'subject_token_type' => $subjectTokenType,
             'subject_token' => $subjectToken,
+            'client_id' => $this->clientID,
+            'client_secret' => $this->clientSecret,
             'scope'         => implode(' ', $this->scopes)
         );
 
         if (!empty($audience)) {
             $post_data['audience'] = $audience;
+        }
+
+        # Consider Basic authentication if provider config is set this way
+        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+            $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
+            unset($post_data['client_secret']);
+            unset($post_data['client_id']);
         }
 
         // Convert token params to string format
