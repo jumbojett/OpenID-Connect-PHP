@@ -227,6 +227,11 @@ class OpenIDConnectClient
     protected $enc_type = PHP_QUERY_RFC1738;
 
     /**
+     * @var bool Enable or disable upgrading to HTTPS by paying attention to HTTP header HTTP_UPGRADE_INSECURE_REQUESTS
+     */
+    protected $httpUpgradeInsecureRequests = true;
+
+    /**
      * @var string holds code challenge method for PKCE mode
      * @see https://tools.ietf.org/html/rfc7636
      */
@@ -585,7 +590,7 @@ class OpenIDConnectClient
          * Support of 'ProxyReverse' configurations.
          */
 
-        if (isset($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS']) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] === '1')) {
+        if ($this->httpUpgradeInsecureRequests && isset($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS']) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] === '1')) {
             $protocol = 'https';
         } else {
             $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO']
@@ -602,7 +607,7 @@ class OpenIDConnectClient
                 ?: @$_SERVER['SERVER_ADDR'];
 
         $port = (443 === $port) || (80 === $port) ? '' : ':' . $port;
-
+	    
         $explodedRequestUri = isset($_SERVER['REQUEST_URI']) ? explode('?', $_SERVER['REQUEST_URI']) : [];
         return sprintf('%s://%s%s/%s', $protocol, $host, $port, trim(reset($explodedRequestUri), '/'));
     }
@@ -662,7 +667,8 @@ class OpenIDConnectClient
         }
 
         // If the client supports Proof Key for Code Exchange (PKCE)
-        if (!empty($this->getCodeChallengeMethod()) && in_array($this->getCodeChallengeMethod(), $this->getProviderConfigValue('code_challenge_methods_supported'))) {
+        $ccm = $this->getCodeChallengeMethod();
+        if (!empty($ccm) && in_array($this->getCodeChallengeMethod(), $this->getProviderConfigValue('code_challenge_methods_supported'))) {
             $codeVerifier = bin2hex(random_bytes(64));
             $this->setCodeVerifier($codeVerifier);
             if (!empty($this->pkceAlgs[$this->getCodeChallengeMethod()])) {
@@ -773,7 +779,9 @@ class OpenIDConnectClient
 	        unset($token_params['client_id']);
         }
 
-        if (!empty($this->getCodeChallengeMethod()) && !empty($this->getCodeVerifier())) {
+        $ccm = $this->getCodeChallengeMethod();
+        $cv = $this->getCodeVerifier();
+        if (!empty($ccm) && !empty($cv)) {
             $headers = [];
             unset($token_params['client_secret']);
             $token_params = array_merge($token_params, array(
@@ -1005,7 +1013,7 @@ class OpenIDConnectClient
             && ($claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((gettype($claims->exp) === 'integer') && ($claims->exp >= time() - $this->leeway)))
             && ( !isset($claims->nbf) || ((gettype($claims->nbf) === 'integer') && ($claims->nbf <= time() + $this->leeway)))
-            && ( !isset($claims->at_hash) || $claims->at_hash === $expected_at_hash )
+            && ( !isset($claims->at_hash) || !isset($accessToken) || $claims->at_hash === $expected_at_hash )
         );
     }
 
@@ -1293,6 +1301,16 @@ class OpenIDConnectClient
         $this->verifyHost = $verifyHost;
     }
 
+
+    /**
+     * Controls whether http header HTTP_UPGRADE_INSECURE_REQUESTS should be considered
+     * defaults to true
+     * @param bool $httpUpgradeInsecureRequests
+     */
+    public function setHttpUpgradeInsecureRequests($httpUpgradeInsecureRequests) {
+        $this->httpUpgradeInsecureRequests = $httpUpgradeInsecureRequests;
+    }
+
     /**
      * @return bool
      */
@@ -1307,6 +1325,14 @@ class OpenIDConnectClient
     public function getVerifyPeer()
     {
         return $this->verifyPeer;
+    }
+
+    /**
+     * @return bool 
+     */
+    public function getHttpUpgradeInsecureRequests()
+    {
+        return $this->httpUpgradeInsecureRequests;
     }
 
     /**
