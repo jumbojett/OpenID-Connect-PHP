@@ -815,6 +815,7 @@ class OpenIDConnectClient
             'refresh_token' => $refresh_token,
             'client_id' => $this->clientID,
             'client_secret' => $this->clientSecret,
+            'scope'         => implode(' ', $this->scopes),
         );
 
         // Convert token params to string format
