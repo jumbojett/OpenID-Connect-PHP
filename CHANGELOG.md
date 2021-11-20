@@ -4,9 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## master
-
-### Added
+## [Unreleased]
+* getRedirectURL() will not log a warning for PHP 7.1+
 * it is now possible to disable upgrading from HTTP to HTTPS for development purposes by calling `setHttpUpgradeInsecureRequests(false)`
 
 ## [0.9.2]
