@@ -5,15 +5,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+* getRedirectURL() will not log a warning for PHP 7.1+ #179
+* it is now possible to disable upgrading from HTTP to HTTPS for development purposes by calling `setHttpUpgradeInsecureRequests(false)` #241
+* bugfix in getSessionKey when _SESSION key does not exist #251
+ Added scope parameter to refresh token request #255
+* bugfix in verifyJWTclaims when $accessToken is empty and $claims->at_hash is not #276
+* bugfix with the `empty` function in PHP 5.4 #267
+
+## [0.9.2]
 
 ### Added
-*
+* Support for [PKCE](https://tools.ietf.org/html/rfc7636). Currently the supported methods are 'plain' and 'S256'.
+
+## [0.9.1]
+
+### Added
+* Add support for MS Azure Active Directory B2C user flows
 
 ### Changed
 * Fix at_hash verification #200
 * Getters for public parameters #204
 * Removed client ID query parameter when making a token request using Basic Auth
-* Added scope parameter to refresh token request
+* Use of `random_bytes()` for token generation instead of `uniqid()`; polyfill for PHP < 7.0 provided.
 
 ### Removed
 * Removed explicit content-length header - caused issues with proxy servers
