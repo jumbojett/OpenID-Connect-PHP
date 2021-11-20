@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 * getRedirectURL() will not log a warning for PHP 7.1+ #179
 * it is now possible to disable upgrading from HTTP to HTTPS for development purposes by calling `setHttpUpgradeInsecureRequests(false)` #241
+* bugfix in getSessionKey when _SESSION key does not exist #251
 * bugfix in verifyJWTclaims when $accessToken is empty and $claims->at_hash is not #276
 * bugfix with the `empty` function in PHP 5.4 #267
 
