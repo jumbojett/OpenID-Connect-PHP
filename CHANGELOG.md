@@ -5,8 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
-* getRedirectURL() will not log a warning for PHP 7.1+
-* it is now possible to disable upgrading from HTTP to HTTPS for development purposes by calling `setHttpUpgradeInsecureRequests(false)`
+* getRedirectURL() will not log a warning for PHP 7.1+ #179
+* it is now possible to disable upgrading from HTTP to HTTPS for development purposes by calling `setHttpUpgradeInsecureRequests(false)` #241
+* bugfix in verifyJWTclaims when $accessToken is empty and $claims->at_hash is not #276
+* bugfix with the `empty` function in PHP 5.4 #267
 
 ## [0.9.2]
 
@@ -16,7 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.9.1]
 
 ### Added
-* Add support for MS Azure Active Directory B2C user flows 
+* Add support for MS Azure Active Directory B2C user flows
 
 ### Changed
 * Fix at_hash verification #200
