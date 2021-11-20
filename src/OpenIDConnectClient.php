@@ -666,7 +666,7 @@ class OpenIDConnectClient
         }
 
         // If the client supports Proof Key for Code Exchange (PKCE)
-        $ccm = $this->getCodeChallengeMethod(); // php5.4 fix, see https://stackoverflow.com/a/4328049
+        $ccm = $this->getCodeChallengeMethod();
         if (!empty($ccm) && in_array($this->getCodeChallengeMethod(), $this->getProviderConfigValue('code_challenge_methods_supported'))) {
             $codeVerifier = bin2hex(random_bytes(64));
             $this->setCodeVerifier($codeVerifier);
@@ -778,8 +778,8 @@ class OpenIDConnectClient
 	        unset($token_params['client_id']);
         }
 
-        $ccm = $this->getCodeChallengeMethod(); // php5.4 fix, see https://stackoverflow.com/a/4328049
-        $cv = $this->getCodeVerifier(); // php5.4 fix, see https://stackoverflow.com/a/4328049
+        $ccm = $this->getCodeChallengeMethod();
+        $cv = $this->getCodeVerifier();
         if (!empty($ccm) && !empty($cv)) {
             $headers = [];
             unset($token_params['client_secret']);
