@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+* Enabled `client_secret_basic` authentication on `refreshToken()` #215
 * Basic auth support for requestResourceOwnerToken #271
 
 ## [0.9.3]
