@@ -185,6 +185,12 @@ class OpenIDConnectClient
     private $wellKnown = false;
 
     /**
+     * @var mixed holds well-known opendid configuration parameters, like policy for MS Azure AD B2C User Flow  
+     * @see https://docs.microsoft.com/en-us/azure/active-directory-b2c/user-flow-overview 
+     */
+    private $wellKnownConfigParameters = array();
+
+    /**
      * @var int timeout (seconds)
      */
     protected $timeOut = 60;
@@ -219,6 +225,22 @@ class OpenIDConnectClient
     private $redirectURL;
 
     protected $enc_type = PHP_QUERY_RFC1738;
+
+    /**
+     * @var bool Enable or disable upgrading to HTTPS by paying attention to HTTP header HTTP_UPGRADE_INSECURE_REQUESTS
+     */
+    protected $httpUpgradeInsecureRequests = true;
+
+    /**
+     * @var string holds code challenge method for PKCE mode
+     * @see https://tools.ietf.org/html/rfc7636
+     */
+    private $codeChallengeMethod = false;
+
+    /**
+     * @var array holds PKCE supported algorithms
+     */
+    private $pkceAlgs = array('S256' => 'sha256', 'plain' => false);
 
     /**
      * @param $provider_url string optional
@@ -500,6 +522,9 @@ class OpenIDConnectClient
         // This is also known as auto "discovery"
         if(!$this->wellKnown) {
             $well_known_config_url = rtrim($this->getProviderURL(), '/') . '/.well-known/openid-configuration';
+            if (count($this->wellKnownConfigParameters) > 0){
+                $well_known_config_url .= '?' .  http_build_query($this->wellKnownConfigParameters) ;
+            }
             $this->wellKnown = json_decode($this->fetchURL($well_known_config_url));
         }
 
@@ -518,6 +543,16 @@ class OpenIDConnectClient
         }
 
         throw new OpenIDConnectClientException("The provider {$param} could not be fetched. Make sure your provider has a well known configuration available.");
+    }
+
+    /**
+     * Set optionnal parameters for .well-known/openid-configuration 
+     *
+     * @param string $param
+     *
+     */
+    public function setWellKnownConfigParameters(array $params = []){
+        $this->wellKnownConfigParameters=$params;
     }
 
 
@@ -555,7 +590,7 @@ class OpenIDConnectClient
          * Support of 'ProxyReverse' configurations.
          */
 
-        if (isset($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS']) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] === '1')) {
+        if ($this->httpUpgradeInsecureRequests && isset($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS']) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] === '1')) {
             $protocol = 'https';
         } else {
             $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO']
@@ -572,17 +607,27 @@ class OpenIDConnectClient
                 ?: @$_SERVER['SERVER_ADDR'];
 
         $port = (443 === $port) || (80 === $port) ? '' : ':' . $port;
-
-        return sprintf('%s://%s%s/%s', $protocol, $host, $port, @trim(reset(explode('?', $_SERVER['REQUEST_URI'])), '/'));
+	    
+        $explodedRequestUri = isset($_SERVER['REQUEST_URI']) ? explode('?', $_SERVER['REQUEST_URI']) : [];
+        return sprintf('%s://%s%s/%s', $protocol, $host, $port, trim(reset($explodedRequestUri), '/'));
     }
 
     /**
      * Used for arbitrary value generation for nonces and state
      *
      * @return string
+     * @throws OpenIDConnectClientException
      */
     protected function generateRandString() {
-        return md5(uniqid(rand(), TRUE));
+        // Error and Exception need to be catched in this order, see https://github.com/paragonie/random_compat/blob/master/README.md
+        // random_compat polyfill library should be removed if support for PHP versions < 7 is dropped
+        try {
+            return \bin2hex(\random_bytes(16));
+        } catch (Error $e) {
+            throw new OpenIDConnectClientException('Random token generation failed.');
+        } catch (Exception $e) {
+            throw new OpenIDConnectClientException('Random token generation failed.');
+        };
     }
 
     /**
@@ -619,6 +664,22 @@ class OpenIDConnectClient
         // If the client has been registered with additional response types
         if (count($this->responseTypes) > 0) {
             $auth_params = array_merge($auth_params, array('response_type' => implode(' ', $this->responseTypes)));
+        }
+
+        // If the client supports Proof Key for Code Exchange (PKCE)
+        $ccm = $this->getCodeChallengeMethod();
+        if (!empty($ccm) && in_array($this->getCodeChallengeMethod(), $this->getProviderConfigValue('code_challenge_methods_supported'))) {
+            $codeVerifier = bin2hex(random_bytes(64));
+            $this->setCodeVerifier($codeVerifier);
+            if (!empty($this->pkceAlgs[$this->getCodeChallengeMethod()])) {
+                $codeChallenge = rtrim(strtr(base64_encode(hash($this->pkceAlgs[$this->getCodeChallengeMethod()], $codeVerifier, true)), '+/', '-_'), '=');
+            } else {
+                $codeChallenge = $codeVerifier;
+            }
+            $auth_params = array_merge($auth_params, array(
+                'code_challenge' => $codeChallenge,
+                'code_challenge_method' => $this->getCodeChallengeMethod()
+            ));
         }
 
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&', $this->enc_type);
@@ -661,7 +722,7 @@ class OpenIDConnectClient
      * @return mixed
      * @throws OpenIDConnectClientException
      */
-    public function requestResourceOwnerToken($bClientAuth =  FALSE) {
+    public function requestResourceOwnerToken($bClientAuth = FALSE) {
         $token_endpoint = $this->getProviderConfigValue('token_endpoint');
 
         $headers = [];
@@ -677,8 +738,13 @@ class OpenIDConnectClient
 
         //For client authentication include the client values
         if($bClientAuth) {
-            $post_data['client_id']     = $this->clientID;
-            $post_data['client_secret'] = $this->clientSecret;
+            $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
+            if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+                $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
+            } else {
+                $post_data['client_id']     = $this->clientID;
+                $post_data['client_secret'] = $this->clientSecret;
+            }
         }
 
         // Convert token params to string format
@@ -715,6 +781,18 @@ class OpenIDConnectClient
         if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
             $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             unset($token_params['client_secret']);
+	        unset($token_params['client_id']);
+        }
+
+        $ccm = $this->getCodeChallengeMethod();
+        $cv = $this->getCodeVerifier();
+        if (!empty($ccm) && !empty($cv)) {
+            $headers = [];
+            unset($token_params['client_secret']);
+            $token_params = array_merge($token_params, array(
+                'client_id' => $this->clientID,
+                'code_verifier' => $this->getCodeVerifier()
+            ));
         }
 
         // Convert token params to string format
@@ -734,7 +812,7 @@ class OpenIDConnectClient
      */
     public function refreshToken($refresh_token) {
         $token_endpoint = $this->getProviderConfigValue('token_endpoint');
-        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic', 'client_secret_post']);
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
 
         $headers = [];
 
@@ -745,12 +823,14 @@ class OpenIDConnectClient
             'refresh_token' => $refresh_token,
             'client_id' => $this->clientID,
             'client_secret' => $this->clientSecret,
+            'scope'         => implode(' ', $this->scopes),
         );
 
         # Consider Basic authentication if provider config is set this way
         if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
             $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             unset($token_params['client_secret']);
+            unset($token_params['client_id']);
         }
 
         // Convert token params to string format
@@ -949,7 +1029,7 @@ class OpenIDConnectClient
             && ($claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((gettype($claims->exp) === 'integer') && ($claims->exp >= time() - $this->leeway)))
             && ( !isset($claims->nbf) || ((gettype($claims->nbf) === 'integer') && ($claims->nbf <= time() + $this->leeway)))
-            && ( !isset($claims->at_hash) || $claims->at_hash === $expected_at_hash )
+            && ( !isset($claims->at_hash) || !isset($accessToken) || $claims->at_hash === $expected_at_hash )
         );
     }
 
@@ -1149,7 +1229,7 @@ class OpenIDConnectClient
         $this->responseCode = $info['http_code'];
 
         if ($output === false) {
-            throw new OpenIDConnectClientException('Curl error: ' . curl_error($ch));
+            throw new OpenIDConnectClientException('Curl error: (' . curl_errno($ch) . ') ' . curl_error($ch));
         }
 
         // Close the cURL resource, and free system resources
@@ -1237,6 +1317,16 @@ class OpenIDConnectClient
         $this->verifyHost = $verifyHost;
     }
 
+
+    /**
+     * Controls whether http header HTTP_UPGRADE_INSECURE_REQUESTS should be considered
+     * defaults to true
+     * @param bool $httpUpgradeInsecureRequests
+     */
+    public function setHttpUpgradeInsecureRequests($httpUpgradeInsecureRequests) {
+        $this->httpUpgradeInsecureRequests = $httpUpgradeInsecureRequests;
+    }
+
     /**
      * @return bool
      */
@@ -1251,6 +1341,14 @@ class OpenIDConnectClient
     public function getVerifyPeer()
     {
         return $this->verifyPeer;
+    }
+
+    /**
+     * @return bool 
+     */
+    public function getHttpUpgradeInsecureRequests()
+    {
+        return $this->httpUpgradeInsecureRequests;
     }
 
     /**
@@ -1569,6 +1667,35 @@ class OpenIDConnectClient
     }
 
     /**
+     * Stores $codeVerifier
+     *
+     * @param string $codeVerifier
+     * @return string
+     */
+    protected function setCodeVerifier($codeVerifier) {
+        $this->setSessionKey('openid_connect_code_verifier', $codeVerifier);
+        return $codeVerifier;
+    }
+
+    /**
+     * Get stored codeVerifier
+     *
+     * @return string
+     */
+    protected function getCodeVerifier() {
+        return $this->getSessionKey('openid_connect_code_verifier');
+    }
+
+    /**
+     * Cleanup state
+     *
+     * @return void
+     */
+    protected function unsetCodeVerifier() {
+        $this->unsetSessionKey('openid_connect_code_verifier');
+    }
+
+    /**
      * Get the response code from last action/curl request.
      *
      * @return int
@@ -1649,7 +1776,10 @@ class OpenIDConnectClient
     protected function getSessionKey($key) {
         $this->startSession();
 
-        return $_SESSION[$key];
+        if (array_key_exists($key, $_SESSION)) {
+            return $_SESSION[$key];
+        }
+        return false;
     }
 
     protected function setSessionKey($key, $value) {
@@ -1720,5 +1850,19 @@ class OpenIDConnectClient
     public function getLeeway()
     {
         return $this->leeway;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCodeChallengeMethod() {
+        return $this->codeChallengeMethod;
+    }
+
+    /**
+     * @param string $codeChallengeMethod
+     */
+    public function setCodeChallengeMethod($codeChallengeMethod) {
+        $this->codeChallengeMethod = $codeChallengeMethod;
     }
 }
