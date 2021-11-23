@@ -435,23 +435,28 @@ class OpenIDConnectClient
      * Connect provider that the end-user has logged out of the relying party site
      * (the client application).
      *
-     * @param string $accessToken ID token (obtained at login)
+     * @param string $enduserIdentification ID token (obtained at login) or username for $method like as "login_hint"
      * @param string|null $redirect URL to which the RP is requesting that the End-User's User Agent
      * be redirected after a logout has been performed. The value MUST have been previously
      * registered with the OP. Value can be null.
+     * @param string $method The way of identifying the end-user for whom authentication is being requested.
+     * The default setting is "id_token_hint". There are two modes supported: "login_hint" and "id_token_hint"
      *
      * @throws OpenIDConnectClientException
      */
-    public function signOut($accessToken, $redirect) {
-        $signout_endpoint = $this->getProviderConfigValue('end_session_endpoint');
+    public function signOut($enduserIdentification, $redirect, $method = "id_token_hint") {
+        if (!in_array($method, array("id_token_hint", "login_hint")))
+            throw new OpenIDConnectClientException('method must be "id_token_hint" or "login_hint"');
+
+        $signout_endpoint = $this->getProviderConfigValue("end_session_endpoint");
 
         $signout_params = null;
         if($redirect === null){
-            $signout_params = array('id_token_hint' => $accessToken);
+            $signout_params = array($method => $enduserIdentification);
         }
         else {
             $signout_params = array(
-                'id_token_hint' => $accessToken,
+                $method => $enduserIdentification,
                 'post_logout_redirect_uri' => $redirect);
         }
 
