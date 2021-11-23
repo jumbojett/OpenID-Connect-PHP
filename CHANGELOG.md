@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.9.4]
+
+### Added
+
+* Enabled `client_secret_basic` authentication on `refreshToken()` #215
+* Basic auth support for requestResourceOwnerToken #271
+
+## [0.9.3]
+
+### Added
+
+* getRedirectURL() will not log a warning for PHP 7.1+ #179
+* it is now possible to disable upgrading from HTTP to HTTPS for development purposes by calling `setHttpUpgradeInsecureRequests(false)` #241
+* bugfix in getSessionKey when _SESSION key does not exist #251
+* Added scope parameter to refresh token request #225
+* bugfix in verifyJWTclaims when $accessToken is empty and $claims->at_hash is not #276
+* bugfix with the `empty` function in PHP 5.4 #267
+
 ## [0.9.2]
 
 ### Added
@@ -12,7 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.9.1]
 
 ### Added
-* Add support for MS Azure Active Directory B2C user flows 
+* Add support for MS Azure Active Directory B2C user flows
 
 ### Changed
 * Fix at_hash verification #200
