@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.9.5]
+
+### Changed
+
+* signOut() Method parameter $accessToken -> $idToken to prevent confusion about access and id tokens usage. #127
+
 ## [0.9.4]
 
 ### Added
@@ -103,7 +109,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Support for providers that has a different login URL from the issuer URL, for instance Azure Active Directory. Here, the provider URL is on the format: https://login.windows.net/(tenant-id), while the issuer claim actually is on the format: https://sts.windows.net/(tenant-id).
 
 ### Changed
-* signOut() Method parameter $accessToken -> $idToken to prevent confusion about access and id tokens usage. #127
 * refreshToken method update #124
 
 ### Removed
