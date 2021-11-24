@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 * signOut() Method parameter $accessToken -> $idToken to prevent confusion about access and id tokens usage. #127
+* Fixed issue where missing nonce within the claims was causing an exception. #280
 
 ## [0.9.4]
 
