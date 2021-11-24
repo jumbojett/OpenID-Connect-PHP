@@ -307,6 +307,11 @@ class OpenIDConnectClient
                 throw new OpenIDConnectClientException('Got response: ' . $token_json->error);
             }
 
+	    // Sometime getState() return an empty string
+            // and the authentication process fail
+            if ($this->getState() == "")
+                $this->setState($_REQUEST['state']);
+
             // Do an OpenID Connect session check
             if ($_REQUEST['state'] !== $this->getState()) {
                 throw new OpenIDConnectClientException('Unable to determine state');
