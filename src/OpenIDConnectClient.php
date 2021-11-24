@@ -455,7 +455,8 @@ class OpenIDConnectClient
         else {
             $signout_params = [
                 'id_token_hint' => $idToken,
-                'post_logout_redirect_uri' => $redirect];
+                'post_logout_redirect_uri' => $redirect,
+            ];
         }
 
         $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, null, '&', $this->encType);
