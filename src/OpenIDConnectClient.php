@@ -1028,7 +1028,7 @@ class OpenIDConnectClient
             && (($claims->aud === $this->clientID) || in_array($this->clientID, $claims->aud, true))
             && (!isset($claims->nonce) || $claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((gettype($claims->exp) === 'integer' || gettype($claims->exp) === 'double') && ($claims->exp >= time() - $this->leeway)))
-            && ( !isset($claims->nbf) || ((gettype($claims->nbf) === 'integer' || gettype($claims->exp) === 'double') && ($claims->nbf <= time() + $this->leeway)))
+            && ( !isset($claims->nbf) || ((gettype($claims->nbf) === 'integer' || gettype($claims->nbf) === 'double') && ($claims->nbf <= time() + $this->leeway)))
             && ( !isset($claims->at_hash) || !isset($accessToken) || $claims->at_hash === $expected_at_hash )
         );
     }
