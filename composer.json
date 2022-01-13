@@ -4,7 +4,7 @@
     "license": "Apache-2.0",
     "require": {
         "php": ">=5.4",
-        "phpseclib/phpseclib" : "~2.0",
+        "phpseclib/phpseclib" : "~2.0 || ^3.0",
         "ext-json": "*",
         "ext-curl": "*",
         "paragonie/random_compat": ">=2"
@@ -21,9 +21,9 @@
     "autoload" : {
          "classmap": [ "src/"]
     },
-  "config" : {
-    "platform": {
-      "php": "5.4"
+    "config" : {
+        "platform": {
+            "php": "5.4"
+        }
     }
-  }
 }
