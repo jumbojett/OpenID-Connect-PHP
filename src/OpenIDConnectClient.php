@@ -616,7 +616,7 @@ class OpenIDConnectClient
             $host = explode(':', $_SERVER['HTTP_HOST'])[0];
         } elseif (isset($_SERVER['SERVER_NAME'])) {
             $host = $_SERVER['SERVER_NAME'];
-        } else {
+        } elseif (isset($_SERVER['SERVER_ADDR'])) {
             $host = $_SERVER['SERVER_ADDR'];
         }
 
