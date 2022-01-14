@@ -592,19 +592,35 @@ class OpenIDConnectClient
 
         if ($this->httpUpgradeInsecureRequests && isset($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS']) && ($_SERVER['HTTP_UPGRADE_INSECURE_REQUESTS'] === '1')) {
             $protocol = 'https';
+        } elseif (isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+            $protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'];
+        } elseif (isset($_SERVER['REQUEST_SCHEME'])) {
+            $protocol = $_SERVER['REQUEST_SCHEME'];
+        } elseif (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+            $protocol = 'https';
         } else {
-            $protocol = @$_SERVER['HTTP_X_FORWARDED_PROTO']
-                ?: @$_SERVER['REQUEST_SCHEME']
-                    ?: ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http');
+            $protocol = 'http';
+        }
+	    
+        if (isset($_SERVER['HTTP_X_FORWARDED_PORT'])) {
+            $port = intval($_SERVER['HTTP_X_FORWARDED_PORT']);
+        } elseif (isset($_SERVER['SERVER_PORT'])) {
+            $port = intval($_SERVER['SERVER_PORT']);
+        } elseif ($protocol === 'https') {
+            $port = 443;
+        } else {
+            $port = 80;
         }
 
-        $port = @intval($_SERVER['HTTP_X_FORWARDED_PORT'])
-            ?: @intval($_SERVER['SERVER_PORT'])
-                ?: (($protocol === 'https') ? 443 : 80);
-
-        $host = @explode(':', $_SERVER['HTTP_HOST'])[0]
-            ?: @$_SERVER['SERVER_NAME']
-                ?: @$_SERVER['SERVER_ADDR'];
+        if (isset($_SERVER['HTTP_HOST'])) {
+            $host = explode(':', $_SERVER['HTTP_HOST'])[0];
+        } elseif (isset($_SERVER['SERVER_NAME'])) {
+            $host = $_SERVER['SERVER_NAME'];
+        } elseif (isset($_SERVER['SERVER_ADDR'])) {
+            $host = $_SERVER['SERVER_ADDR'];
+        } else {
+            return 'http:///';
+        }
 
         $port = (443 === $port) || (80 === $port) ? '' : ':' . $port;
 	    
