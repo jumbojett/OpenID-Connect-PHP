@@ -618,6 +618,8 @@ class OpenIDConnectClient
             $host = $_SERVER['SERVER_NAME'];
         } elseif (isset($_SERVER['SERVER_ADDR'])) {
             $host = $_SERVER['SERVER_ADDR'];
+        } else {
+            return false;
         }
 
         $port = (443 === $port) || (80 === $port) ? '' : ':' . $port;
