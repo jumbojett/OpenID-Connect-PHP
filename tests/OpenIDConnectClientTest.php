@@ -2,8 +2,10 @@
 
 use Jumbojett\OpenIDConnectClient;
 use Jumbojett\OpenIDConnectClientException;
+use PHPUnit\Framework\MockObject\MockObject;
+use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
-class OpenIDConnectClientTest extends PHPUnit_Framework_TestCase
+class OpenIDConnectClientTest extends TestCase
 {
     /**
      * @return void
@@ -30,7 +32,7 @@ class OpenIDConnectClientTest extends PHPUnit_Framework_TestCase
         $_REQUEST['state'] = false;
         $_SESSION['openid_connect_state'] = false;
 
-        /** @var OpenIDConnectClient | PHPUnit_Framework_MockObject_MockObject $client */
+        /** @var OpenIDConnectClient | MockObject $client */
         $client = $this->getMockBuilder(OpenIDConnectClient::class)->setMethods(['decodeJWT', 'getProviderConfigValue', 'verifyJWTsignature'])->getMock();
         $client->method('decodeJWT')->willReturn($fakeClaims);
         $client->method('getProviderConfigValue')->with('jwks_uri')->willReturn(true);
