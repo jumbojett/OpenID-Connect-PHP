@@ -156,7 +156,7 @@ $oidc->setVerifyPeer(false);
 Also, your local system might not support HTTPS, so you might disable uprading to it:
 
 ```php
-$oidc->httpUpgradeInsecureRequests(false);
+$oidc->setHttpUpgradeInsecureRequests(false);
 ```
 
 ### Todo ###
