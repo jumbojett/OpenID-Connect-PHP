@@ -803,8 +803,10 @@ class OpenIDConnectClient
         $ccm = $this->getCodeChallengeMethod();
         $cv = $this->getCodeVerifier();
         if (!empty($ccm) && !empty($cv)) {
-            $headers = [];
-            unset($token_params['client_secret']);
+            if (empty($this->getClientSecret())) {
+                $headers = [];
+                unset($token_params['client_secret']);
+            }
             $token_params = array_merge($token_params, array(
                 'client_id' => $this->clientID,
                 'code_verifier' => $this->getCodeVerifier()
