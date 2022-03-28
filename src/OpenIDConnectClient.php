@@ -211,7 +211,7 @@ class OpenIDConnectClient
     protected $verifiedClaims = array();
 
     /**
-     * @var callable validator function for issuer claim
+     * @var callable|null validator function for issuer claim
      */
     private $issuerValidator;
 
@@ -259,10 +259,6 @@ class OpenIDConnectClient
 
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
-
-        $this->issuerValidator = function($iss){
-	        return ($iss === $this->getIssuer() || $iss === $this->getWellKnownIssuer() || $iss === $this->getWellKnownIssuer(true));
-        };
     }
 
     /**
@@ -1038,6 +1034,19 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param string $iss
+     * @return bool
+     * @throws OpenIDConnectClientException
+     */
+    protected function validateIssuer($iss) {
+        if ($this->issuerValidator !== null) {
+            return $this->issuerValidator->__invoke($iss);
+        }
+
+        return ($iss === $this->getIssuer() || $iss === $this->getWellKnownIssuer() || $iss === $this->getWellKnownIssuer(true));
+    }
+
+    /**
      * @param object $claims
      * @param string|null $accessToken
      * @return bool
@@ -1053,7 +1062,7 @@ class OpenIDConnectClient
             $len = ((int)$bit)/16;
             $expected_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
-        return (($this->issuerValidator->__invoke($claims->iss))
+        return (($this->validateIssuer($claims->iss))
             && (($claims->aud === $this->clientID) || in_array($this->clientID, $claims->aud, true))
             && (!isset($claims->nonce) || $claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((gettype($claims->exp) === 'integer') && ($claims->exp >= time() - $this->leeway)))
