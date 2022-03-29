@@ -130,6 +130,11 @@ class OpenIDConnectClient
     private $verifyHost = true;
 
     /**
+     * @var string user-agent header if necessary
+     */
+    private $userAgent;
+
+    /**
      * @var string if we acquire an access token it will be stored here
      */
     protected $accessToken;
@@ -1244,6 +1249,10 @@ class OpenIDConnectClient
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         }
 
+        if($this->userAgent) {
+            curl_setopt($ch, CURLOPT_USERAGENT, $this->userAgent);
+        }
+
         // Should cURL return or print out the data? (true = return, false = print)
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
@@ -1346,6 +1355,13 @@ class OpenIDConnectClient
         $this->verifyHost = $verifyHost;
     }
 
+        /**
+     * @param string $userAgent
+     */
+    public function setUserAgent($userAgent) {
+        $this->userAgent = $userAgent;
+    }
+
 
     /**
      * Controls whether http header HTTP_UPGRADE_INSECURE_REQUESTS should be considered
@@ -1370,6 +1386,14 @@ class OpenIDConnectClient
     public function getVerifyPeer()
     {
         return $this->verifyPeer;
+    }
+
+        /**
+     * @return string
+     */
+    public function getUserAgent()
+    {
+        return $this->userAgent;
     }
 
     /**
