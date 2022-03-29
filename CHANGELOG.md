@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 * Support for [phpseclib/phpseclib](https://phpseclib.com/) version **3**. #260
 * Support client_secret on token endpoint with PKCE. #293
+* Support configurable User-agent header. #294
 
 ## [0.9.5]
 
