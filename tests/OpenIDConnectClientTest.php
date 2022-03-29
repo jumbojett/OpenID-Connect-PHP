@@ -55,4 +55,11 @@ class OpenIDConnectClientTest extends TestCase
             }
         }
     }
+
+    public function testSerialize()
+    {
+        $client = new OpenIDConnectClient('https://example.com', 'foo', 'bar', 'baz');
+        $serialized = serialize($client);
+        $this->assertInstanceOf('Jumbojett\OpenIDConnectClient', unserialize($serialized));
+    }
 }
