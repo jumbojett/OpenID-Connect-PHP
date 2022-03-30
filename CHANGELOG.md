@@ -7,12 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
+
 * Support for [phpseclib/phpseclib](https://phpseclib.com/) version **3**. #260
 * Support client_secret on token endpoint with PKCE. #293
+* Added new parameter to `requestTokens()` to pass custom HTTP headers #297
 
 ### Changed
 
-* Allow serializing `OpenIDConnectClient` using `serialize()`
+* Allow serializing `OpenIDConnectClient` using `serialize()` #295
 
 ## [0.9.5]
 

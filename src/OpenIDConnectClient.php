@@ -770,14 +770,13 @@ class OpenIDConnectClient
      * Requests ID and Access tokens
      *
      * @param string $code
+     * @param string[] $headers Extra HTTP headers to pass to the token endpoint
      * @return mixed
      * @throws OpenIDConnectClientException
      */
-    protected function requestTokens($code) {
+    protected function requestTokens($code, $headers = array()) {
         $token_endpoint = $this->getProviderConfigValue('token_endpoint');
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
-
-        $headers = [];
 
         $grant_type = 'authorization_code';
 
@@ -789,9 +788,10 @@ class OpenIDConnectClient
             'client_secret' => $this->clientSecret
         );
 
+        $authorizationHeader = null;
         # Consider Basic authentication if provider config is set this way
         if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
-            $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
+            $authorizationHeader = 'Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret));
             unset($token_params['client_secret']);
 	        unset($token_params['client_id']);
         }
@@ -800,7 +800,7 @@ class OpenIDConnectClient
         $cv = $this->getCodeVerifier();
         if (!empty($ccm) && !empty($cv)) {
             if (empty($this->getClientSecret())) {
-                $headers = [];
+                $authorizationHeader = null;
                 unset($token_params['client_secret']);
             }
             $token_params = array_merge($token_params, array(
@@ -811,6 +811,10 @@ class OpenIDConnectClient
 
         // Convert token params to string format
         $token_params = http_build_query($token_params, '', '&', $this->enc_type);
+
+        if (null !== $authorizationHeader) {
+            $headers[] = $authorizationHeader;
+        }
 
         $this->tokenResponse = json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
 
