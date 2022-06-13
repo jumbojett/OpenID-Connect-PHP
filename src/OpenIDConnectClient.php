@@ -22,6 +22,8 @@
 
 namespace Jumbojett;
 
+use Jumbojett\Interfaces\HandleJweResponseInterface;
+
 /**
  *
  * JWT signature verification support by Jonathan Reed <jdreed@mit.edu>
@@ -160,6 +162,11 @@ class OpenIDConnectClient
     private $responseCode;
 
     /**
+     * @var string|null Content type from the server
+     */
+    private $responseContentType;
+
+    /**
      * @var array holds response types
      */
     private $responseTypes = array();
@@ -243,6 +250,11 @@ class OpenIDConnectClient
     private $pkceAlgs = array('S256' => 'sha256', 'plain' => false);
 
     /**
+     * @var HandleJweResponseInterface|null
+     */
+    private $jweResponseHandler;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -280,6 +292,13 @@ class OpenIDConnectClient
      */
     public function setResponseTypes($response_types) {
         $this->responseTypes = array_merge($this->responseTypes, (array)$response_types);
+    }
+
+    /**
+     * @param HandleJweResponseInterface $jwe_response_handler
+     */
+    public function setJweResponseHandler($jwe_response_handler) {
+        $this->jweResponseHandler = $jwe_response_handler;
     }
 
     /**
@@ -323,16 +342,7 @@ class OpenIDConnectClient
             $claims = $this->decodeJWT($token_json->id_token, 1);
 
             // Verify the signature
-            if ($this->canVerifySignatures()) {
-                if (!$this->getProviderConfigValue('jwks_uri')) {
-                    throw new OpenIDConnectClientException ('Unable to verify signature due to no jwks_uri being defined');
-                }
-                if (!$this->verifyJWTsignature($token_json->id_token)) {
-                    throw new OpenIDConnectClientException ('Unable to verify signature');
-                }
-            } else {
-                user_error('Warning: JWT signature verification unavailable.');
-            }
+            $this->verifySignatures($token_json->id_token);
 
             // Save the id token
             $this->idToken = $token_json->id_token;
@@ -385,16 +395,7 @@ class OpenIDConnectClient
             $claims = $this->decodeJWT($id_token, 1);
 
             // Verify the signature
-            if ($this->canVerifySignatures()) {
-                if (!$this->getProviderConfigValue('jwks_uri')) {
-                    throw new OpenIDConnectClientException ('Unable to verify signature due to no jwks_uri being defined');
-                }
-                if (!$this->verifyJWTsignature($id_token)) {
-                    throw new OpenIDConnectClientException ('Unable to verify signature');
-                }
-            } else {
-                user_error('Warning: JWT signature verification unavailable.');
-            }
+            $this->verifySignatures($id_token);
 
             // Save the id token
             $this->idToken = $id_token;
@@ -793,7 +794,7 @@ class OpenIDConnectClient
         if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
             $authorizationHeader = 'Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret));
             unset($token_params['client_secret']);
-	        unset($token_params['client_id']);
+            unset($token_params['client_id']);
         }
 
         $ccm = $this->getCodeChallengeMethod();
@@ -1038,6 +1039,25 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param string $jwt encoded JWT
+     * @return void
+     * @throws OpenIDConnectClientException
+     */
+    public function verifySignatures($jwt)
+    {
+        if ($this->canVerifySignatures()) {
+            if (!$this->getProviderConfigValue('jwks_uri')) {
+                throw new OpenIDConnectClientException ('Unable to verify signature due to no jwks_uri being defined');
+            }
+            if (!$this->verifyJWTsignature($jwt)) {
+                throw new OpenIDConnectClientException ('Unable to verify signature');
+            }
+        } else {
+            user_error('Warning: JWT signature verification unavailable.');
+        }
+    }
+
+    /**
      * @param string $iss
      * @return bool
      * @throws OpenIDConnectClientException
@@ -1137,10 +1157,41 @@ class OpenIDConnectClient
         $headers = ["Authorization: Bearer {$this->accessToken}",
             'Accept: application/json'];
 
-        $user_json = json_decode($this->fetchURL($user_info_endpoint,null,$headers));
+        $response = $this->fetchURL($user_info_endpoint,null,$headers);
         if ($this->getResponseCode() <> 200) {
             throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$this->getResponseCode());
         }
+
+        // When we receive application/jwt, the UserInfo Response is signed and/or encrypted.
+        if ($this->getResponseContentType() === 'application/jwt' ) {
+            // Check if the response is encrypted
+            $jwtHeaders = $this->decodeJWT($response);
+            if (isset($jwtHeaders->enc)) {
+                // If we don't have a JWE handler then throw error
+                if ($this->jweResponseHandler === null) {
+                    throw new OpenIDConnectClientException('JWE response handler not set');
+                }
+
+                // Handle JWE
+                $jwt = $this->jweResponseHandler->handleJweResponse($response);
+            }
+
+            // Verify the signature
+            $this->verifySignatures($jwt);
+
+            // Get claims from JWT
+            $claims = $this->decodeJWT($jwt, 1);
+
+            // Verify the JWT claims
+            if (!$this->verifyJWTclaims($claims)) {
+                throw new OpenIDConnectClientException('Invalid JWT signature');
+            }
+
+            $user_json = $claims;
+        } else {
+            $user_json = json_decode($response);
+        }
+
         $this->userInfo = $user_json;
 
         if($attribute === null) {
@@ -1269,6 +1320,7 @@ class OpenIDConnectClient
         // HTTP Response code from server may be required from subclass
         $info = curl_getinfo($ch);
         $this->responseCode = $info['http_code'];
+        $this->responseContentType = $info['content_type'];
 
         if ($output === false) {
             throw new OpenIDConnectClientException('Curl error: (' . curl_errno($ch) . ') ' . curl_error($ch));
@@ -1745,6 +1797,16 @@ class OpenIDConnectClient
     public function getResponseCode()
     {
         return $this->responseCode;
+    }
+
+    /**
+     * Get the content type from last action/curl request.
+     *
+     * @return string|null
+     */
+    public function getResponseContentType()
+    {
+        return $this->responseContentType;
     }
 
     /**
