@@ -799,7 +799,8 @@ class OpenIDConnectClient
         $ccm = $this->getCodeChallengeMethod();
         $cv = $this->getCodeVerifier();
         if (!empty($ccm) && !empty($cv)) {
-            if (empty($this->getClientSecret())) {
+            $cs = $this->getClientSecret();
+            if (empty($cs)) {
                 $authorizationHeader = null;
                 unset($token_params['client_secret']);
             }
