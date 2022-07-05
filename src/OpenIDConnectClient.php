@@ -1804,7 +1804,7 @@ class OpenIDConnectClient
      * Use session to manage a nonce
      */
     protected function startSession() {
-        if (!isset($_SESSION)) {
+        if (session_status() === PHP_SESSION_NONE) {
             @session_start();
         }
     }
