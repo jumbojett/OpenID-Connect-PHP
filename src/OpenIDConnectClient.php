@@ -825,6 +825,49 @@ class OpenIDConnectClient
     }
 
     /**
+     * Request RFC8693 Token Exchange
+     * https://datatracker.ietf.org/doc/html/rfc8693
+     *
+     * @param string $subjectToken
+     * @param string $subjectTokenType
+     * @param string $audience
+     * @return mixed
+     * @throws OpenIDConnectClientException
+     */
+    public function requestTokenExchange($subjectToken, $subjectTokenType, $audience = '') {
+        $token_endpoint = $this->getProviderConfigValue('token_endpoint');
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
+        $headers = [];
+        $grant_type = 'urn:ietf:params:oauth:grant-type:token-exchange';
+
+        $post_data = array(
+            'grant_type'    => $grant_type,
+            'subject_token_type' => $subjectTokenType,
+            'subject_token' => $subjectToken,
+            'client_id' => $this->clientID,
+            'client_secret' => $this->clientSecret,
+            'scope'         => implode(' ', $this->scopes)
+        );
+
+        if (!empty($audience)) {
+            $post_data['audience'] = $audience;
+        }
+
+        # Consider Basic authentication if provider config is set this way
+        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+            $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
+            unset($post_data['client_secret']);
+            unset($post_data['client_id']);
+        }
+
+        // Convert token params to string format
+        $post_params = http_build_query($post_data, null, '&', $this->enc_type);
+
+        return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
+    }
+
+
+    /**
      * Requests Access token with refresh token
      *
      * @param string $refresh_token
