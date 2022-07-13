@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 
+## [0.9.7]
+
 ### Added
 
 * Support for Self-Contained JWTs. #308
