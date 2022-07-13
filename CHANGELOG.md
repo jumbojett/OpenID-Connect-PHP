@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [unreleased]
+
+### Added
+
+* Support for Self-Contained JWTs. #308
+* Support for RFC8693 Token Exchange Request. #275
+
+### Fixed
+
+* PHP 5.4 compatibility. #304
+* Use session_status(). #306
+
 ## [0.9.6]
 
 ### Added
