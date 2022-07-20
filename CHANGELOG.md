@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 
+### Added
+
+* Support for capturing `refresh_token_expires_in` during `authenticate()`
+
 ## [0.9.7]
 
 ### Added
