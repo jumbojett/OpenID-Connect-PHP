@@ -145,12 +145,18 @@ $name = $oidc->requestUserInfo('given_name');
 
 
 ## Development Environments ##
-In some cases you may need to disable SSL security on on your development systems.
+In some cases you may need to disable SSL security on your development systems.
 Note: This is not recommended on production systems.
 
 ```php
 $oidc->setVerifyHost(false);
 $oidc->setVerifyPeer(false);
+```
+
+Also, your local system might not support HTTPS, so you might disable upgrading to it:
+
+```php
+$oidc->setHttpUpgradeInsecureRequests(false);
 ```
 
 ### Todo ###
@@ -159,4 +165,4 @@ $oidc->setVerifyPeer(false);
   [1]: http://openid.net/specs/openid-connect-basic-1_0-15.html#id_res
   
 ## Contributing ###
- - All pull requests, once merged, should be added to the changelog.md file.
+ - All pull requests, once merged, should be added to the CHANGELOG.md file.

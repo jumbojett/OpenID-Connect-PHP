@@ -2,8 +2,10 @@
 
 
 use Jumbojett\OpenIDConnectClient;
+use PHPUnit\Framework\MockObject\MockObject;
+use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
-class TokenVerificationTest extends PHPUnit_Framework_TestCase
+class TokenVerificationTest extends TestCase
 {
     /**
      * @param $alg
@@ -13,7 +15,7 @@ class TokenVerificationTest extends PHPUnit_Framework_TestCase
      */
     public function testTokenVerification($alg, $jwt)
     {
-        /** @var OpenIDConnectClient | PHPUnit_Framework_MockObject_MockObject $client */
+        /** @var OpenIDConnectClient | MockObject $client */
         $client = $this->getMockBuilder(OpenIDConnectClient::class)->setMethods(['fetchUrl'])->getMock();
         $client->method('fetchUrl')->willReturn(file_get_contents(__DIR__ . "/data/jwks-$alg.json"));
         $client->setProviderURL('https://jwt.io/');

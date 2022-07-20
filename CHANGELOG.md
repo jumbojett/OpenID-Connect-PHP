@@ -4,6 +4,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [unreleased]
+
+## [0.9.7]
+
+### Added
+
+* Support for Self-Contained JWTs. #308
+* Support for RFC8693 Token Exchange Request. #275
+
+### Fixed
+
+* PHP 5.4 compatibility. #304
+* Use session_status(). #306
+
+## [0.9.6]
+
+### Added
+
+* Support for [phpseclib/phpseclib](https://phpseclib.com/) version **3**. #260
+* Support client_secret on token endpoint with PKCE. #293
+* Added new parameter to `requestTokens()` to pass custom HTTP headers #297
+
+### Changed
+
+* Allow serializing `OpenIDConnectClient` using `serialize()` #295
+
+## [0.9.5]
+
+### Changed
+
+* signOut() Method parameter $accessToken -> $idToken to prevent confusion about access and id tokens usage. #127
+* Fixed issue where missing nonce within the claims was causing an exception. #280
+
+## [0.9.4]
+
+### Added
+
+* Enabled `client_secret_basic` authentication on `refreshToken()` #215
+* Basic auth support for requestResourceOwnerToken #271
+
+## [0.9.3]
+
+### Added
+
+* getRedirectURL() will not log a warning for PHP 7.1+ #179
+* it is now possible to disable upgrading from HTTP to HTTPS for development purposes by calling `setHttpUpgradeInsecureRequests(false)` #241
+* bugfix in getSessionKey when _SESSION key does not exist #251
+* Added scope parameter to refresh token request #225
+* bugfix in verifyJWTclaims when $accessToken is empty and $claims->at_hash is not #276
+* bugfix with the `empty` function in PHP 5.4 #267
+
 ## [0.9.2]
 
 ### Added
@@ -12,7 +63,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.9.1]
 
 ### Added
-* Add support for MS Azure Active Directory B2C user flows 
+* Add support for MS Azure Active Directory B2C user flows
 
 ### Changed
 * Fix at_hash verification #200
