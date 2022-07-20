@@ -360,6 +360,11 @@ class OpenIDConnectClient
                 if (isset($token_json->refresh_token)) {
                     $this->refreshToken = $token_json->refresh_token;
                 }
+		    
+		// Save the refresh token expiration (seconds), if we got one
+		if (isset($token_json->refresh_token_expires_in)) {
+                    $this->refreshTokenExpiresIn = $token_json->refresh_token_expires_in;
+                }
 
                 // Success!
                 return true;
