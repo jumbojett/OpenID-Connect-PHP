@@ -798,6 +798,21 @@ class OpenIDConnectClient
 	        unset($token_params['client_id']);
         }
 
+        if (in_array('client_secret_jwt', $token_endpoint_auth_methods_supported, true)) {
+            $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
+
+            if(isset($this->providerConfig['client_assertion'])){
+                $client_assertion = $this->getProviderConfigValue('client_assertion');
+            }
+            else{
+                $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('token_endpoint'));
+            }
+            
+            $token_params['client_assertion_type'] = $client_assertion_type;
+            $token_params['client_assertion'] = $client_assertion;
+            unset($token_params['client_secret']);
+	    }
+
         $ccm = $this->getCodeChallengeMethod();
         $cv = $this->getCodeVerifier();
         if (!empty($ccm) && !empty($cv)) {
@@ -897,6 +912,21 @@ class OpenIDConnectClient
             unset($token_params['client_id']);
         }
 
+        if (in_array('client_secret_jwt', $token_endpoint_auth_methods_supported, true)) {
+            $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
+            $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('token_endpoint'));
+            
+            $token_params["grant_type"] = "urn:ietf:params:oauth:grant-type:token-exchange";
+            $token_params["subject_token"] = $refresh_token;
+            $token_params["audience"] = $this->clientID;
+            $token_params["subject_token_type"] = "urn:ietf:params:oauth:token-type:refresh_token";
+			$token_params["requested_token_type"] = "urn:ietf:params:oauth:token-type:access_token";
+            $token_params['client_assertion_type']=$client_assertion_type;
+            $token_params['client_assertion'] = $client_assertion;
+            
+            unset($token_params['client_secret']);
+            unset($token_params['client_id']);
+        }
         // Convert token params to string format
         $token_params = http_build_query($token_params, '', '&', $this->encType);
 
@@ -1059,11 +1089,11 @@ class OpenIDConnectClient
         switch ($header->alg) {
             case 'RS256':
             case 'PS256':
+            case 'PS512':
             case 'RS384':
             case 'RS512':
                 $hashtype = 'sha' . substr($header->alg, 2);
-                $signatureType = $header->alg === 'PS256' ? 'PSS' : '';
-
+                $signatureType = $header->alg === 'PS256' || $header->alg === 'PS512' ? 'PSS' : '';
                 if (isset($header->jwk)) {
                     $jwk = $header->jwk;
                 } else {
@@ -1546,6 +1576,7 @@ class OpenIDConnectClient
      */
     public function introspectToken($token, $token_type_hint = '', $clientId = null, $clientSecret = null) {
         $introspection_endpoint = $this->getProviderConfigValue('introspection_endpoint');
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
 
         $post_data = ['token' => $token];
 
@@ -1556,9 +1587,19 @@ class OpenIDConnectClient
         $clientSecret = $clientSecret !== null ? $clientSecret : $this->clientSecret;
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, '', '&');
         $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
             'Accept: application/json'];
+
+        if (in_array('client_secret_jwt', $token_endpoint_auth_methods_supported, true)) {
+            $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
+            $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('introspection_endpoint'));
+            
+            $post_data['client_assertion_type']=$client_assertion_type;
+            $post_data['client_assertion'] = $client_assertion;
+            $headers = ['Accept: application/json'];
+        }
+
+        $post_params = http_build_query($post_data, '', '&');
 
         return json_decode($this->fetchURL($introspection_endpoint, $post_params, $headers));
     }
@@ -1877,6 +1918,43 @@ class OpenIDConnectClient
         unset($_SESSION[$key]);
     }
 
+    protected function getJWTClientAssertion($aud) {
+        $jti = hash('sha256',bin2hex(random_bytes(64)));
+
+        $now = time();
+
+		$header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+		$payload = json_encode([
+			'sub' => $this->getClientID(),
+			'iss' => $this->getClientID(),
+			'aud' => $aud,
+			'jti' => $jti,
+			'exp' => $now + 3600,
+			'iat' => $now,
+		]);
+		// Encode Header to Base64Url String
+		$base64UrlHeader = $this->urlEncode($header);
+		
+
+		// Encode Payload to Base64Url String
+		$base64UrlPayload = $this->urlEncode($payload);
+
+		// Create Signature Hash
+		$signature = hash_hmac(
+			'sha256',
+			$base64UrlHeader . "." . $base64UrlPayload,
+			$this->getClientSecret(),
+			true
+		);
+
+		// Encode Signature to Base64Url String
+		$base64UrlSignature = $this->urlEncode($signature);
+		
+		$jwt = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
+
+		return $jwt;
+    }
+    
     public function setUrlEncoding($curEncoding) {
         switch ($curEncoding)
         {
