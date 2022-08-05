@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 
+## [0.9.8]
+
+## Fixed
+
+* Do not use PKCE if IdP does not support it. #317
+
 ## [0.9.7]
 
 ### Added
