@@ -492,7 +492,7 @@ class OpenIDConnectClient
      * @param string $param
      * @param string $default optional
      * @throws OpenIDConnectClientException
-     * @return string
+     * @return string|array
      *
      */
     protected function getProviderConfigValue($param, $default = null) {
@@ -682,18 +682,18 @@ class OpenIDConnectClient
         }
 
         // If the client supports Proof Key for Code Exchange (PKCE)
-        $ccm = $this->getCodeChallengeMethod();
-        if (!empty($ccm) && in_array($this->getCodeChallengeMethod(), $this->getProviderConfigValue('code_challenge_methods_supported'))) {
+        $codeChallengeMethod = $this->getCodeChallengeMethod();
+        if (!empty($codeChallengeMethod) && in_array($codeChallengeMethod, $this->getProviderConfigValue('code_challenge_methods_supported', []), true)) {
             $codeVerifier = bin2hex(random_bytes(64));
             $this->setCodeVerifier($codeVerifier);
-            if (!empty($this->pkceAlgs[$this->getCodeChallengeMethod()])) {
-                $codeChallenge = rtrim(strtr(base64_encode(hash($this->pkceAlgs[$this->getCodeChallengeMethod()], $codeVerifier, true)), '+/', '-_'), '=');
+            if (!empty($this->pkceAlgs[$codeChallengeMethod])) {
+                $codeChallenge = rtrim(strtr(base64_encode(hash($this->pkceAlgs[$codeChallengeMethod], $codeVerifier, true)), '+/', '-_'), '=');
             } else {
                 $codeChallenge = $codeVerifier;
             }
             $auth_params = array_merge($auth_params, [
                 'code_challenge' => $codeChallenge,
-                'code_challenge_method' => $this->getCodeChallengeMethod()
+                'code_challenge_method' => $codeChallengeMethod
             ]);
         }
 
