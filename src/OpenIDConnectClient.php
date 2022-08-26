@@ -558,7 +558,7 @@ class OpenIDConnectClient
     /**
      * @param string $url Sets redirect URL for auth flow
      */
-    public function setRedirectURL ($url) {
+    public function setRedirectURL($url) {
         if (parse_url($url,PHP_URL_HOST) !== false) {
             $this->redirectURL = $url;
         }
