@@ -811,7 +811,7 @@ class OpenIDConnectClient
             $token_params['client_assertion_type'] = $client_assertion_type;
             $token_params['client_assertion'] = $client_assertion;
             unset($token_params['client_secret']);
-	    }
+	}
 
         $ccm = $this->getCodeChallengeMethod();
         $cv = $this->getCodeVerifier();
