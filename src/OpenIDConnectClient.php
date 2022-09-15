@@ -1010,7 +1010,7 @@ class OpenIDConnectClient
 
     /**
      * @param string $hashtype
-     * @param object $key
+     * @param string $key
      * @param $payload
      * @param $signature
      * @return bool
@@ -1068,7 +1068,7 @@ class OpenIDConnectClient
                 if (isset($header->jwk)) {
                     $jwk = $header->jwk;
                 } else {
-                    $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
+                    $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')), false);
                     if ($jwks === NULL) {
                         throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
                     }
