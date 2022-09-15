@@ -1227,6 +1227,9 @@ class OpenIDConnectClient
 
                 // Handle JWE
                 $jwt = $this->jweResponseHandler->handleJweResponse($response);
+            } else {
+                // If the response is not encrypted then it must be signed
+                $jwt = $response;
             }
 
             // Verify the signature
