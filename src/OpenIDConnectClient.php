@@ -343,13 +343,25 @@ class OpenIDConnectClient
                 throw new OpenIDConnectClientException('User did not authorize openid scope.');
             }
 
-            $claims = $this->decodeJWT($token_json->id_token, 1);
+            $id_token = $token_json->id_token;
+            $idTokenHeaders = $this->decodeJWT($id_token);
+            if (isset($idTokenHeaders->enc)) {
+                // If we don't have a JWE handler then throw error
+                if ($this->jweResponseHandler === null) {
+                    throw new OpenIDConnectClientException('JWE response handler not set');
+                }
+
+                // Handle JWE
+                $id_token = $this->jweResponseHandler->handleJweResponse($id_token);
+            }
+
+            $claims = $this->decodeJWT($id_token, 1);
 
             // Verify the signature
-            $this->verifySignatures($token_json->id_token);
+            $this->verifySignatures($id_token);
 
             // Save the id token
-            $this->idToken = $token_json->id_token;
+            $this->idToken = $id_token;
 
             // Save the access token
             $this->accessToken = $token_json->access_token;
