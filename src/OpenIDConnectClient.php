@@ -806,7 +806,7 @@ class OpenIDConnectClient
         // When there is a private key jwt generator and it is supported then use it as client authentication
         if ($this->privateKeyJwtGenerator !== null && in_array('private_key_jwt', $token_endpoint_auth_methods_supported, true)) {
             $token_params['client_assertion_type'] = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
-            $token_params['client_assertion'] = $this->privateKeyJwtGenerator($token_endpoint);
+            $token_params['client_assertion'] = $this->privateKeyJwtGenerator->__invoke($token_endpoint);
         }
 
         $ccm = $this->getCodeChallengeMethod();
