@@ -216,6 +216,11 @@ class OpenIDConnectClient
     private $issuerValidator;
 
     /**
+     * @var callable|null generator function for private key jwt client authentication
+     */
+    private $privateKeyJwtGenerator;
+
+    /**
      * @var bool Allow OAuth 2 implicit flow; see http://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth
      */
     private $allowImplicitFlow = false;
@@ -796,6 +801,12 @@ class OpenIDConnectClient
             $authorizationHeader = 'Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret));
             unset($token_params['client_secret']);
 	        unset($token_params['client_id']);
+        }
+
+        // When there is a private key jwt generator and it is supported then use it as client authentication
+        if ($this->privateKeyJwtGenerator !== null && in_array('private_key_jwt', $token_endpoint_auth_methods_supported, true)) {
+            $token_params['client_assertion_type'] = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
+            $token_params['client_assertion'] = $this->privateKeyJwtGenerator($token_endpoint);
         }
 
         $ccm = $this->getCodeChallengeMethod();
@@ -1454,6 +1465,18 @@ class OpenIDConnectClient
     }
 
     /**
+     * Use this for private_key_jwt client authentication
+     * The given function should accept the token_endpoint string as the only argument
+     * and return a jwt signed with your private key according to:
+     * https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication
+     *
+     * @param callable $privateKeyJwtGenerator
+     */
+    public function setPrivateKeyJwtGenerator($privateKeyJwtGenerator) {
+        $this->privateKeyJwtGenerator = $privateKeyJwtGenerator;
+    }
+
+    /**
      * @param bool $allowImplicitFlow
      */
     public function setAllowImplicitFlow($allowImplicitFlow) {
@@ -1920,6 +1943,14 @@ class OpenIDConnectClient
      */
     public function getIssuerValidator() {
         return $this->issuerValidator;
+    }
+
+
+    /**
+     * @return callable
+     */
+    public function getPrivateKeyJwtGenerator() {
+        return $this->privateKeyJwtGenerator;
     }
 
     /**
