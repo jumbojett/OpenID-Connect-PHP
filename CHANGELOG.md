@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
+* Support for signed and encrypted UserInfo response. #305
+* Support for signed and encrypted ID Token. #305
 
 ## [0.9.8]
 
