@@ -1066,6 +1066,7 @@ class OpenIDConnectClient
 
                 if (isset($header->jwk)) {
                     $jwk = $header->jwk;
+                    $this->verifyJWKHeader($jwk);
                 } else {
                     $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
                     if ($jwks === NULL) {
@@ -1941,5 +1942,13 @@ class OpenIDConnectClient
      */
     public function setCodeChallengeMethod($codeChallengeMethod) {
         $this->codeChallengeMethod = $codeChallengeMethod;
+    }
+
+    /**
+     * @throws OpenIDConnectClientException
+     */
+    protected function verifyJWKHeader($jwk)
+    {
+        throw new OpenIDConnectClientException('Self signed JWK header is not valid');
     }
 }
