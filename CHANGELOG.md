@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 
+## Fixed
+
+* Harden self-signed JWK header usage. #323
+
 ## [0.9.8]
 
 ## Fixed
