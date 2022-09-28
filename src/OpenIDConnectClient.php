@@ -647,7 +647,7 @@ class OpenIDConnectClient
             throw new OpenIDConnectClientException('Random token generation failed.');
         } catch (Exception $e) {
             throw new OpenIDConnectClientException('Random token generation failed.');
-        };
+        }
     }
 
     /**
@@ -872,7 +872,7 @@ class OpenIDConnectClient
         }
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&', $this->enc_type);
+        $post_params = http_build_query($post_data, null, '&', $this->encType);
 
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
     }
