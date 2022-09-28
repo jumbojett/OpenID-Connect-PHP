@@ -378,7 +378,6 @@ class OpenIDConnectClient
 
                 // Success!
                 return true;
-
             }
 
             throw new OpenIDConnectClientException ('Unable to verify JWT claims');
@@ -479,8 +478,8 @@ class OpenIDConnectClient
      * back-channel logout flows.
      *
      * This function should be evaluated as a boolean check
-     * in your route that receives the POST request for back-
-     * channel logout executed from the OP.
+     * in your route that receives the POST request for back-channel
+     * logout executed from the OP.
      *
      * @return bool
      * @throws OpenIDConnectClientException
@@ -506,18 +505,15 @@ class OpenIDConnectClient
             }
 
             // Verify Logout Token Claims
-            if ($this->verifyLogoutTokenClaims($claims, $logout_token)) {
-                $this->logoutToken = $logout_token;
+            if ($this->verifyLogoutTokenClaims($claims)) {
                 $this->verifiedClaims = $claims;
                 return true;
             }
-            else {
-                return false;
-            }
+
+            return false;
         }
-        else {
-            throw new OpenIDConnectClientException('Back-channel logout: There was no logout_token in the request');
-        }
+
+        throw new OpenIDConnectClientException('Back-channel logout: There was no logout_token in the request');
     }
 
     /**
@@ -526,6 +522,7 @@ class OpenIDConnectClient
      *
      * @param object $claims
      * @return bool
+     * @throws OpenIDConnectClientException
      */
     public function verifyLogoutTokenClaims($claims)
     {
@@ -572,11 +569,11 @@ class OpenIDConnectClient
             return false;
         }
         // Validate the iat. At this point we can return true if it is ok
-        if (isset($claims->iat) && ((gettype($claims->iat) === 'integer') && ($claims->iat <= time() + $this->leeway))) {
+        if (isset($claims->iat) && ((is_int($claims->iat)) && ($claims->iat <= time() + $this->leeway))) {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -770,6 +767,7 @@ class OpenIDConnectClient
      * Start Here
      * @return void
      * @throws OpenIDConnectClientException
+     * @throws \Exception
      */
     private function requestAuthorization() {
 
