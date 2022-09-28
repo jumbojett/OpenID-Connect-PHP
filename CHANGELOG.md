@@ -4,13 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [unreleased]
+## [0.9.9]
+
+### Added
+
+* Added support for back-channel logout. #302
 * Added support for `private_key_jwt` Client Authentication method #322
 
 ## Fixed
 
 * Harden self-signed JWK header usage. #323
-* Added support for back-channel logout. #302
 
 ## [0.9.8]
 
@@ -64,13 +67,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * it is now possible to disable upgrading from HTTP to HTTPS for development purposes by calling `setHttpUpgradeInsecureRequests(false)` #241
 * bugfix in getSessionKey when _SESSION key does not exist #251
 * Added scope parameter to refresh token request #225
-* bugfix in verifyJWTclaims when $accessToken is empty and $claims->at_hash is not #276
+* bugfix in `verifyJWTclaims` when $accessToken is empty and $claims->at_hash is not #276
 * bugfix with the `empty` function in PHP 5.4 #267
 
 ## [0.9.2]
 
 ### Added
-* Support for [PKCE](https://tools.ietf.org/html/rfc7636). Currently the supported methods are 'plain' and 'S256'.
+* Support for [PKCE](https://tools.ietf.org/html/rfc7636). Currently, the supported methods are 'plain' and 'S256'.
 
 ## [0.9.1]
 
@@ -133,7 +136,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Add option to send additional registration parameters like post_logout_redirect_uris. #140
 
 ### Changed
-* disabled autoload for Crypt_RSA + makre refreshToken() method tolerant for errors #137
+* disabled autoload for Crypt_RSA + make refreshToken() method tolerant for errors #137
 
 ### Removed
 *
@@ -143,7 +146,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 * Added five minutes leeway due to clock skew between openidconnect server and client.
 * Fix save access_token from request in implicit flow authentication #129
-* verifyJWTsignature() method private -> public #126
+* `verifyJWTsignature()` method private -> public #126
 * Support for providers where provider/login URL is not the same as the issuer URL. #125
 * Support for providers that has a different login URL from the issuer URL, for instance Azure Active Directory. Here, the provider URL is on the format: https://login.windows.net/(tenant-id), while the issuer claim actually is on the format: https://sts.windows.net/(tenant-id).
 
