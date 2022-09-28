@@ -247,6 +247,16 @@ class OpenIDConnectClient
     private $pkceAlgs = ['S256' => 'sha256', 'plain' => false];
 
     /**
+     * @var string if we acquire a sid in back-channel logout it will be stored here
+     */
+    private $backChannelSid;
+
+    /**
+     * @var string if we acquire a sub in back-channel logout it will be stored here
+     */
+    private $backChannelSubject;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -456,6 +466,112 @@ class OpenIDConnectClient
 
         $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, '', '&', $this->encType);
         $this->redirect($signout_endpoint);
+    }
+
+
+    /**
+     * Decode and then verify a logout token sent as part of
+     * back-channel logout flows.
+     *
+     * This function should be evaluated as a boolean check
+     * in your route that receives the POST request for back-
+     * channel logout executed from the OP.
+     *
+     * @return bool
+     * @throws OpenIDConnectClientException
+     */
+    public function verifyLogoutToken()
+    {
+        if (isset($_REQUEST['logout_token'])) {
+            $logout_token = $_REQUEST['logout_token'];
+
+            $claims = $this->decodeJWT($logout_token, 1);
+
+            // Verify the signature
+            if ($this->canVerifySignatures()) {
+                if (!$this->getProviderConfigValue('jwks_uri')) {
+                    throw new OpenIDConnectClientException('Back-channel logout: Unable to verify signature due to no jwks_uri being defined');
+                }
+                if (!$this->verifyJWTsignature($logout_token)) {
+                    throw new OpenIDConnectClientException('Back-channel logout: Unable to verify JWT signature');
+                }
+            }
+            else {
+                user_error('Warning: JWT signature verification unavailable');
+            }
+
+            // Verify Logout Token Claims
+            if ($this->verifyLogoutTokenClaims($claims, $logout_token)) {
+                $this->logoutToken = $logout_token;
+                $this->verifiedClaims = $claims;
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            throw new OpenIDConnectClientException('Back-channel logout: There was no logout_token in the request');
+        }
+    }
+
+    /**
+     * Verify each claim in the logout token according to the
+     * spec for back-channel authentication.
+     *
+     * @param object $claims
+     * @return bool
+     */
+    public function verifyLogoutTokenClaims($claims)
+    {
+        // Verify that the Logout Token doesn't contain a nonce Claim.
+        if (isset($claims->nonce)) {
+            return false;
+        }
+
+        // Verify that the logout token contains a sub or sid, or both
+        if (!isset($claims->sid) && !isset($claims->sub)) {
+            return false;
+        }
+        // Set the sid, which could be used to map to a session in
+        // the RP, and therefore be used to help destroy the RP's
+        // session.
+        if (isset($claims->sid)) {
+            $this->backChannelSid = $claims->sid;
+        }
+
+        // Set the sub, which could be used to map to a session in
+        // the RP, and therefore be used to help destroy the RP's
+        // session.
+        if (isset($claims->sub)) {
+            $this->backChannelSubject = $claims->sub;
+        }
+
+        // Verify that the Logout Token contains an events Claim whose
+        // value is a JSON object containing the member name
+        // http://schemas.openid.net/event/backchannel-logout
+        if (isset($claims->events)) {
+            $events = (array) $claims->events;
+            if (!isset($events['http://schemas.openid.net/event/backchannel-logout']) ||
+                !is_object($events['http://schemas.openid.net/event/backchannel-logout'])) {
+                return false;
+            }
+        }
+
+        // Validate the iss
+        if (!$this->validateIssuer($claims->iss)) {
+            return false;
+        }
+        // Validate the aud
+        if ((!$claims->aud === $this->clientID) || (!in_array($this->clientID, $claims->aud, true))) {
+            return false;
+        }
+        // Validate the iat. At this point we can return true if it is ok
+        if (isset($claims->iat) && ((gettype($claims->iat) === 'integer') && ($claims->iat <= time() + $this->leeway))) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -1950,5 +2066,19 @@ class OpenIDConnectClient
     protected function verifyJWKHeader($jwk)
     {
         throw new OpenIDConnectClientException('Self signed JWK header is not valid');
+    }
+
+    /*
+     * @return string
+     */
+    public function getSidFromBackChannel() {
+        return $this->backChannelSid;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSubjectFromBackChannel() {
+        return $this->backChannelSubject;
     }
 }
