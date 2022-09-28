@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Fixed
 
 * Harden self-signed JWK header usage. #323
+* Added support for back-channel logout. #302
 
 ## [0.9.8]
 

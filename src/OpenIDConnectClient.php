@@ -517,7 +517,7 @@ class OpenIDConnectClient
 
     /**
      * Verify each claim in the logout token according to the
-     * spec for back-channel authentication.
+     * spec for back-channel logout.
      *
      * @param object $claims
      * @return bool
