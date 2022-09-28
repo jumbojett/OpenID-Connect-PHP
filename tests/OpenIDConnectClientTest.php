@@ -23,7 +23,7 @@ class OpenIDConnectClientTest extends TestCase
 
     public function testAuthenticateDoesNotThrowExceptionIfClaimsIsMissingNonce()
     {
-        $fakeClaims = new \StdClass();
+        $fakeClaims = new StdClass();
         $fakeClaims->iss = 'fake-issuer';
         $fakeClaims->aud = 'fake-client-id';
         $fakeClaims->nonce = null;
@@ -33,10 +33,10 @@ class OpenIDConnectClientTest extends TestCase
         $_SESSION['openid_connect_state'] = false;
 
         /** @var OpenIDConnectClient | MockObject $client */
-        $client = $this->getMockBuilder(OpenIDConnectClient::class)->setMethods(['decodeJWT', 'getProviderConfigValue', 'verifyJWTsignature'])->getMock();
+        $client = $this->getMockBuilder(OpenIDConnectClient::class)->setMethods(['decodeJWT', 'getProviderConfigValue', 'verifyJWTSignature'])->getMock();
         $client->method('decodeJWT')->willReturn($fakeClaims);
         $client->method('getProviderConfigValue')->with('jwks_uri')->willReturn(true);
-        $client->method('verifyJWTsignature')->willReturn(true);
+        $client->method('verifyJWTSignature')->willReturn(true);
 
         $client->setClientID('fake-client-id');
         $client->setIssuer('fake-issuer');
@@ -60,7 +60,7 @@ class OpenIDConnectClientTest extends TestCase
     {
         $client = new OpenIDConnectClient('https://example.com', 'foo', 'bar', 'baz');
         $serialized = serialize($client);
-        $this->assertInstanceOf('Jumbojett\OpenIDConnectClient', unserialize($serialized));
+        $this->assertInstanceOf(OpenIDConnectClient::class, unserialize($serialized));
     }
 
     /**
@@ -75,7 +75,7 @@ class OpenIDConnectClientTest extends TestCase
         $this->assertEquals($expected, $client->supportsAuthMethod($authMethod, $idpAuthMethods));
     }
 
-    public function provider()
+    public function provider(): array
     {
         return [
             'client_secret_basic - default config' => [true, 'client_secret_basic', null, ['client_secret_basic']],
@@ -90,8 +90,9 @@ class OpenIDConnectClientTest extends TestCase
     }
 
     /**
-     * @covers Jumbojett\\OpenIDConnectClient::verifyLogoutTokenClaims
+     * @covers       Jumbojett\\OpenIDConnectClient::verifyLogoutTokenClaims
      * @dataProvider provideTestVerifyLogoutTokenClaimsData
+     * @throws OpenIDConnectClientException
      */
     public function testVerifyLogoutTokenClaims( $claims, $expectedResult )
     {
@@ -113,7 +114,8 @@ class OpenIDConnectClientTest extends TestCase
     /**
      * @return array
      */
-    public function provideTestVerifyLogoutTokenClaimsData() {
+    public function provideTestVerifyLogoutTokenClaimsData(): array
+    {
         return [
             'valid-single-aud' => [
                 (object)[
