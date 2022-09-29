@@ -262,6 +262,11 @@ class OpenIDConnectClient
     private $backChannelSubject;
 
     /**
+     * @var bool set to true to enable client_secret_jwt
+     */
+    private $token_endpoint_client_secret_jwt_supported = false;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -598,6 +603,14 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param bool $token_endpoint_client_secret_jwt_supported
+     */
+    public function setTokenEndpointClientSecretJwtSupported($token_endpoint_client_secret_jwt_supported)
+    {
+        $this->token_endpoint_client_secret_jwt_supported = $token_endpoint_client_secret_jwt_supported;
+    }
+
+    /**
      * @param $jwk object - example: (object) ['kid' => ..., 'nbf' => ..., 'use' => 'sig', 'kty' => "RSA", 'e' => "", 'n' => ""]
      */
     protected function addAdditionalJwk($jwk) {
@@ -923,7 +936,7 @@ class OpenIDConnectClient
             $token_params['client_assertion'] = $this->privateKeyJwtGenerator->__invoke($token_endpoint);
         }
 
-        if (in_array('client_secret_jwt', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsClientSecretJWT($token_endpoint_auth_methods_supported)) {
             $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
 
             if(isset($this->providerConfig['client_assertion'])){
@@ -1037,7 +1050,7 @@ class OpenIDConnectClient
             unset($token_params['client_id']);
         }
 
-        if (in_array('client_secret_jwt', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsClientSecretJWT($token_endpoint_auth_methods_supported)) {
             $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
             $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('token_endpoint'));
             
@@ -1728,7 +1741,7 @@ class OpenIDConnectClient
         $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
             'Accept: application/json'];
 
-        if (in_array('client_secret_jwt', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsClientSecretJWT($token_endpoint_auth_methods_supported)) {
             $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
             $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('introspection_endpoint'));
             
@@ -2187,5 +2200,17 @@ class OpenIDConnectClient
      */
     public function getSubjectFromBackChannel() {
         return $this->backChannelSubject;
+    }
+
+    /**
+     * @param array $token_endpoint_auth_methods_supported
+     * @return bool
+     */
+    private function supportsClientSecretJWT(array $token_endpoint_auth_methods_supported)
+    {
+        if (!$this->token_endpoint_client_secret_jwt_supported) {
+            return false;
+        }
+        return in_array('client_secret_jwt', $token_endpoint_auth_methods_supported, true);
     }
 }
