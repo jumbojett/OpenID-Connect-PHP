@@ -262,6 +262,11 @@ class OpenIDConnectClient
     private $backChannelSubject;
 
     /**
+     * @var array list of supported auth methods
+     */
+    private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -598,6 +603,14 @@ class OpenIDConnectClient
     }
 
     /**
+     * @param array $token_endpoint_auth_methods_supported
+     */
+    public function setTokenEndpointAuthMethodsSupported($token_endpoint_auth_methods_supported)
+    {
+        $this->token_endpoint_auth_methods_supported = $token_endpoint_auth_methods_supported;
+    }
+
+    /**
      * @param $jwk object - example: (object) ['kid' => ..., 'nbf' => ..., 'use' => 'sig', 'kty' => "RSA", 'e' => "", 'n' => ""]
      */
     protected function addAdditionalJwk($jwk) {
@@ -872,7 +885,7 @@ class OpenIDConnectClient
         //For client authentication include the client values
         if($bClientAuth) {
             $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
-            if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+            if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
                 $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             } else {
                 $post_data['client_id']     = $this->clientID;
@@ -911,19 +924,19 @@ class OpenIDConnectClient
 
         $authorizationHeader = null;
         # Consider Basic authentication if provider config is set this way
-        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
             $authorizationHeader = 'Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret));
             unset($token_params['client_secret']);
 	        unset($token_params['client_id']);
         }
 
         // When there is a private key jwt generator and it is supported then use it as client authentication
-        if ($this->privateKeyJwtGenerator !== null && in_array('private_key_jwt', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->privateKeyJwtGenerator !== null && $this->supportsAuthMethod('private_key_jwt', $token_endpoint_auth_methods_supported)) {
             $token_params['client_assertion_type'] = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
             $token_params['client_assertion'] = $this->privateKeyJwtGenerator->__invoke($token_endpoint);
         }
 
-        if (in_array('client_secret_jwt', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsAuthMethod('client_secret_jwt', $token_endpoint_auth_methods_supported)) {
             $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
 
             if(isset($this->providerConfig['client_assertion'])){
@@ -994,7 +1007,7 @@ class OpenIDConnectClient
         }
 
         # Consider Basic authentication if provider config is set this way
-        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
             $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             unset($post_data['client_secret']);
             unset($post_data['client_id']);
@@ -1031,13 +1044,13 @@ class OpenIDConnectClient
         ];
 
         # Consider Basic authentication if provider config is set this way
-        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
             $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             unset($token_params['client_secret']);
             unset($token_params['client_id']);
         }
 
-        if (in_array('client_secret_jwt', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsAuthMethod('client_secret_jwt', $token_endpoint_auth_methods_supported)) {
             $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
             $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('token_endpoint'));
             
@@ -1728,7 +1741,7 @@ class OpenIDConnectClient
         $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
             'Accept: application/json'];
 
-        if (in_array('client_secret_jwt', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsAuthMethod('client_secret_jwt', $token_endpoint_auth_methods_supported)) {
             $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
             $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('introspection_endpoint'));
             
@@ -2187,5 +2200,20 @@ class OpenIDConnectClient
      */
     public function getSubjectFromBackChannel() {
         return $this->backChannelSubject;
+    }
+
+    /**
+     * @param string $auth_method
+     * @param array $token_endpoint_auth_methods_supported
+     * @return bool
+     */
+    public function supportsAuthMethod($auth_method, $token_endpoint_auth_methods_supported)
+    {
+        # client_secret_jwt has to explicitly be enabled
+        if (!in_array($auth_method, $this->token_endpoint_auth_methods_supported, true)) {
+            return false;
+        }
+
+        return in_array($auth_method, $token_endpoint_auth_methods_supported, true);
     }
 }
