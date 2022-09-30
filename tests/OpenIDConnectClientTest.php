@@ -88,4 +88,151 @@ class OpenIDConnectClientTest extends TestCase
 
         ];
     }
+
+    /**
+     * @covers Jumbojett\\OpenIDConnectClient::verifyLogoutTokenClaims
+     * @dataProvider provideTestVerifyLogoutTokenClaimsData
+     */
+    public function testVerifyLogoutTokenClaims( $claims, $expectedResult )
+    {
+        /** @var OpenIDConnectClient | MockObject $client */
+        $client = $this->getMockBuilder(OpenIDConnectClient::class)->setMethods(['decodeJWT', 'getProviderConfigValue', 'verifyJWTsignature'])->getMock();
+
+        $client->setClientID('fake-client-id');
+        $client->setIssuer('fake-issuer');
+        $client->setIssuerValidator(function() {
+            return true;
+        });
+        $client->setProviderURL('https://jwt.io/');
+
+        $actualResult = $client->verifyLogoutTokenClaims( $claims );
+
+        $this->assertEquals( $expectedResult, $actualResult );
+    }
+
+    /**
+     * @return array
+     */
+    public function provideTestVerifyLogoutTokenClaimsData() {
+        return [
+            'valid-single-aud' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => 'fake-client-id',
+                    'sid' => 'fake-client-sid',
+                    'sub' => 'fake-client-sub',
+                    'iat' => time(),
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ],
+                ],
+                true
+            ],
+            'valid-multiple-auds' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sid' => 'fake-client-sid',
+                    'sub' => 'fake-client-sub',
+                    'iat' => time(),
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ],
+                ],
+                true
+            ],
+            'invalid-no-sid-and-no-sub' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'iat' => time(),
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ],
+                ],
+                false
+            ],
+            'valid-no-sid' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sub' => 'fake-client-sub',
+                    'iat' => time(),
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ],
+                ],
+                true
+            ],
+            'valid-no-sub' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sid' => 'fake-client-sid',
+                    'iat' => time(),
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ],
+                ],
+                true
+            ],
+            'invalid-with-nonce' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sid' => 'fake-client-sid',
+                    'iat' => time(),
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ],
+                    'nonce' => 'must-not-be-set'
+                ],
+                false
+            ],
+            'invalid-no-events' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sid' => 'fake-client-sid',
+                    'iat' => time(),
+                    'nonce' => 'must-not-be-set'
+                ],
+                false
+            ],
+            'invalid-no-backchannel-event' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sid' => 'fake-client-sid',
+                    'iat' => time(),
+                    'events' => (object) [],
+                    'nonce' => 'must-not-be-set'
+                ],
+                false
+            ],
+            'invalid-no-iat' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sid' => 'fake-client-sid',
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ]
+                ],
+                false
+            ],
+            'invalid-bad-iat' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sid' => 'fake-client-sid',
+                    'iat' => time() + 301,
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ]
+                ],
+                false
+            ],
+        ];
+    }
 }
