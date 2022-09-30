@@ -96,7 +96,7 @@ class OpenIDConnectClientTest extends TestCase
     public function testVerifyLogoutTokenClaims( $claims, $expectedResult )
     {
         /** @var OpenIDConnectClient | MockObject $client */
-        $client = $this->getMockBuilder(OpenIDConnectClient::class)->setMethods(['decodeJWT', 'getProviderConfigValue', 'verifyJWTsignature'])->getMock();
+        $client = $this->getMockBuilder(OpenIDConnectClient::class)->setMethods(['decodeJWT'])->getMock();
 
         $client->setClientID('fake-client-id');
         $client->setIssuer('fake-issuer');
