@@ -4,12 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.9.10]
+
+## Fixed
+
+* `private_key_jwt` and `client_secret_jwt` need to explicitly be enabled #331
+
+
 ## [0.9.9]
 
 ### Added
 
 * Added support for back-channel logout. #302
 * Added support for `private_key_jwt` Client Authentication method #322
+* Added support for `client_secret_jwt` Client Authentication method #324
+* Added PS512 encryption support #342
 
 ## Fixed
 
