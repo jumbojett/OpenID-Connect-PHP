@@ -2,7 +2,7 @@ PHP OpenID Connect Basic Client
 ========================
 A simple library that allows an application to authenticate a user through the basic OpenID Connect flow.
 This library hopes to encourage OpenID Connect use by making it simple enough for a developer with little knowledge of
-the OpenID Connect protocol to setup authentication.
+the OpenID Connect protocol to set up authentication.
 
 A special thanks goes to Justin Richer and Amanda Anganes for their help and support of the protocol.
 
@@ -12,11 +12,12 @@ A special thanks goes to Justin Richer and Amanda Anganes for their help and sup
  3. JSON extension
 
 ## Install ##
- 1. Install library using composer
+1. Install library using composer
 ```
 composer require jumbojett/openid-connect-php
 ```
- 2. Include composer autoloader
+
+2. Include composer autoloader
 ```php
 require __DIR__ . '/vendor/autoload.php';
 ```
@@ -190,6 +191,28 @@ function handleLogout() {
 }
 
 ```
+
+## Example 10: Enable Token Endpoint Auth Methods ##
+
+By default, only `client_secret_basic` is enabled on client side which was the only supported for a long time.
+Recently `client_secret_jwt` and `private_key_jwt` have been added, but they remain disabled until explicitly enabled.
+
+```php
+use Jumbojett\OpenIDConnectClient;
+
+$oidc = new OpenIDConnectClient('https://id.provider.com',
+                                'ClientIDHere',
+                                null);
+# enable 'client_secret_basic' and 'client_secret_jwt'                                
+$oidc->setTokenEndpointAuthMethodsSupported(['client_secret_basic', 'client_secret_jwt']);
+
+# for 'private_key_jwt' in addition also the generator function has to be set.
+$oidc->setTokenEndpointAuthMethodsSupported(['private_key_jwt']);
+$oidc->setPrivateKeyJwtGenerator(function(string $token_endpoint) {
+    # TODO: what ever is necessary
+})
+```
+
 
 ## Development Environments ##
 In some cases you may need to disable SSL security on your development systems.
