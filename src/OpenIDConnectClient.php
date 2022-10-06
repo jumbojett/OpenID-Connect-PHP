@@ -22,8 +22,6 @@
 
 namespace Jumbojett;
 
-use Jumbojett\Interfaces\HandleJweResponseInterface;
-
 /**
  *
  * JWT signature verification support by Jonathan Reed <jdreed@mit.edu>
@@ -274,11 +272,6 @@ class OpenIDConnectClient
     private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
 
     /**
-     * @var HandleJweResponseInterface|null
-     */
-    private $jweResponseHandler;
-
-    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -316,13 +309,6 @@ class OpenIDConnectClient
      */
     public function setResponseTypes($response_types) {
         $this->responseTypes = array_merge($this->responseTypes, (array)$response_types);
-    }
-
-    /**
-     * @param HandleJweResponseInterface $jwe_response_handler
-     */
-    public function setJweResponseHandler($jwe_response_handler) {
-        $this->jweResponseHandler = $jwe_response_handler;
     }
 
     /**
@@ -366,13 +352,8 @@ class OpenIDConnectClient
             $id_token = $token_json->id_token;
             $idTokenHeaders = $this->decodeJWT($id_token);
             if (isset($idTokenHeaders->enc)) {
-                // If we don't have a JWE handler then throw error
-                if ($this->jweResponseHandler === null) {
-                    throw new OpenIDConnectClientException('JWE response handler not set');
-                }
-
                 // Handle JWE
-                $id_token = $this->jweResponseHandler->handleJweResponse($id_token);
+                $id_token = $this->handleJweResponse($id_token);
             }
 
             $claims = $this->decodeJWT($id_token, 1);
@@ -1401,13 +1382,8 @@ class OpenIDConnectClient
             // Check if the response is encrypted
             $jwtHeaders = $this->decodeJWT($response);
             if (isset($jwtHeaders->enc)) {
-                // If we don't have a JWE handler then throw error
-                if ($this->jweResponseHandler === null) {
-                    throw new OpenIDConnectClientException('JWE response handler not set');
-                }
-
                 // Handle JWE
-                $jwt = $this->jweResponseHandler->handleJweResponse($response);
+                $jwt = $this->handleJweResponse($response);
             } else {
                 // If the response is not encrypted then it must be signed
                 $jwt = $response;
@@ -2263,6 +2239,16 @@ class OpenIDConnectClient
     protected function verifyJWKHeader($jwk)
     {
         throw new OpenIDConnectClientException('Self signed JWK header is not valid');
+    }
+
+    /**
+     * @param string $jwe The JWE to decrypt
+     * @return string the JWT payload
+     * @throws OpenIDConnectClientException
+     */
+    protected function handleJweResponse($jwe)
+    {
+        throw new OpenIDConnectClientException('JWE response is not supported, please extend the class and implement this method');
     }
 
     /*
