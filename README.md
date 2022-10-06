@@ -2,7 +2,7 @@ PHP OpenID Connect Basic Client
 ========================
 A simple library that allows an application to authenticate a user through the basic OpenID Connect flow.
 This library hopes to encourage OpenID Connect use by making it simple enough for a developer with little knowledge of
-the OpenID Connect protocol to setup authentication.
+the OpenID Connect protocol to set up authentication.
 
 A special thanks goes to Justin Richer and Amanda Anganes for their help and support of the protocol.
 
@@ -12,11 +12,12 @@ A special thanks goes to Justin Richer and Amanda Anganes for their help and sup
  3. JSON extension
 
 ## Install ##
- 1. Install library using composer
+1. Install library using composer
 ```
 composer require jumbojett/openid-connect-php
 ```
- 2. Include composer autoloader
+
+2. Include composer autoloader
 ```php
 require __DIR__ . '/vendor/autoload.php';
 ```
@@ -141,6 +142,75 @@ $oidc->setCodeChallengeMethod('S256');
 $oidc->authenticate();
 $name = $oidc->requestUserInfo('given_name');
 
+```
+
+## Example 9: Back-channel logout ##
+
+Back-channel authentication assumes you can end a session on the server side on behalf of the user (without relying
+on their browser). The request is a POST from the OP direct to your RP. In this way, the use of this library can
+ensure your RP performs 'single sign out' for the user even if they didn't have your RP open in a browser or other
+device, but still had an active session there.
+
+Either the sid or the sub may be accessible from the logout token sent from the OP. You can use either
+`getSidFromBackChannel()` or `getSubFromBackChannel()` to retrieve them if it is helpful to match them to a session
+in order to destroy it.
+
+The below ensures the use of this library to ensure validation of the back-channel logout token, but is afterward
+just a hypothetical way of finding such a session and destroying it. Adjust it to the needs of your RP.
+
+```php
+
+function handleLogout() {
+    // NOTE: assumes that $this->oidc is an instance of OpenIDConnectClient()
+    if ($this->oidc->verifyLogoutToken()) {
+        $sid = $this->oidc->getSidFromBackChannel();
+
+        if (isset($sid)) {
+            // Somehow find the session based on the $sid and
+            // destroy it. This depends on your RP's design,
+            // there is nothing in the OIDC spec to mandate how.
+            //
+            // In this example, we find a Redis key, which was
+            // previously stored using the sid we obtained from
+            // the access token after login.
+            //
+            // The value of the Redis key is that of the user's
+            // session ID specific to this hypothetical RP app.
+            //
+            // We then switch to that session and destroy it.
+            $this->redis->connect('127.0.0.1', 6379);
+            $session_id_to_destroy = $this->redis->get($sid);
+            if ($session_id_to_destroy) {
+                session_commit();
+                session_id($session_id_to_destroy); // switches to that session
+                session_start();
+                $_SESSION = array(); // effectively ends the session
+            }
+        }
+    }
+}
+
+```
+
+## Example 10: Enable Token Endpoint Auth Methods ##
+
+By default, only `client_secret_basic` is enabled on client side which was the only supported for a long time.
+Recently `client_secret_jwt` and `private_key_jwt` have been added, but they remain disabled until explicitly enabled.
+
+```php
+use Jumbojett\OpenIDConnectClient;
+
+$oidc = new OpenIDConnectClient('https://id.provider.com',
+                                'ClientIDHere',
+                                null);
+# enable 'client_secret_basic' and 'client_secret_jwt'                                
+$oidc->setTokenEndpointAuthMethodsSupported(['client_secret_basic', 'client_secret_jwt']);
+
+# for 'private_key_jwt' in addition also the generator function has to be set.
+$oidc->setTokenEndpointAuthMethodsSupported(['private_key_jwt']);
+$oidc->setPrivateKeyJwtGenerator(function(string $token_endpoint) {
+    # TODO: what ever is necessary
+})
 ```
 
 

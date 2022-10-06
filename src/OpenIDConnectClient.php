@@ -223,6 +223,11 @@ class OpenIDConnectClient
     private $issuerValidator;
 
     /**
+     * @var callable|null generator function for private key jwt client authentication
+     */
+    private $privateKeyJwtGenerator;
+
+    /**
      * @var bool Allow OAuth 2 implicit flow; see http://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth
      */
     private $allowImplicitFlow = false;
@@ -252,6 +257,21 @@ class OpenIDConnectClient
      * @var array holds PKCE supported algorithms
      */
     private $pkceAlgs = ['S256' => 'sha256', 'plain' => false];
+
+    /**
+     * @var string if we acquire a sid in back-channel logout it will be stored here
+     */
+    private $backChannelSid;
+
+    /**
+     * @var string if we acquire a sub in back-channel logout it will be stored here
+     */
+    private $backChannelSubject;
+
+    /**
+     * @var array list of supported auth methods
+     */
+    private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
 
     /**
      * @var HandleJweResponseInterface|null
@@ -385,7 +405,6 @@ class OpenIDConnectClient
 
                 // Success!
                 return true;
-
             }
 
             throw new OpenIDConnectClientException ('Unable to verify JWT claims');
@@ -471,6 +490,110 @@ class OpenIDConnectClient
         $this->redirect($signout_endpoint);
     }
 
+
+    /**
+     * Decode and then verify a logout token sent as part of
+     * back-channel logout flows.
+     *
+     * This function should be evaluated as a boolean check
+     * in your route that receives the POST request for back-channel
+     * logout executed from the OP.
+     *
+     * @return bool
+     * @throws OpenIDConnectClientException
+     */
+    public function verifyLogoutToken()
+    {
+        if (isset($_REQUEST['logout_token'])) {
+            $logout_token = $_REQUEST['logout_token'];
+
+            $claims = $this->decodeJWT($logout_token, 1);
+
+            // Verify the signature
+            if ($this->canVerifySignatures()) {
+                if (!$this->getProviderConfigValue('jwks_uri')) {
+                    throw new OpenIDConnectClientException('Back-channel logout: Unable to verify signature due to no jwks_uri being defined');
+                }
+                if (!$this->verifyJWTsignature($logout_token)) {
+                    throw new OpenIDConnectClientException('Back-channel logout: Unable to verify JWT signature');
+                }
+            }
+            else {
+                user_error('Warning: JWT signature verification unavailable');
+            }
+
+            // Verify Logout Token Claims
+            if ($this->verifyLogoutTokenClaims($claims)) {
+                $this->verifiedClaims = $claims;
+                return true;
+            }
+
+            return false;
+        }
+
+        throw new OpenIDConnectClientException('Back-channel logout: There was no logout_token in the request');
+    }
+
+    /**
+     * Verify each claim in the logout token according to the
+     * spec for back-channel logout.
+     *
+     * @param object $claims
+     * @return bool
+     * @throws OpenIDConnectClientException
+     */
+    public function verifyLogoutTokenClaims($claims)
+    {
+        // Verify that the Logout Token doesn't contain a nonce Claim.
+        if (isset($claims->nonce)) {
+            return false;
+        }
+
+        // Verify that the logout token contains a sub or sid, or both
+        if (!isset($claims->sid) && !isset($claims->sub)) {
+            return false;
+        }
+        // Set the sid, which could be used to map to a session in
+        // the RP, and therefore be used to help destroy the RP's
+        // session.
+        if (isset($claims->sid)) {
+            $this->backChannelSid = $claims->sid;
+        }
+
+        // Set the sub, which could be used to map to a session in
+        // the RP, and therefore be used to help destroy the RP's
+        // session.
+        if (isset($claims->sub)) {
+            $this->backChannelSubject = $claims->sub;
+        }
+
+        // Verify that the Logout Token contains an events Claim whose
+        // value is a JSON object containing the member name
+        // http://schemas.openid.net/event/backchannel-logout
+        if (isset($claims->events)) {
+            $events = (array) $claims->events;
+            if (!isset($events['http://schemas.openid.net/event/backchannel-logout']) ||
+                !is_object($events['http://schemas.openid.net/event/backchannel-logout'])) {
+                return false;
+            }
+        }
+
+        // Validate the iss
+        if (!$this->validateIssuer($claims->iss)) {
+            return false;
+        }
+        // Validate the aud
+        if ((!$claims->aud === $this->clientID) || (!in_array($this->clientID, $claims->aud, true))) {
+            return false;
+        }
+        // Validate the iat. At this point we can return true if it is ok
+        if (isset($claims->iat) && ((is_int($claims->iat)) && ($claims->iat <= time() + $this->leeway))) {
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * @param array $scope - example: openid, given_name, etc...
      */
@@ -490,6 +613,14 @@ class OpenIDConnectClient
      */
     public function addRegistrationParam($param) {
         $this->registrationParams = array_merge($this->registrationParams, (array)$param);
+    }
+
+    /**
+     * @param array $token_endpoint_auth_methods_supported
+     */
+    public function setTokenEndpointAuthMethodsSupported($token_endpoint_auth_methods_supported)
+    {
+        $this->token_endpoint_auth_methods_supported = $token_endpoint_auth_methods_supported;
     }
 
     /**
@@ -571,7 +702,7 @@ class OpenIDConnectClient
     /**
      * @param string $url Sets redirect URL for auth flow
      */
-    public function setRedirectURL ($url) {
+    public function setRedirectURL($url) {
         if (parse_url($url,PHP_URL_HOST) !== false) {
             $this->redirectURL = $url;
         }
@@ -655,13 +786,14 @@ class OpenIDConnectClient
             throw new OpenIDConnectClientException('Random token generation failed.');
         } catch (Exception $e) {
             throw new OpenIDConnectClientException('Random token generation failed.');
-        };
+        }
     }
 
     /**
      * Start Here
      * @return void
      * @throws OpenIDConnectClientException
+     * @throws \Exception
      */
     private function requestAuthorization() {
 
@@ -766,7 +898,7 @@ class OpenIDConnectClient
         //For client authentication include the client values
         if($bClientAuth) {
             $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
-            if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+            if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
                 $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             } else {
                 $post_data['client_id']     = $this->clientID;
@@ -805,11 +937,32 @@ class OpenIDConnectClient
 
         $authorizationHeader = null;
         # Consider Basic authentication if provider config is set this way
-        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
             $authorizationHeader = 'Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret));
             unset($token_params['client_secret']);
             unset($token_params['client_id']);
         }
+
+        // When there is a private key jwt generator and it is supported then use it as client authentication
+        if ($this->privateKeyJwtGenerator !== null && $this->supportsAuthMethod('private_key_jwt', $token_endpoint_auth_methods_supported)) {
+            $token_params['client_assertion_type'] = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
+            $token_params['client_assertion'] = $this->privateKeyJwtGenerator->__invoke($token_endpoint);
+        }
+
+        if ($this->supportsAuthMethod('client_secret_jwt', $token_endpoint_auth_methods_supported)) {
+            $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
+
+            if(isset($this->providerConfig['client_assertion'])){
+                $client_assertion = $this->getProviderConfigValue('client_assertion');
+            }
+            else{
+                $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('token_endpoint'));
+            }
+
+            $token_params['client_assertion_type'] = $client_assertion_type;
+            $token_params['client_assertion'] = $client_assertion;
+            unset($token_params['client_secret']);
+    	}
 
         $ccm = $this->getCodeChallengeMethod();
         $cv = $this->getCodeVerifier();
@@ -867,14 +1020,14 @@ class OpenIDConnectClient
         }
 
         # Consider Basic authentication if provider config is set this way
-        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
             $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             unset($post_data['client_secret']);
             unset($post_data['client_id']);
         }
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&', $this->enc_type);
+        $post_params = http_build_query($post_data, null, '&', $this->encType);
 
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers));
     }
@@ -904,12 +1057,27 @@ class OpenIDConnectClient
         ];
 
         # Consider Basic authentication if provider config is set this way
-        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported, true)) {
+        if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
             $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
             unset($token_params['client_secret']);
             unset($token_params['client_id']);
         }
 
+        if ($this->supportsAuthMethod('client_secret_jwt', $token_endpoint_auth_methods_supported)) {
+            $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
+            $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('token_endpoint'));
+
+            $token_params["grant_type"] = "urn:ietf:params:oauth:grant-type:token-exchange";
+            $token_params["subject_token"] = $refresh_token;
+            $token_params["audience"] = $this->clientID;
+            $token_params["subject_token_type"] = "urn:ietf:params:oauth:token-type:refresh_token";
+			$token_params["requested_token_type"] = "urn:ietf:params:oauth:token-type:access_token";
+            $token_params['client_assertion_type']=$client_assertion_type;
+            $token_params['client_assertion'] = $client_assertion;
+
+            unset($token_params['client_secret']);
+            unset($token_params['client_id']);
+        }
         // Convert token params to string format
         $token_params = http_build_query($token_params, '', '&', $this->encType);
 
@@ -1072,13 +1240,14 @@ class OpenIDConnectClient
         switch ($header->alg) {
             case 'RS256':
             case 'PS256':
+            case 'PS512':
             case 'RS384':
             case 'RS512':
                 $hashtype = 'sha' . substr($header->alg, 2);
-                $signatureType = $header->alg === 'PS256' ? 'PSS' : '';
-
+                $signatureType = $header->alg === 'PS256' || $header->alg === 'PS512' ? 'PSS' : '';
                 if (isset($header->jwk)) {
                     $jwk = $header->jwk;
+                    $this->verifyJWKHeader($jwk);
                 } else {
                     $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')), false);
                     if ($jwks === NULL) {
@@ -1521,6 +1690,18 @@ class OpenIDConnectClient
     }
 
     /**
+     * Use this for private_key_jwt client authentication
+     * The given function should accept the token_endpoint string as the only argument
+     * and return a jwt signed with your private key according to:
+     * https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication
+     *
+     * @param callable $privateKeyJwtGenerator
+     */
+    public function setPrivateKeyJwtGenerator($privateKeyJwtGenerator) {
+        $this->privateKeyJwtGenerator = $privateKeyJwtGenerator;
+    }
+
+    /**
      * @param bool $allowImplicitFlow
      */
     public function setAllowImplicitFlow($allowImplicitFlow) {
@@ -1613,6 +1794,7 @@ class OpenIDConnectClient
      */
     public function introspectToken($token, $token_type_hint = '', $clientId = null, $clientSecret = null) {
         $introspection_endpoint = $this->getProviderConfigValue('introspection_endpoint');
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
 
         $post_data = ['token' => $token];
 
@@ -1623,9 +1805,19 @@ class OpenIDConnectClient
         $clientSecret = $clientSecret !== null ? $clientSecret : $this->clientSecret;
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, '', '&');
         $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
             'Accept: application/json'];
+
+        if ($this->supportsAuthMethod('client_secret_jwt', $token_endpoint_auth_methods_supported)) {
+            $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
+            $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('introspection_endpoint'));
+
+            $post_data['client_assertion_type']=$client_assertion_type;
+            $post_data['client_assertion'] = $client_assertion;
+            $headers = ['Accept: application/json'];
+        }
+
+        $post_params = http_build_query($post_data, '', '&');
 
         return json_decode($this->fetchURL($introspection_endpoint, $post_params, $headers));
     }
@@ -1954,6 +2146,43 @@ class OpenIDConnectClient
         unset($_SESSION[$key]);
     }
 
+    protected function getJWTClientAssertion($aud) {
+        $jti = hash('sha256',bin2hex(random_bytes(64)));
+
+        $now = time();
+
+		$header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+		$payload = json_encode([
+			'sub' => $this->getClientID(),
+			'iss' => $this->getClientID(),
+			'aud' => $aud,
+			'jti' => $jti,
+			'exp' => $now + 3600,
+			'iat' => $now,
+		]);
+		// Encode Header to Base64Url String
+		$base64UrlHeader = $this->urlEncode($header);
+
+
+		// Encode Payload to Base64Url String
+		$base64UrlPayload = $this->urlEncode($payload);
+
+		// Create Signature Hash
+		$signature = hash_hmac(
+			'sha256',
+			$base64UrlHeader . "." . $base64UrlPayload,
+			$this->getClientSecret(),
+			true
+		);
+
+		// Encode Signature to Base64Url String
+		$base64UrlSignature = $this->urlEncode($signature);
+
+		$jwt = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
+
+		return $jwt;
+    }
+
     public function setUrlEncoding($curEncoding) {
         switch ($curEncoding)
         {
@@ -1999,6 +2228,14 @@ class OpenIDConnectClient
         return $this->issuerValidator;
     }
 
+
+    /**
+     * @return callable
+     */
+    public function getPrivateKeyJwtGenerator() {
+        return $this->privateKeyJwtGenerator;
+    }
+
     /**
      * @return int
      */
@@ -2018,5 +2255,42 @@ class OpenIDConnectClient
      */
     public function setCodeChallengeMethod($codeChallengeMethod) {
         $this->codeChallengeMethod = $codeChallengeMethod;
+    }
+
+    /**
+     * @throws OpenIDConnectClientException
+     */
+    protected function verifyJWKHeader($jwk)
+    {
+        throw new OpenIDConnectClientException('Self signed JWK header is not valid');
+    }
+
+    /*
+     * @return string
+     */
+    public function getSidFromBackChannel() {
+        return $this->backChannelSid;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSubjectFromBackChannel() {
+        return $this->backChannelSubject;
+    }
+
+    /**
+     * @param string $auth_method
+     * @param array $token_endpoint_auth_methods_supported
+     * @return bool
+     */
+    public function supportsAuthMethod($auth_method, $token_endpoint_auth_methods_supported)
+    {
+        # client_secret_jwt has to explicitly be enabled
+        if (!in_array($auth_method, $this->token_endpoint_auth_methods_supported, true)) {
+            return false;
+        }
+
+        return in_array($auth_method, $token_endpoint_auth_methods_supported, true);
     }
 }

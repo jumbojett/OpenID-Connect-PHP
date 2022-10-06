@@ -62,4 +62,30 @@ class OpenIDConnectClientTest extends TestCase
         $serialized = serialize($client);
         $this->assertInstanceOf('Jumbojett\OpenIDConnectClient', unserialize($serialized));
     }
+
+    /**
+     * @dataProvider provider
+     */
+    public function testAuthMethodSupport($expected, $authMethod, $clientAuthMethods, $idpAuthMethods)
+    {
+        $client = new OpenIDConnectClient();
+        if ($clientAuthMethods !== null) {
+            $client->setTokenEndpointAuthMethodsSupported($clientAuthMethods);
+        }
+        $this->assertEquals($expected, $client->supportsAuthMethod($authMethod, $idpAuthMethods));
+    }
+
+    public function provider()
+    {
+        return [
+            'client_secret_basic - default config' => [true, 'client_secret_basic', null, ['client_secret_basic']],
+
+            'client_secret_jwt - default config' => [false, 'client_secret_jwt', null, ['client_secret_basic', 'client_secret_jwt']],
+            'client_secret_jwt - explicitly enabled' => [true, 'client_secret_jwt', ['client_secret_jwt'], ['client_secret_basic', 'client_secret_jwt']],
+
+            'private_key_jwt - default config' => [false, 'private_key_jwt', null, ['client_secret_basic', 'client_secret_jwt', 'private_key_jwt']],
+            'private_key_jwt - explicitly enabled' => [true, 'private_key_jwt', ['private_key_jwt'], ['client_secret_basic', 'client_secret_jwt', 'private_key_jwt']],
+
+        ];
+    }
 }
