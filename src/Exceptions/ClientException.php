@@ -9,7 +9,7 @@ use Exception;
 /**
  * OpenIDConnect Exception Class
  */
-class OpenIDConnectClientException extends Exception
+class ClientException extends Exception
 {
 
 }
