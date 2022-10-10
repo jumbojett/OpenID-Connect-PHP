@@ -355,9 +355,6 @@ class OpenIDConnectClient
             $claims = $this->decodeJWT($token_json->id_token, 1);
 
             // Verify the signature
-            if (!$this->getProviderConfigValue('jwks_uri')) {
-                throw new OpenIDConnectClientException ('Unable to verify signature due to no jwks_uri being defined');
-            }
             if (!$this->verifyJWTsignature($token_json->id_token)) {
                 throw new ClientException ('Unable to verify signature');
             }
@@ -412,9 +409,6 @@ class OpenIDConnectClient
             $claims = $this->decodeJWT($id_token, 1);
 
             // Verify the signature
-            if (!$this->getProviderConfigValue('jwks_uri')) {
-                throw new OpenIDConnectClientException ('Unable to verify signature due to no jwks_uri being defined');
-            }
             if (!$this->verifyJWTsignature($id_token)) {
                 throw new ClientException ('Unable to verify signature');
             }
@@ -493,9 +487,6 @@ class OpenIDConnectClient
             $claims = $this->decodeJWT($logout_token, 1);
 
             // Verify the signature
-            if (!$this->getProviderConfigValue('jwks_uri')) {
-                throw new OpenIDConnectClientException('Back-channel logout: Unable to verify signature due to no jwks_uri being defined');
-            }
             if (!$this->verifyJWTsignature($logout_token)) {
                 throw new ClientException('Back-channel logout: Unable to verify JWT signature');
             }
@@ -1222,6 +1213,10 @@ class OpenIDConnectClient
                     $jwk = $header->jwk;
                     $this->verifyJWKHeader($jwk);
                 } else {
+                    if (!$this->getProviderConfigValue('jwks_uri')) {
+                        throw new ClientException ('Unable to verify signature due to no jwks_uri being defined');
+                    }
+
                     $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
                     if ($jwks === NULL) {
                         throw new ClientException('Error decoding JSON from jwks_uri');
