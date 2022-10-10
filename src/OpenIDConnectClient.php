@@ -313,13 +313,17 @@ class OpenIDConnectClient
     /**
      * @return bool
      * @throws ClientException
+     * @throws AuthenticationErrorException
      */
     public function authenticate(): bool
     {
         // Do a preemptive check to see if the provider has thrown an error from a previous redirect
         if (isset($_REQUEST['error'])) {
-            $desc = isset($_REQUEST['error_description']) ? ' Description: ' . $_REQUEST['error_description'] : '';
-            throw new OpenIDConnectClientException('Error: ' . $_REQUEST['error'] .$desc);
+            throw new AuthenticationErrorException(
+                $_REQUEST['error'] ?? null,
+                $_REQUEST['error_description'] ?? null,
+                $_REQUEST['error_uri'] ?? null
+            );
         }
 
         // If we have an authorization code then proceed to request a token
