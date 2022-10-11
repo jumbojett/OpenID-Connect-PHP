@@ -22,6 +22,7 @@
 
 namespace Jumbojett;
 
+use Jumbojett\OpenIDConnectClient\Exceptions\AuthenticationErrorException;
 use Jumbojett\OpenIDConnectClient\Exceptions\ClientException;
 
 /**
@@ -328,114 +329,11 @@ class OpenIDConnectClient
 
         // If we have an authorization code then proceed to request a token
         if (isset($_REQUEST['code'])) {
-
-            $code = $_REQUEST['code'];
-            $token_json = $this->requestTokens($code);
-
-            // Throw an error if the server returns one
-            if (isset($token_json->error)) {
-                if (isset($token_json->error_description)) {
-                    throw new ClientException($token_json->error_description);
-                }
-                throw new ClientException('Got response: ' . $token_json->error);
-            }
-
-            // Do an OpenID Connect session check
-            if ($_REQUEST['state'] !== $this->getState()) {
-                throw new ClientException('Unable to determine state');
-            }
-
-            // Cleanup state
-            $this->unsetState();
-
-            if (!property_exists($token_json, 'id_token')) {
-                throw new ClientException('User did not authorize openid scope.');
-            }
-
-            $claims = $this->decodeJWT($token_json->id_token, 1);
-
-            // Verify the signature
-            if (!$this->verifyJWTsignature($token_json->id_token)) {
-                throw new ClientException ('Unable to verify signature');
-            }
-
-            // Save the id token
-            $this->idToken = $token_json->id_token;
-
-            // Save the access token
-            $this->accessToken = $token_json->access_token;
-
-            // If this is a valid claim
-            if ($this->verifyJWTclaims($claims, $token_json->access_token)) {
-
-                // Clean up the session a little
-                $this->unsetNonce();
-
-                // Save the full response
-                $this->tokenResponse = $token_json;
-
-                // Save the verified claims
-                $this->verifiedClaims = $claims;
-
-                // Save the refresh token, if we got one
-                if (isset($token_json->refresh_token)) {
-                    $this->refreshToken = $token_json->refresh_token;
-                }
-
-                // Success!
-                return true;
-            }
-
-            throw new ClientException ('Unable to verify JWT claims');
+            return $this->handleSuccessfulAuthenticationCodeResponse($_REQUEST['code'], $_REQUEST['state'] ?? null);
         }
 
         if ($this->allowImplicitFlow && isset($_REQUEST['id_token'])) {
-            // if we have no code but an id_token use that
-            $id_token = $_REQUEST['id_token'];
-
-            $accessToken = null;
-            if (isset($_REQUEST['access_token'])) {
-                $accessToken = $_REQUEST['access_token'];
-            }
-
-            // Do an OpenID Connect session check
-            if ($_REQUEST['state'] !== $this->getState()) {
-                throw new ClientException('Unable to determine state');
-            }
-
-            // Cleanup state
-            $this->unsetState();
-
-            $claims = $this->decodeJWT($id_token, 1);
-
-            // Verify the signature
-            if (!$this->verifyJWTsignature($id_token)) {
-                throw new ClientException ('Unable to verify signature');
-            }
-
-            // Save the id token
-            $this->idToken = $id_token;
-
-            // If this is a valid claim
-            if ($this->verifyJWTclaims($claims, $accessToken)) {
-
-                // Clean up the session a little
-                $this->unsetNonce();
-
-                // Save the verified claims
-                $this->verifiedClaims = $claims;
-
-                // Save the access token
-                if ($accessToken) {
-                    $this->accessToken = $accessToken;
-                }
-
-                // Success!
-                return true;
-
-            }
-
-            throw new ClientException ('Unable to verify JWT claims');
+            return $this->handleSuccessfulImplicitFlowResponse($_REQUEST['id_token'], $_REQUEST['state'] ?? null);
         }
 
         $this->requestAuthorization();
@@ -889,6 +787,8 @@ class OpenIDConnectClient
 
     /**
      * Requests ID and Access tokens
+     *
+     * https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.1.3.1
      *
      * @param string $code
      * @param string[] $headers Extra HTTP headers to pass to the token endpoint
@@ -1474,6 +1374,132 @@ class OpenIDConnectClient
         curl_close($ch);
 
         return $output;
+    }
+
+    /**
+     * Handle Successful response from the authorization server
+     *
+     * https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.1.2.5
+     * https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.1.2.7
+     * https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2
+     *
+     * @param string $code
+     * @param string $state
+     * @return bool
+     * @throws ClientException
+     * @throws AuthenticationErrorException
+     */
+    protected function handleSuccessfulAuthenticationCodeResponse(string $code, string $state): bool
+    {
+        // Do an OpenID Connect session check
+        if ($state !== $this->getState()) {
+            throw new ClientException('Unable to determine state');
+        }
+
+        // Cleanup state
+        $this->unsetState();
+
+        // Request tokens
+        $token_json = $this->requestTokens($code);
+
+        // Throw an error if the server returns one
+        if (isset($token_json->error)) {
+            throw new AuthenticationErrorException(
+                $token_json->error ?? null,
+                    $token_json->error_description ?? null,
+                    $token_json->error_uri ?? null
+            );
+        }
+
+        if (!property_exists($token_json, 'id_token')) {
+            throw new ClientException('User did not authorize openid scope.');
+        }
+
+        $claims = $this->decodeJWT($token_json->id_token, 1);
+
+        // Verify the signature
+        if (!$this->verifyJWTsignature($token_json->id_token)) {
+            throw new ClientException ('Unable to verify signature');
+        }
+
+        // Save the id token
+        $this->idToken = $token_json->id_token;
+
+        // Save the access token
+        $this->accessToken = $token_json->access_token;
+
+        // If this is a valid claim
+        if ($this->verifyJWTclaims($claims, $token_json->access_token)) {
+
+            // Clean up the session a little
+            $this->unsetNonce();
+
+            // Save the full response
+            $this->tokenResponse = $token_json;
+
+            // Save the verified claims
+            $this->verifiedClaims = $claims;
+
+            // Save the refresh token, if we got one
+            if (isset($token_json->refresh_token)) {
+                $this->refreshToken = $token_json->refresh_token;
+            }
+
+            // Success!
+            return true;
+        }
+
+        throw new ClientException ('Unable to verify JWT claims');
+    }
+
+    /**
+     * @param $id_token
+     * @param $state
+     * @return bool
+     * @throws ClientException
+     */
+    private function handleSuccessfulImplicitFlowResponse(string $id_token, string $state): bool
+    {
+        // Do an OpenID Connect session check
+        if ($state !== $this->getState()) {
+            throw new ClientException('Unable to determine state');
+        }
+
+        // Cleanup state
+        $this->unsetState();
+
+        $accessToken = $_REQUEST['access_token'] ?? null;
+
+        $claims = $this->decodeJWT($id_token, 1);
+
+        // Verify the signature
+        if (!$this->verifyJWTsignature($id_token)) {
+            throw new ClientException ('Unable to verify signature');
+        }
+
+        // Save the id token
+        $this->idToken = $id_token;
+
+        // If this is a valid claim
+        if ($this->verifyJWTclaims($claims, $accessToken)) {
+
+            // Clean up the session a little
+            $this->unsetNonce();
+
+            // Save the verified claims
+            $this->verifiedClaims = $claims;
+
+            // Save the access token
+            if ($accessToken) {
+                $this->accessToken = $accessToken;
+            }
+
+            // Success!
+            return true;
+
+        }
+
+        throw new ClientException ('Unable to verify JWT claims');
     }
 
     /**
