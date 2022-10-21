@@ -1,0 +1,51 @@
+---
+name: Keycloak Integration Tests
+
+on: [ push, pull_request ]
+
+env:
+  DEFAULT_COMPOSER_FLAGS: "--prefer-dist --no-interaction --no-progress --optimize-autoloader --ansi"
+
+jobs:
+  integration-tests:
+    name: PHP ${{ matrix.php }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        php: [ '8.0' ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+      - name: Cache composer dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+      - name: Install dependencies
+        run: composer update $DEFAULT_COMPOSER_FLAGS
+      - name: Start keycloak
+        run: |
+          docker-compose -f .github/workflows/keycloak/docker-compose.yml up -d
+          echo "Waiting for Keycloak to start..."
+          sleep 10 # Wait for keycloak to start because of please wait in logs
+          .github/workflows/keycloak/wait-for-keycloak.sh http://localhost:8080/realms/master
+      - name: Echo logs of keycloak
+        run: |
+          cd .github/workflows/keycloak
+          docker-compose logs --tail all keycloak
+      - name: Create custom realm
+        run: |
+          cd .github/workflows/keycloak
+          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
+      - name: Run keycloak integration tests
+        run: echo "TODO"
