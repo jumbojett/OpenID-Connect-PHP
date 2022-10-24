@@ -50,5 +50,6 @@ jobs:
           docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh create realms -s realm="testrealm" -s id="testrealm" -s enabled=true
           docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh create users -r testrealm -s username=testuser -s enabled=true
           docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh set-password -r testrealm --username testuser --new-password testpassword
+          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh create clients -r testrealm -s clientId=testclient -s enabled=true -s clientAuthenticatorType=client-secret -s secret=testsecret -s 'redirectUris=["http://localhost:8081/*"]' -i
       - name: Run keycloak integration tests
         run: echo "TODO"
