@@ -43,9 +43,12 @@ jobs:
         run: |
           cd .github/workflows/keycloak
           docker-compose logs --tail all keycloak
-      - name: Create custom realm
+      - name: Create custom realm, user and client
         run: |
           cd .github/workflows/keycloak
-          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
+          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin --client admin-cli
+          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh create realms -s realm="testrealm" -s id="testrealm" -s enabled=true
+          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh create users -r testrealm -s username=testuser -s enabled=true
+          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh set-password -r testrealm --username testuser --new-password testpassword
       - name: Run keycloak integration tests
         run: echo "TODO"
