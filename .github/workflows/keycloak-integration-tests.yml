@@ -35,10 +35,11 @@ jobs:
         run: composer update $DEFAULT_COMPOSER_FLAGS
       - name: Start keycloak
         run: |
-          docker-compose -f .github/workflows/keycloak/docker-compose.yml up -d
+          cd .github/workflows/keycloak
+          make docker-up
           echo "Waiting for Keycloak to start..."
           sleep 10 # Wait for keycloak to start because of please wait in logs
-          .github/workflows/keycloak/wait-for-keycloak.sh http://localhost:8080/realms/master
+          ./wait-for-keycloak.sh http://localhost:8080/realms/master
       - name: Echo logs of keycloak
         run: |
           cd .github/workflows/keycloak
@@ -46,10 +47,10 @@ jobs:
       - name: Create custom realm, user and client
         run: |
           cd .github/workflows/keycloak
-          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin --client admin-cli
-          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh create realms -s realm="testrealm" -s id="testrealm" -s enabled=true
-          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh create users -r testrealm -s username=testuser -s enabled=true
-          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh set-password -r testrealm --username testuser --new-password testpassword
-          docker-compose exec -T keycloak /opt/keycloak/bin/kcadm.sh create clients -r testrealm -s clientId=testclient -s enabled=true -s clientAuthenticatorType=client-secret -s secret=testsecret -s 'redirectUris=["http://localhost:8081/*"]' -i
-      - name: Run keycloak integration tests
+          make keycloak-create-test-realm
+      - name: Run simple test application
+        run: |
+          cd .github/workflows/keycloak
+          make serve-test-application > /dev/null 2>&1 &
+      - name: Run integration tests
         run: echo "TODO"
