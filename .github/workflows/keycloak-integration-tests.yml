@@ -53,4 +53,7 @@ jobs:
           cd .github/workflows/keycloak
           make serve-test-application > /dev/null 2>&1 &
       - name: Run integration tests
-        run: echo "TODO"
+        uses: cypress-io/github-action@v4
+        with:
+          working-directory: .github/workflows/keycloak
+          browser: chrome
