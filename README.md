@@ -1,3 +1,5 @@
+NB: This is a fork from [jumbojett/OpenID-Connect-PHP](https://github.com/jumbojett/OpenID-Connect-PHP) to allow client basic authentication on obtaining the access token.
+
 PHP OpenID Connect Basic Client
 ========================
 A simple library that allows an application to authenticate a user through the basic OpenID Connect flow.
@@ -14,7 +16,7 @@ A special thanks goes to Justin Richer and Amanda Anganes for their help and sup
 ## Install ##
 1. Install library using composer
 ```
-composer require jumbojett/openid-connect-php
+composer require magentron/openid-connect-php
 ```
 
 2. Include composer autoloader
