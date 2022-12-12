@@ -1882,7 +1882,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return string
+     * @return object
      */
     public function getTokenResponse() {
         return $this->tokenResponse;
