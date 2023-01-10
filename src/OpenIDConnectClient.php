@@ -338,7 +338,7 @@ class OpenIDConnectClient
             }
 
             // Do an OpenID Connect session check
-	    if (isset($_REQUEST['state']) && ($_REQUEST['state'] !== $this->getState())) {
+	    if (!isset($_REQUEST['state']) || ($_REQUEST['state'] !== $this->getState())) {
                 throw new OpenIDConnectClientException('Unable to determine state');
             }
 
@@ -401,7 +401,7 @@ class OpenIDConnectClient
             }
 
             // Do an OpenID Connect session check
-	    if (isset($_REQUEST['state']) && ($_REQUEST['state'] !== $this->getState())) {            
+	    if (!isset($_REQUEST['state']) || ($_REQUEST['state'] !== $this->getState())) {            
                 throw new OpenIDConnectClientException('Unable to determine state');
             }
 
