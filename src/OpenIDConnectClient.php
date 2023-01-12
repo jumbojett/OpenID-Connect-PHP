@@ -145,7 +145,7 @@ class OpenIDConnectClient
     protected $idToken;
 
     /**
-     * @var string stores the token response
+     * @var object stores the token response
      */
     private $tokenResponse;
 
@@ -1925,7 +1925,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return string
+     * @return object
      */
     public function getTokenResponse() {
         return $this->tokenResponse;
