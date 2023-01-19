@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
+* Fixed issue on authentication for php8. #354
 * Support for signed and encrypted UserInfo response. #305
 * Support for signed and encrypted ID Token. #305
 
