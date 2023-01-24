@@ -71,6 +71,52 @@ class OpenIDConnectClientException extends \Exception
 
 }
 
+class OpenIDConnectExceptionFactory
+{
+    const UNABLE_VERIFY_SIGNATURE = 0;
+    const TOKEN_IS_NOT_STRING = 1;
+    const TOKEN_PART_MISSING = 2;
+    const UNABLE_DECODE_TOKEN = 3;
+    const UNABLE_DECODE_JSON_HEADER = 4;
+    const UNABLE_DECODE_JSON_JWKS_URI = 5;
+    const MISSING_SIGNATURE_TYPE = 6;
+    const NOT_SUPPORTED_SIGNATURE_TYPE = 7;
+    const UNABLE_VERIFY_JWT_CLAIMS = 8;
+
+    private static $codes = array(
+        self::UNABLE_VERIFY_SIGNATURE => 'Unable to verify signature',
+        self::TOKEN_IS_NOT_STRING => 'Error token is not a string',
+        self::TOKEN_PART_MISSING => 'Error missing part %s in token',
+        self::UNABLE_DECODE_TOKEN => 'Error decoding signature from token',
+        self::UNABLE_DECODE_JSON_HEADER => 'Error decoding JSON from token header',
+        self::UNABLE_DECODE_JSON_JWKS_URI => 'Error decoding JSON from jwks_uri',
+        self::MISSING_SIGNATURE_TYPE => 'Error missing signature type in token header',
+        self::NOT_SUPPORTED_SIGNATURE_TYPE => 'No support for signature type',
+        self::UNABLE_VERIFY_JWT_CLAIMS => 'Unable to verify JWT claims',
+    );
+
+    public static function throwException($errorCode, $params = array(), $previous = null)
+    {
+        $exceptionMessage = self::generateMessage($errorCode, $params);
+
+        throw new OpenIDConnectClientException($exceptionMessage, $errorCode, $previous);
+    }
+
+    public static function generateMessage($errorCode, $params = array())
+    {
+        if (!isset(self::$codes[$errorCode])) {
+            throw new \Exception('Error code is not supported by this factory');
+        }
+
+        if (is_array($params) && count($params) > 0) {
+            array_unshift($params, self::$codes[$errorCode]);
+            return call_user_func_array('sprintf', $params);
+        }
+
+        return self::$codes[$errorCode];
+    }
+}
+
 /**
  * Require the CURL and JSON PHP extensions to be installed
  */
@@ -388,7 +434,10 @@ class OpenIDConnectClient
                 return true;
             }
 
-            throw new OpenIDConnectClientException ('Unable to verify JWT claims');
+            /// throw new OpenIDConnectClientException('Unable to verify JWT claims');
+            OpenIDConnectExceptionFactory::throwException(
+                OpenIDConnectExceptionFactory::UNABLE_VERIFY_JWT_CLAIMS
+            );
         }
 
         if ($this->allowImplicitFlow && isset($_REQUEST['id_token'])) {
