@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed issue on authentication for php8. #354
 * Support for signed and encrypted UserInfo response. #305
 * Support for signed and encrypted ID Token. #305
+* Update construct typehint in docblock. #364
 
 ### Added
 - Support for signed and encrypted UserInfo response. #305
