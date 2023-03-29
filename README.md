@@ -152,7 +152,7 @@ ensure your RP performs 'single sign out' for the user even if they didn't have 
 device, but still had an active session there.
 
 Either the sid or the sub may be accessible from the logout token sent from the OP. You can use either
-`getSidFromBackChannel()` or `getSubFromBackChannel()` to retrieve them if it is helpful to match them to a session
+`getSidFromBackChannel()` or `getSubjectFromBackChannel()` to retrieve them if it is helpful to match them to a session
 in order to destroy it.
 
 The below ensures the use of this library to ensure validation of the back-channel logout token, but is afterward
