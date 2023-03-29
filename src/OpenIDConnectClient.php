@@ -563,7 +563,9 @@ class OpenIDConnectClient
             return false;
         }
         // Validate the aud
-        if ((!$claims->aud === $this->clientID) || (!in_array($this->clientID, $claims->aud, true))) {
+        $auds = $claims->aud;
+        $auds = is_array( $auds ) ? $auds : [ $auds ];
+        if (!in_array($this->clientID, $auds, true)) {
             return false;
         }
         // Validate the iat. At this point we can return true if it is ok

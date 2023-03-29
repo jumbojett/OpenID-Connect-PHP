@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Support for signed and encrypted UserInfo response. #305
 * Support for signed and encrypted ID Token. #305
 * Update construct typehint in docblock. #364
+* Fixed LogoutToken verification for single value aud claims #334
 
 ### Added
 - Support for signed and encrypted UserInfo response. #305
