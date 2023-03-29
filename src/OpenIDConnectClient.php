@@ -272,11 +272,10 @@ class OpenIDConnectClient
     private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
 
     /**
-     * @param $provider_url string optional
-     *
-     * @param $client_id string optional
-     * @param $client_secret string optional
-     * @param null $issuer
+     * @param string|null $provider_url optional
+     * @param string|null $client_id optional
+     * @param string|null $client_secret optional
+     * @param string|null $issuer
      */
     public function __construct($provider_url = null, $client_id = null, $client_secret = null, $issuer = null) {
         $this->setProviderURL($provider_url);
