@@ -617,9 +617,8 @@ class OpenIDConnectClient
      *
      * @param string $param
      * @param string $default optional
+     * @return string|bool|string[]
      * @throws OpenIDConnectClientException
-     * @return string|array
-     *
      */
     protected function getProviderConfigValue($param, $default = null) {
 
@@ -637,9 +636,8 @@ class OpenIDConnectClient
      *
      * @param string $param
      * @param string $default optional
+     * @return string|bool|string[]
      * @throws OpenIDConnectClientException
-     * @return string
-     *
      */
     protected function getWellKnownConfigValue($param, $default = null) {
 
