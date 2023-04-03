@@ -145,7 +145,7 @@ class OpenIDConnectClient
     protected $idToken;
 
     /**
-     * @var string stores the token response
+     * @var object stores the token response
      */
     private $tokenResponse;
 
@@ -272,11 +272,10 @@ class OpenIDConnectClient
     private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
 
     /**
-     * @param $provider_url string optional
-     *
-     * @param $client_id string optional
-     * @param $client_secret string optional
-     * @param null $issuer
+     * @param string|null $provider_url optional
+     * @param string|null $client_id optional
+     * @param string|null $client_secret optional
+     * @param string|null $issuer
      */
     public function __construct($provider_url = null, $client_id = null, $client_secret = null, $issuer = null) {
         $this->setProviderURL($provider_url);
@@ -338,7 +337,7 @@ class OpenIDConnectClient
             }
 
             // Do an OpenID Connect session check
-            if ($_REQUEST['state'] !== $this->getState()) {
+	    if (!isset($_REQUEST['state']) || ($_REQUEST['state'] !== $this->getState())) {
                 throw new OpenIDConnectClientException('Unable to determine state');
             }
 
@@ -401,7 +400,7 @@ class OpenIDConnectClient
             }
 
             // Do an OpenID Connect session check
-            if ($_REQUEST['state'] !== $this->getState()) {
+	    if (!isset($_REQUEST['state']) || ($_REQUEST['state'] !== $this->getState())) {            
                 throw new OpenIDConnectClientException('Unable to determine state');
             }
 
@@ -564,7 +563,9 @@ class OpenIDConnectClient
             return false;
         }
         // Validate the aud
-        if ((!$claims->aud === $this->clientID) || (!in_array($this->clientID, $claims->aud, true))) {
+        $auds = $claims->aud;
+        $auds = is_array( $auds ) ? $auds : [ $auds ];
+        if (!in_array($this->clientID, $auds, true)) {
             return false;
         }
         // Validate the iat. At this point we can return true if it is ok
@@ -640,7 +641,7 @@ class OpenIDConnectClient
      * @return string
      *
      */
-    private function getWellKnownConfigValue($param, $default = null) {
+    protected function getWellKnownConfigValue($param, $default = null) {
 
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
@@ -1936,7 +1937,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return string
+     * @return object
      */
     public function getTokenResponse() {
         return $this->tokenResponse;
