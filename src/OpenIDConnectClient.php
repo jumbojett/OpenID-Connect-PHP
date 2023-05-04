@@ -1367,6 +1367,7 @@ class OpenIDConnectClient
             // Allows to keep the POST method even after redirect
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
+            curl_setopt($ch, CURLOPT_USERAGENT, $this->getUserAgent());
 
             // Default content type is form encoded
             $content_type = 'application/x-www-form-urlencoded';
@@ -2057,5 +2058,10 @@ class OpenIDConnectClient
         }
 
         return in_array($auth_method, $token_endpoint_auth_methods_supported, true);
+    }
+
+    protected function getUserAgent(): string
+    {
+        return "";
     }
 }
