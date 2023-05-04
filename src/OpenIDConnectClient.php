@@ -2062,6 +2062,6 @@ class OpenIDConnectClient
 
     protected function getUserAgent(): string
     {
-        return "";
+        return "jumbojett/OpenID-Connect-PHP";
     }
 }
