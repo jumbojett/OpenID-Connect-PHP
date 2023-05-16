@@ -618,11 +618,8 @@ class OpenIDConnectClient
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
         if(!$this->wellKnown) {
-            $well_known_config_url = rtrim($this->getProviderURL(), '/') . '/.well-known/openid-configuration';
-            if (count($this->wellKnownConfigParameters) > 0){
-                $well_known_config_url .= '?' .  http_build_query($this->wellKnownConfigParameters) ;
-            }
-            $this->wellKnown = json_decode($this->fetchURL($well_known_config_url), false);
+            $wellKnownConfigUrl = $this->getWellKnownConfigUrl();
+            $this->wellKnown = json_decode($this->fetchURL($wellKnownConfigUrl), false);
         }
 
         $value = $this->wellKnown->{$param} ?? false;
@@ -2063,5 +2060,17 @@ class OpenIDConnectClient
     protected function getUserAgent(): string
     {
         return "jumbojett/OpenID-Connect-PHP";
+    }
+
+    /**
+     * @throws OpenIDConnectClientException
+     */
+    protected function getWellKnownConfigUrl(): string
+    {
+        $wellKnownConfigUrl = rtrim($this->getProviderURL(), '/') . '/.well-known/openid-configuration';
+        if (count($this->wellKnownConfigParameters) > 0) {
+            $wellKnownConfigUrl .= '?' .  http_build_query($this->wellKnownConfigParameters) ;
+        }
+        return $wellKnownConfigUrl;
     }
 }
