@@ -469,12 +469,7 @@ class OpenIDConnectClient
             $claims = $this->decodeJWT($logout_token, 1);
 
             // Verify the signature
-            if (!$this->getProviderConfigValue('jwks_uri')) {
-                throw new OpenIDConnectClientException('Back-channel logout: Unable to verify signature due to no jwks_uri being defined');
-            }
-            if (!$this->verifyJWTSignature($logout_token)) {
-                throw new OpenIDConnectClientException('Back-channel logout: Unable to verify JWT signature');
-            }
+            $this->verifySignatures($logout_token);
 
             // Verify Logout Token Claims
             if ($this->verifyLogoutTokenClaims($claims)) {
