@@ -307,7 +307,7 @@ class OpenIDConnectClient
                 throw new OpenIDConnectClientException('Got response: ' . $token_json->error);
             }
 
-	    // Sometime getState() return an empty string
+	        // Sometime getState() return an empty string
             // and the authentication process fail
             if ($this->getState() == "")
                 $this->setState($_REQUEST['state']);
@@ -343,6 +343,13 @@ class OpenIDConnectClient
 
             // Save the access token
             $this->accessToken = $token_json->access_token;
+
+            // During verifyJWTclaims sometime return an empty string (probably caused by the session timeout between KC and Client)
+            // Which cause issue in the *_auth.php, this should "patch" the randomic emptiness.
+            if ($this->getNonce() == "") {
+                $this->setNonce($claims->nonce);
+                user_error('Warning: Function getNonce return empty, setting in the session!');
+            };
 
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims, $token_json->access_token)) {
