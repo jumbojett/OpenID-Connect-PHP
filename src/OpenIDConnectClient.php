@@ -588,7 +588,7 @@ class OpenIDConnectClient
      *
      * @param string $param
      * @param string|string[]|bool|null $default optional
-     * @return string|string[]|bool|null
+     * @return string|string[]|bool
      *
      * @throws OpenIDConnectClientException
      */
@@ -608,7 +608,7 @@ class OpenIDConnectClient
      *
      * @param string $param
      * @param string|string[]|bool|null $default optional
-     * @return string|string[]|bool|null
+     * @return string|string[]|bool
      *
      * @throws OpenIDConnectClientException
      */
