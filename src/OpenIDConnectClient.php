@@ -587,8 +587,8 @@ class OpenIDConnectClient
      * Gets anything that we need configuration wise including endpoints, and other values
      *
      * @param string $param
-     * @param string|array|bool|null $default optional
-     * @return string|array|bool|null
+     * @param string|string[]|bool|null $default optional
+     * @return string|string[]|bool|null
      *
      * @throws OpenIDConnectClientException
      */
@@ -607,8 +607,8 @@ class OpenIDConnectClient
      * Gets anything that we need configuration wise including endpoints, and other values
      *
      * @param string $param
-     * @param string|array|bool|null $default optional
-     * @return string|array|bool|null
+     * @param string|string[]|bool|null $default optional
+     * @return string|string[]|bool|null
      *
      * @throws OpenIDConnectClientException
      */
