@@ -143,14 +143,22 @@ class OpenIDConnectClient
     private $scopes = [];
 
     /**
+     * Holds the curl http_code after fetchUrl
      * @var int|null Response code from the server
      */
     private $responseCode;
 
     /**
+     * Holds the curl content_type after fetchUrl
      * @var string|null Content type from the server
      */
     private $responseContentType;
+
+    /**
+     * Holds the curl headers after fetchUrl
+     * @var array<string, string> Content type from the server
+     */
+    private $responseHeaders;
 
     /**
      * @var array holds response types
@@ -1356,7 +1364,12 @@ class OpenIDConnectClient
      * @return bool|string
      * @throws OpenIDConnectClientException
      */
-    protected function fetchURL(string $url, string $post_body = null, array $headers = []) {
+    protected function fetchURL(string $url, string $post_body = null, array $headers = [])
+    {
+        // Reset response data
+        $this->responseCode = null;
+        $this->responseContentType = null;
+        $this->responseHeaders = [];
 
         // OK cool - then let's create a new cURL resource handle
         $ch = curl_init();
@@ -1424,6 +1437,9 @@ class OpenIDConnectClient
 
         // Timeout in seconds
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeOut);
+
+        // Set response header handler
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, [$this, 'curlCallbackHeaderFunction']);
 
         // Download the given URL, and return output
         $output = curl_exec($ch);
@@ -1872,6 +1888,16 @@ class OpenIDConnectClient
     }
 
     /**
+     * Get the header from last action/curl request
+     *
+     * @return array
+     */
+    public function getResponseHeaders()
+    {
+        return $this->responseHeaders;
+    }
+
+    /**
      * Set timeout (seconds)
      *
      * @param int $timeout
@@ -2063,5 +2089,27 @@ class OpenIDConnectClient
     protected function getUserAgent(): string
     {
         return "jumbojett/OpenID-Connect-PHP";
+    }
+
+    /**
+     * Internal function to set response headers from curl response
+     *
+     * @param $curl resource curl handler
+     * @param $string string header as string from curl response
+     * @return int
+     */
+    protected function curlCallbackHeaderFunction($curl, string $string): int
+    {
+        $length = strlen($string);
+
+        $header = explode(':', $string, 2);
+        if (count($header) < 2) {
+            return $length;
+        }
+
+        $key = strtolower(trim($header[0]));
+        $value = trim($header[1]);
+        $this->responseHeaders[$key] = $value;
+        return $length;
     }
 }
