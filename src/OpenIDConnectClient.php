@@ -737,12 +737,10 @@ class OpenIDConnectClient
     }
 
     /**
-     * Start Here
-     * @return void
-     * @throws OpenIDConnectClientException
-     * @throws Exception
+     * Prepare URL for authorization.
+     * @return string URL used for authorization (authorization endpoint with all parameters)
      */
-    private function requestAuthorization() {
+    protected function prepareAuthorizationURL() {
 
         $auth_endpoint = $this->getProviderConfigValue('authorization_endpoint');
         $response_type = 'code';
@@ -789,7 +787,18 @@ class OpenIDConnectClient
             ]);
         }
 
-        $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, '', '&', $this->encType);
+        return $auth_endpoint . (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, '', '&', $this->encType);
+    }
+
+    /**
+     * Start Here
+     * @return void
+     * @throws OpenIDConnectClientException
+     * @throws Exception
+     */
+    private function requestAuthorization() {
+
+        $auth_endpoint = $this->prepareAuthorizationURL();
 
         $this->commitSession();
         $this->redirect($auth_endpoint);
