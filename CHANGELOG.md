@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Update construct typehint in docblock. #364
 * Fixed LogoutToken verification for single value aud claims #334
 * Added function to set useragent #370
+* Update well known config value function response types #376
 
 ### Added
 - Support for signed and encrypted UserInfo response. #305

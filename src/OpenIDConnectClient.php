@@ -587,13 +587,13 @@ class OpenIDConnectClient
      * Gets anything that we need configuration wise including endpoints, and other values
      *
      * @param string $param
-     * @param string|array|null $default optional
-     * @return string|array
+     * @param string|string[]|bool|null $default optional
+     * @return string|string[]|bool
      *
-     *@throws OpenIDConnectClientException
+     * @throws OpenIDConnectClientException
      */
-    protected function getProviderConfigValue(string $param, $default = null) {
-
+    protected function getProviderConfigValue(string $param, $default = null)
+    {
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
         // This is also known as auto "discovery"
         if (!isset($this->providerConfig[$param])) {
@@ -607,12 +607,12 @@ class OpenIDConnectClient
      * Gets anything that we need configuration wise including endpoints, and other values
      *
      * @param string $param
-     * @param string|null $default optional
-     * @return string
+     * @param string|string[]|bool|null $default optional
+     * @return string|string[]|bool
      *
-     *@throws OpenIDConnectClientException
+     * @throws OpenIDConnectClientException
      */
-    protected function getWellKnownConfigValue(string $param, string $default = null): string
+    protected function getWellKnownConfigValue(string $param, $default = null)
     {
 
         // If the configuration value is not available, attempt to fetch it from a well known config endpoint
