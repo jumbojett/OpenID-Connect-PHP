@@ -4,7 +4,7 @@
     "license": "Apache-2.0",
     "require": {
         "php": ">=5.4",
-        "phpseclib/phpseclib" : "~2.0 || ^3.0",
+        "phpseclib/phpseclib" : "^2.0.31 || ^3.0.7",
         "ext-json": "*",
         "ext-curl": "*",
         "paragonie/random_compat": ">=2"
