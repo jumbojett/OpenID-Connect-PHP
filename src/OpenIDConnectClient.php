@@ -808,11 +808,11 @@ class OpenIDConnectClient
         $grant_type = 'client_credentials';
 
         $post_data = [
-            'grant_type'    => $grant_type,
-            'client_id'     => $this->clientID,
-            'client_secret' => $this->clientSecret,
-            'scope'         => implode(' ', $this->scopes)
+            'grant_type' => $grant_type,
+            'scope'      => implode(' ', $this->scopes)
         ];
+
+        $this->setOptionalBasicAuthentication($headers, $post_data);
 
         // Convert token params to string format
         $post_params = http_build_query($post_data, '', '&', $this->encType);
@@ -844,13 +844,7 @@ class OpenIDConnectClient
 
         //For client authentication include the client values
         if($bClientAuth) {
-            $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
-            if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
-                $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
-            } else {
-                $post_data['client_id']     = $this->clientID;
-                $post_data['client_secret'] = $this->clientSecret;
-            }
+            $this->setOptionalBasicAuthentication($headers, $post_data);
         }
 
         // Convert token params to string format
@@ -859,6 +853,23 @@ class OpenIDConnectClient
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers), false);
     }
 
+    /**
+     * Use client basic authentication if supported.
+     *
+     * @param array $headers
+     * @param array $post_data
+     * @throws OpenIDConnectClientException
+     */
+    protected function setOptionalBasicAuthentication(&$headers, &$post_data) {
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
+
+        if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
+            $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
+        } else {
+            $post_data['client_id']     = $this->clientID;
+            $post_data['client_secret'] = $this->clientSecret;
+        }
+    }
 
     /**
      * Requests ID and Access tokens

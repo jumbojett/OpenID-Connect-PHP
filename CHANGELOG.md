@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * User-Agent is set for any HTTP method in fetchURL() (not just POST). #382
 * Update visibility of getWellKnownConfigValue to protected. #363
 * Fixed issue on authentication for php8. #354
+* Enabled `client_secret_basic` authentication on `requestClientCredentialsToken()` #347
 * Support for signed and encrypted UserInfo response. #305
 * Support for signed and encrypted ID Token. #305
 * Update construct typehint in docblock. #364
