@@ -219,6 +219,11 @@ class OpenIDConnectClient
     private $redirectURL;
 
     /**
+     * @var string
+     */
+    private $loginHint;
+
+    /**
      * @var int defines which URL-encoding http_build_query() uses
      */
     protected $encType = PHP_QUERY_RFC1738;
@@ -646,6 +651,12 @@ class OpenIDConnectClient
         $this->wellKnownConfigParameters=$params;
     }
 
+    /**
+     * @param string $hint Sets optional login_hint for auth flow
+     */
+    public function setLoginHint ($hint) {
+        $this->loginHint = $hint;
+    }
 
     /**
      * @param string $url Sets redirect URL for auth flow
@@ -762,6 +773,10 @@ class OpenIDConnectClient
             'state' => $state,
             'scope' => 'openid'
         ]);
+
+        if (isset($this->loginHint)) {
+            $auth_params = array_merge($auth_params, array('login_hint' => $this->loginHint));
+        }
 
         // If the client has been registered with additional scopes
         if (count($this->scopes) > 0) {
