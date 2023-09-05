@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
+* Microsoft Azure multi tenant support for issuer validation when verifying JWT claims #386 
 * User-Agent is set for any HTTP method in fetchURL() (not just POST). #382
 * Update visibility of getWellKnownConfigValue to protected. #363
 * Fixed issue on authentication for php8. #354
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Update well known config value function response types #376
 
 ### Added
+- Microsoft Azure multi tenant support for issuer validation when verifying JWT claims #386 
 - Support for signed and encrypted UserInfo response. #305
 - Support for signed and encrypted ID Token. #305
 
