@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for signed and encrypted UserInfo response. #305
 - Support for signed and encrypted ID Token. #305
 
+### Changed
+- Avoid to send empty optional scope parameter in a client credentials grant #392
+
 ## [0.9.10] - 2022-09-30
 
 ### Fixed
