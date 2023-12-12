@@ -69,6 +69,61 @@ class OpenIDConnectClientException extends Exception
 {
 }
 
+
+/**
+ * Interface for a nonce handler
+ */
+interface NonceHandler {
+    public function getKey(string $key);
+    public function setKey(string $key, $value);
+    public function unsetKey(string $key);
+    public function commit();
+}
+
+
+/**
+ * Default nonce handler - via $_SESSION
+ */
+class SessionNonceHandler implements NonceHandler {
+    /**
+     * Use session to manage a nonce
+     */
+    protected function startSession() {
+        if (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+    }
+
+    public function commit() {
+        $this->startSession();
+
+        session_write_close();
+    }
+
+    public function getKey(string $key) {
+        $this->startSession();
+
+        if (array_key_exists($key, $_SESSION)) {
+            return $_SESSION[$key];
+        }
+        return false;
+    }
+
+    public function setKey(string $key, $value) {
+        $this->startSession();
+
+        $_SESSION[$key] = $value;
+    }
+
+    public function unsetKey(string $key) {
+        $this->startSession();
+
+        unset($_SESSION[$key]);
+    }
+
+}
+
+
 /**
  *
  * Please note this class stores nonces by default in $_SESSION['openid_connect_nonce']
@@ -91,6 +146,11 @@ class OpenIDConnectClient
      * @var string arbitrary secret value
      */
     private $clientSecret;
+
+    /**
+     * @var \Jumbojett\NonceHandler configurable nonce handler
+     */
+    private $nonceHandler;
 
     /**
      * @var array holds the provider configuration
@@ -260,7 +320,7 @@ class OpenIDConnectClient
      * @param string|null $client_secret optional
      * @param string|null $issuer
      */
-    public function __construct(string $provider_url = null, string $client_id = null, string $client_secret = null, string $issuer = null) {
+    public function __construct(string $provider_url = null, string $client_id = null, string $client_secret = null, string $issuer = null, NonceHandler $nonceHandler = null ) {
         $this->setProviderURL($provider_url);
         if ($issuer === null) {
             $this->setIssuer($provider_url);
@@ -270,6 +330,7 @@ class OpenIDConnectClient
 
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
+        $this->nonceHandler = $nonceHandler ?? new SessionNonceHandler();
     }
 
     /**
@@ -791,7 +852,7 @@ class OpenIDConnectClient
 
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, '', '&', $this->encType);
 
-        $this->commitSession();
+        $this->nonceHandler->commit();
         $this->redirect($auth_endpoint);
     }
 
@@ -1777,7 +1838,7 @@ class OpenIDConnectClient
      */
     protected function setNonce(string $nonce): string
     {
-        $this->setSessionKey('openid_connect_nonce', $nonce);
+        $this->nonceHandler->setKey('openid_connect_nonce', $nonce);
         return $nonce;
     }
 
@@ -1787,7 +1848,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getNonce() {
-        return $this->getSessionKey('openid_connect_nonce');
+        return $this->nonceHandler->getKey('openid_connect_nonce');
     }
 
     /**
@@ -1796,7 +1857,7 @@ class OpenIDConnectClient
      * @return void
      */
     protected function unsetNonce() {
-        $this->unsetSessionKey('openid_connect_nonce');
+        $this->nonceHandler->unsetKey('openid_connect_nonce');
     }
 
     /**
@@ -1804,7 +1865,7 @@ class OpenIDConnectClient
      */
     protected function setState(string $state): string
     {
-        $this->setSessionKey('openid_connect_state', $state);
+        $this->nonceHandler->setKey('openid_connect_state', $state);
         return $state;
     }
 
@@ -1814,7 +1875,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getState() {
-        return $this->getSessionKey('openid_connect_state');
+        return $this->nonceHandler->getKey('openid_connect_state');
     }
 
     /**
@@ -1823,7 +1884,7 @@ class OpenIDConnectClient
      * @return void
      */
     protected function unsetState() {
-        $this->unsetSessionKey('openid_connect_state');
+        $this->nonceHandler->unsetKey('openid_connect_state');
     }
 
     /**
@@ -1831,7 +1892,7 @@ class OpenIDConnectClient
      */
     protected function setCodeVerifier(string $codeVerifier): string
     {
-        $this->setSessionKey('openid_connect_code_verifier', $codeVerifier);
+        $this->nonceHandler->setKey('openid_connect_code_verifier', $codeVerifier);
         return $codeVerifier;
     }
 
@@ -1841,7 +1902,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getCodeVerifier() {
-        return $this->getSessionKey('openid_connect_code_verifier');
+        return $this->nonceHandler->getKey('openid_connect_code_verifier');
     }
 
     /**
@@ -1850,7 +1911,7 @@ class OpenIDConnectClient
      * @return void
      */
     protected function unsetCodeVerifier() {
-        $this->unsetSessionKey('openid_connect_code_verifier');
+        $this->nonceHandler->unsetKey('openid_connect_code_verifier');
     }
 
     /**
@@ -1885,42 +1946,6 @@ class OpenIDConnectClient
     public function getTimeout(): int
     {
         return $this->timeOut;
-    }
-
-    /**
-     * Use session to manage a nonce
-     */
-    protected function startSession() {
-        if (session_status() === PHP_SESSION_NONE) {
-            @session_start();
-        }
-    }
-
-    protected function commitSession() {
-        $this->startSession();
-
-        session_write_close();
-    }
-
-    protected function getSessionKey(string $key) {
-        $this->startSession();
-
-        if (array_key_exists($key, $_SESSION)) {
-            return $_SESSION[$key];
-        }
-        return false;
-    }
-
-    protected function setSessionKey(string $key, $value) {
-        $this->startSession();
-
-        $_SESSION[$key] = $value;
-    }
-
-    protected function unsetSessionKey(string $key) {
-        $this->startSession();
-
-        unset($_SESSION[$key]);
     }
 
     /**
