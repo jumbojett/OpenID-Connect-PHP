@@ -696,7 +696,7 @@ class OpenIDConnectClient
         if (isset($_SERVER['HTTP_X_FORWARDED_PORT'])) {
             $port = (int)$_SERVER['HTTP_X_FORWARDED_PORT'];
         } elseif (isset($_SERVER['SERVER_PORT'])) {
-            $port = $_SERVER['SERVER_PORT'];
+            $port = (int)$_SERVER['SERVER_PORT'];
         } elseif ($protocol === 'https') {
             $port = 443;
         } else {
