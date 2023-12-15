@@ -1264,7 +1264,7 @@ class OpenIDConnectClient
         $user_info_endpoint = $this->getProviderConfigValue('userinfo_endpoint');
         $schema = 'openid';
 
-        $user_info_endpoint .= '?schema=' . $schema;
+        $user_info_endpoint .= (parse_url($user_info_endpoint, PHP_URL_QUERY) ? '&' : '?') . 'schema=' . $schema;
 
         //The accessToken has to be sent in the Authorization header.
         // Accept json to indicate response type
