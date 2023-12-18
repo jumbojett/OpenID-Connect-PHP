@@ -70,7 +70,7 @@ $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
 $oidc->providerConfigParam(array('token_endpoint'=>'https://id.provider.com/connect/token'));
-$oidc->addScope('my_scope');
+$oidc->addScope(['my_scope']);
 
 // this assumes success (to validate check if the access_token property is there and a valid JWT) :
 $clientCredentialsToken = $oidc->requestClientCredentialsToken()->access_token;
@@ -86,7 +86,7 @@ $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
 $oidc->providerConfigParam(array('token_endpoint'=>'https://id.provider.com/connect/token'));
-$oidc->addScope('my_scope');
+$oidc->addScope(['my_scope']);
 
 //Add username and password
 $oidc->addAuthParam(array('username'=>'<Username>'));
@@ -106,7 +106,7 @@ $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
 $oidc->setResponseTypes(array('id_token'));
-$oidc->addScope(array('openid'));
+$oidc->addScope(['openid']);
 $oidc->setAllowImplicitFlow(true);
 $oidc->addAuthParam(array('response_mode' => 'form_post'));
 $oidc->setCertPath('/path/to/my.cert');
