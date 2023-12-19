@@ -69,7 +69,7 @@ use Jumbojett\OpenIDConnectClient;
 $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
-$oidc->providerConfigParam(array('token_endpoint'=>'https://id.provider.com/connect/token'));
+$oidc->providerConfigParam(['token_endpoint'=>'https://id.provider.com/connect/token']);
 $oidc->addScope(['my_scope']);
 
 // this assumes success (to validate check if the access_token property is there and a valid JWT) :
@@ -85,12 +85,12 @@ use Jumbojett\OpenIDConnectClient;
 $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
-$oidc->providerConfigParam(array('token_endpoint'=>'https://id.provider.com/connect/token'));
+$oidc->providerConfigParam(['token_endpoint'=>'https://id.provider.com/connect/token']);
 $oidc->addScope(['my_scope']);
 
 //Add username and password
-$oidc->addAuthParam(array('username'=>'<Username>'));
-$oidc->addAuthParam(array('password'=>'<Password>'));
+$oidc->addAuthParam(['username'=>'<Username>']);
+$oidc->addAuthParam(['password'=>'<Password>']);
 
 //Perform the auth and return the token (to validate check if the access_token property is there and a valid JWT) :
 $token = $oidc->requestResourceOwnerToken(TRUE)->access_token;
@@ -105,10 +105,10 @@ use Jumbojett\OpenIDConnectClient;
 $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
-$oidc->setResponseTypes(array('id_token'));
+$oidc->setResponseTypes(['id_token']);
 $oidc->addScope(['openid']);
 $oidc->setAllowImplicitFlow(true);
-$oidc->addAuthParam(array('response_mode' => 'form_post'));
+$oidc->addAuthParam(['response_mode' => 'form_post']);
 $oidc->setCertPath('/path/to/my.cert');
 $oidc->authenticate();
 $sub = $oidc->getVerifiedClaims('sub');
@@ -184,7 +184,7 @@ function handleLogout() {
                 session_commit();
                 session_id($session_id_to_destroy); // switches to that session
                 session_start();
-                $_SESSION = array(); // effectively ends the session
+                $_SESSION = []; // effectively ends the session
             }
         }
     }
