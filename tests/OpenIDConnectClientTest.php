@@ -26,6 +26,7 @@ class OpenIDConnectClientTest extends TestCase
         $fakeClaims = new StdClass();
         $fakeClaims->iss = 'fake-issuer';
         $fakeClaims->aud = 'fake-client-id';
+        $fakeClaims->sub = 'fake-sub';
         $fakeClaims->nonce = null;
 
         $_REQUEST['id_token'] = 'abc.123.xyz';
