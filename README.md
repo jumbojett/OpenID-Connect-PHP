@@ -106,7 +106,6 @@ $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
 $oidc->setResponseTypes(['id_token']);
-$oidc->addScope(['openid']);
 $oidc->setAllowImplicitFlow(true);
 $oidc->addAuthParam(['response_mode' => 'form_post']);
 $oidc->setCertPath('/path/to/my.cert');
