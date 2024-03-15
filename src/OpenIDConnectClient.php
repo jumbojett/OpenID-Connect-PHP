@@ -918,10 +918,8 @@ class OpenIDConnectClient
                 $authorizationHeader = null;
                 unset($token_params['client_secret']);
             }
-            $token_params = array_merge($token_params, [
-                'client_id' => $this->clientID,
-                'code_verifier' => $this->getCodeVerifier()
-            ]);
+
+            $token_params['code_verifier'] = $this->getCodeVerifier();
         }
 
         // Convert token params to string format

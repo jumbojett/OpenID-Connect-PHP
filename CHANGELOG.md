@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1]
+
+### Changed
+
+- Fix unnecessary client_id in token params. Which can issue errors in OIDC providers authentication with PKCE support. Fixes [issue](https://github.com/jumbojett/OpenID-Connect-PHP/issues/312)
+
 ## [1.0.0] - 2023-12-13
 
 ### Added
