@@ -10,7 +10,8 @@
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",
-        "yoast/phpunit-polyfills": "^1.0"
+        "yoast/phpunit-polyfills": "^1.0",
+        "phpunit/phpunit": "^9.6"
     },
     "archive" : {
         "exclude" : [
@@ -19,5 +20,8 @@
     },
     "autoload" : {
          "classmap": [ "src/"]
+    },
+    "scripts" : {
+        "test":  "phpunit"
     }
 }
