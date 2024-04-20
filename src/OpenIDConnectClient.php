@@ -1221,9 +1221,9 @@ class OpenIDConnectClient
     /**
      * @param string $jwt encoded JWT
      * @param int $section the section we would like to decode
-     * @return object
+     * @return ?object
      */
-    protected function decodeJWT(string $jwt, int $section = 0): stdClass {
+    protected function decodeJWT(string $jwt, int $section = 0): ?stdClass {
 
         $parts = explode('.', $jwt);
         return json_decode(base64url_decode($parts[$section]), false);
@@ -1725,7 +1725,7 @@ class OpenIDConnectClient
         return $this->accessToken;
     }
 
-    public function getRefreshToken(): string
+    public function getRefreshToken(): ?string
     {
         return $this->refreshToken;
     }

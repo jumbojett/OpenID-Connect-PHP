@@ -9,20 +9,10 @@
         stopOnFailure="false"
         processIsolation="false"
         backupGlobals="false"
-        syntaxCheck="true"
 >
     <testsuites>
         <testsuite name="Tests">
             <directory>./tests</directory>
         </testsuite>
     </testsuites>
-    <filter>
-        <whitelist addUncoveredFilesFromWhitelist="true">
-            <directory suffix=".php">./src</directory>
-            <exclude>
-                <directory>./vendor</directory>
-                <directory>./tests</directory>
-            </exclude>
-        </whitelist>
-    </filter>
 </phpunit>
