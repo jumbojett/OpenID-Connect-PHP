@@ -696,7 +696,7 @@ class OpenIDConnectClient
         if (isset($_SERVER['HTTP_X_FORWARDED_PORT'])) {
             $port = (int)$_SERVER['HTTP_X_FORWARDED_PORT'];
         } elseif (isset($_SERVER['SERVER_PORT'])) {
-            $port = $_SERVER['SERVER_PORT'];
+            $port = (int)$_SERVER['SERVER_PORT'];
         } elseif ($protocol === 'https') {
             $port = 443;
         } else {
@@ -1206,6 +1206,7 @@ class OpenIDConnectClient
         }
         return (($this->validateIssuer($claims->iss))
             && (($claims->aud === $this->clientID) || in_array($this->clientID, $claims->aud, true))
+            && ($claims->sub === $this->getIdTokenPayload()->sub)
             && (!isset($claims->nonce) || $claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((is_int($claims->exp)) && ($claims->exp >= time() - $this->leeway)))
             && ( !isset($claims->nbf) || ((is_int($claims->nbf)) && ($claims->nbf <= time() + $this->leeway)))
