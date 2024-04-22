@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated readme PHP requirement to PHP 7.0+ #407
 - Added dependabot for GitHub Actions #407
 - Cast `$_SERVER['SERVER_PORT']` to integer to prevent adding 80 or 443 port to redirect URL. #403
+- Check subject when verifying JWT #406
 
 ## [1.0.0] - 2023-12-13
 
