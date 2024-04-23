@@ -469,12 +469,7 @@ class OpenIDConnectClient
             $claims = $this->decodeJWT($logout_token, 1);
 
             // Verify the signature
-            if (!$this->getProviderConfigValue('jwks_uri')) {
-                throw new OpenIDConnectClientException('Back-channel logout: Unable to verify signature due to no jwks_uri being defined');
-            }
-            if (!$this->verifyJWTSignature($logout_token)) {
-                throw new OpenIDConnectClientException('Back-channel logout: Unable to verify JWT signature');
-            }
+            $this->verifySignatures($logout_token);
 
             // Verify Logout Token Claims
             if ($this->verifyLogoutTokenClaims($claims)) {
@@ -1134,7 +1129,12 @@ class OpenIDConnectClient
                     $jwk = $header->jwk;
                     $this->verifyJWKHeader($jwk);
                 } else {
-                    $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')), false);
+                    $jwksUri = $this->getProviderConfigValue('jwks_uri');
+                    if (!$jwksUri) {
+                        throw new OpenIDConnectClientException ('Unable to verify signature due to no jwks_uri being defined');
+                    }
+
+                    $jwks = json_decode($this->fetchURL($jwksUri), false);
                     if ($jwks === NULL) {
                         throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
                     }
@@ -1164,9 +1164,6 @@ class OpenIDConnectClient
      */
     public function verifySignatures(string $jwt)
     {
-        if (!$this->getProviderConfigValue('jwks_uri')) {
-            throw new OpenIDConnectClientException ('Unable to verify signature due to no jwks_uri being defined');
-        }
         if (!$this->verifyJWTSignature($jwt)) {
             throw new OpenIDConnectClientException ('Unable to verify signature');
         }
