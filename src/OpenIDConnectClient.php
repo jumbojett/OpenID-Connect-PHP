@@ -1025,6 +1025,10 @@ class OpenIDConnectClient
             $this->accessToken = $json->access_token;
         }
 
+        if (isset($json->id_token)) {
+            $this->idToken = $json->id_token;
+        }
+
         if (isset($json->refresh_token)) {
             $this->refreshToken = $json->refresh_token;
         }
