@@ -4,18 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
-* Update visibility of getWellKnownConfigValue to protected. #363
-* Fixed issue on authentication for php8. #354
+[unreleased]
+- Updated CI to also test on PHP 8.3 #407
+- Updated readme PHP requirement to PHP 7.0+ #407
+- Added dependabot for GitHub Actions #407
+- Cast `$_SERVER['SERVER_PORT']` to integer to prevent adding 80 or 443 port to redirect URL. #403
+- Check subject when verifying JWT #406
+- Removed duplicate check on jwks_uri and only check if jwks_uri exists when needed #373
 * Enabled `client_secret_basic` authentication on `requestClientCredentialsToken()` #347
-* Support for signed and encrypted UserInfo response. #305
-* Support for signed and encrypted ID Token. #305
-* Update construct typehint in docblock. #364
-* Fixed LogoutToken verification for single value aud claims #334
+
+## [1.0.0] - 2023-12-13
 
 ### Added
-- Support for signed and encrypted UserInfo response. #305
-- Support for signed and encrypted ID Token. #305
+- PHP 7.0 is required. #327
+- Support for signed and encrypted UserInfo response and ID Token. #305
+- Allow to set User-Agent header. #370
+
+### Fixed
+- User-Agent is set for any HTTP method in fetchURL() (not just POST). #382
+- Update visibility of getWellKnownConfigValue to protected. #363
+- Fixed issue on authentication for php8. #354
+- Update construct typehint in docblock. #364
+- Fixed LogoutToken verification for single value aud claims. #334
+- Update well known config value function response types. #376
 
 ## [0.9.10] - 2022-09-30
 
