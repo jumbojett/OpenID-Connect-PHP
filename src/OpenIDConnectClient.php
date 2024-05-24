@@ -255,6 +255,11 @@ class OpenIDConnectClient
     private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
 
     /**
+     * @var bool if mtls is enabled for endpoint calls
+     */
+    private $mtlsEnabled;
+
+    /**
      * @param string|null $provider_url optional
      * @param string|null $client_id optional
      * @param string|null $client_secret optional
@@ -434,7 +439,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function signOut(string $idToken, $redirect) {
-        $sign_out_endpoint = $this->getProviderConfigValue('end_session_endpoint');
+        $sign_out_endpoint = $this->getEndpoint('end_session_endpoint');
 
         if($redirect === null){
             $signout_params = ['id_token_hint' => $idToken];
@@ -739,7 +744,7 @@ class OpenIDConnectClient
      */
     private function requestAuthorization() {
 
-        $auth_endpoint = $this->getProviderConfigValue('authorization_endpoint');
+        $auth_endpoint = $this->getEndpoint('authorization_endpoint');
         $response_type = 'code';
 
         // Generate and store a nonce in the session
@@ -796,7 +801,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function requestClientCredentialsToken() {
-        $token_endpoint = $this->getProviderConfigValue('token_endpoint');
+        $token_endpoint = $this->getEndpoint('token_endpoint');
 
         $headers = [];
 
@@ -824,7 +829,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function requestResourceOwnerToken(bool $bClientAuth = false) {
-        $token_endpoint = $this->getProviderConfigValue('token_endpoint');
+        $token_endpoint = $this->getEndpoint('token_endpoint');
 
         $headers = [];
 
@@ -864,7 +869,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     protected function requestTokens(string $code, array $headers = []) {
-        $token_endpoint = $this->getProviderConfigValue('token_endpoint');
+        $token_endpoint = $this->getEndpoint('token_endpoint');
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
 
         $grant_type = 'authorization_code';
@@ -897,7 +902,7 @@ class OpenIDConnectClient
                 $client_assertion = $this->getProviderConfigValue('client_assertion');
             }
             else{
-                $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('token_endpoint'));
+                $client_assertion = $this->getJWTClientAssertion($token_endpoint);
             }
 
             $token_params['client_assertion_type'] = $client_assertion_type;
@@ -942,7 +947,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function requestTokenExchange(string $subjectToken, string $subjectTokenType, string $audience = '') {
-        $token_endpoint = $this->getProviderConfigValue('token_endpoint');
+        $token_endpoint = $this->getEndpoint('token_endpoint');
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
         $headers = [];
         $grant_type = 'urn:ietf:params:oauth:grant-type:token-exchange';
@@ -981,7 +986,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function refreshToken(string $refresh_token) {
-        $token_endpoint = $this->getProviderConfigValue('token_endpoint');
+        $token_endpoint = $this->getEndpoint('token_endpoint');
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
 
         $headers = [];
@@ -1004,7 +1009,7 @@ class OpenIDConnectClient
 
         if ($this->supportsAuthMethod('client_secret_jwt', $token_endpoint_auth_methods_supported)) {
             $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
-            $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('token_endpoint'));
+            $client_assertion = $this->getJWTClientAssertion($token_endpoint);
 
             $token_params["grant_type"] = "urn:ietf:params:oauth:grant-type:token-exchange";
             $token_params["subject_token"] = $refresh_token;
@@ -1259,7 +1264,7 @@ class OpenIDConnectClient
      */
     public function requestUserInfo(string $attribute = null) {
 
-        $user_info_endpoint = $this->getProviderConfigValue('userinfo_endpoint');
+        $user_info_endpoint = $this->getEndpoint('userinfo_endpoint');
         $schema = 'openid';
 
         $user_info_endpoint .= '?schema=' . $schema;
@@ -1585,7 +1590,7 @@ class OpenIDConnectClient
      */
     public function register() {
 
-        $registration_endpoint = $this->getProviderConfigValue('registration_endpoint');
+        $registration_endpoint = $this->getEndpoint('registration_endpoint');
 
         $send_object = (object ) array_merge($this->registrationParams, [
             'redirect_uris' => [$this->getRedirectURL()],
@@ -1629,7 +1634,7 @@ class OpenIDConnectClient
      * @throws Exception
      */
     public function introspectToken(string $token, string $token_type_hint = '', string $clientId = null, string $clientSecret = null) {
-        $introspection_endpoint = $this->getProviderConfigValue('introspection_endpoint');
+        $introspection_endpoint = $this->getEndpoint('introspection_endpoint');
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
 
         $post_data = ['token' => $token];
@@ -1646,7 +1651,7 @@ class OpenIDConnectClient
 
         if ($this->supportsAuthMethod('client_secret_jwt', $token_endpoint_auth_methods_supported)) {
             $client_assertion_type = $this->getProviderConfigValue('client_assertion_type');
-            $client_assertion = $this->getJWTClientAssertion($this->getProviderConfigValue('introspection_endpoint'));
+            $client_assertion = $this->getJWTClientAssertion($introspection_endpoint);
 
             $post_data['client_assertion_type']=$client_assertion_type;
             $post_data['client_assertion'] = $client_assertion;
@@ -1670,7 +1675,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      */
     public function revokeToken(string $token, string $token_type_hint = '', string $clientId = null, string $clientSecret = null) {
-        $revocation_endpoint = $this->getProviderConfigValue('revocation_endpoint');
+        $revocation_endpoint = $this->getEndpoint('revocation_endpoint');
 
         $post_data = ['token' => $token];
 
@@ -2022,6 +2027,16 @@ class OpenIDConnectClient
         $this->codeChallengeMethod = $codeChallengeMethod;
     }
 
+    public function getMtlsEnabled(): bool
+    {
+        return $this->mtlsEnabled;
+    }
+
+    public function setMtlsEnabled(bool $mtlsEnabled):
+    {
+        $this->mtlsEnabled = $mtlsEnabled;
+    }
+
     /**
      * @throws OpenIDConnectClientException
      */
@@ -2063,5 +2078,23 @@ class OpenIDConnectClient
     protected function getUserAgent(): string
     {
         return "jumbojett/OpenID-Connect-PHP";
+    }
+
+    /**
+     * Get the endpoint from the provider config.
+     * If mTLS is enabled, it will look up the endpoint in the mTLS endpoint aliases.
+     *
+     * @throws OpenIDConnectClientException
+     */
+    protected function getEndpoint(string $endpointName): string
+    {
+        $mtlsEndpointAliases = $this->getProviderConfigValue('mtls_endpoint_aliases');
+        $mtlsEndpoint = $mtlsEndpointAliases[$endpointName] ?? null;
+
+        if ($this->mtlsEnabled && !empty($mtlsEndpoint)) {
+            return $mtlsEndpoint;
+        }
+
+        return $this->getProviderConfigValue($endpointName);
     }
 }
