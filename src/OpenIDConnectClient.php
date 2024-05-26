@@ -255,9 +255,39 @@ class OpenIDConnectClient
     private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
 
     /**
-     * @var bool if mtls is enabled for endpoint calls
+     * @var bool used to enable mTLS for endpoint calls
      */
     private $mtlsEnabled;
+
+    /**
+     * @var ?string if mTLS enabled, path to ssl cert
+     */
+    private $mtlsCertPath;
+
+    /**
+     * @var ?string if needed, password for mTLS cert
+     */
+    private $mtlsCertPassword;
+
+    /**
+     * @var ?string ssl cert type, default is "PEM", other options are "DER", "ENG" and "P12".
+     */
+    private $mtlsCertType;
+
+    /**
+     * @var ?string ssl key path for mTLS
+     */
+    private $mtlsKeyPath;
+
+    /**
+     * @var ?string password for ssl key
+     */
+    private $mtlsKeyPassword;
+
+    /**
+     * @var ?string key type, default is "PEM", other options are "DER", "ENG".
+     */
+    private $mtlsKeyType;
 
     /**
      * @param string|null $provider_url optional
@@ -1424,6 +1454,26 @@ class OpenIDConnectClient
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         }
 
+        // Add mTLS configuration if enabled
+        if ($this->mtlsEnabled) {
+            curl_setopt($ch, CURLOPT_SSLCERT, $this->mtlsCertPath);
+            if ($this->mtlsCertType) {
+                curl_setopt($ch, CURLOPT_SSLCERTTYPE, $this->mtlsCertType);
+            }
+            if ($this->mtlsCertPassword) {
+                curl_setopt($ch, CURLOPT_SSLCERTPASSWD, $this->mtlsCertPassword);
+            }
+            if ($this->mtlsKeyPath) {
+                curl_setopt($ch, CURLOPT_SSLKEY, $this->mtlsKeyPath);
+            }
+            if ($this->mtlsKeyType) {
+                curl_setopt($ch, CURLOPT_SSLKEYTYPE, $this->mtlsKeyType);
+            }
+            if ($this->mtlsKeyPassword) {
+                curl_setopt($ch, CURLOPT_SSLKEYPASSWD, $this->mtlsKeyPassword);
+            }
+        }
+
         // Should cURL return or print out the data? (true = return, false = print)
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
@@ -2032,9 +2082,35 @@ class OpenIDConnectClient
         return $this->mtlsEnabled;
     }
 
-    public function setMtlsEnabled(bool $mtlsEnabled):
+    public function setMtlsEnabled(bool $mtlsEnabled)
     {
         $this->mtlsEnabled = $mtlsEnabled;
+    }
+
+    /**
+     * @param ?string $certPath
+     * @param ?string $certType
+     * @param ?string $certPassword
+     * @return void
+     */
+    public function setMtlsCert($certPath = null, $certType = null, $certPassword = null)
+    {
+        $this->mtlsCertPath = $certPath;
+        $this->mtlsCertType = $certType;
+        $this->mtlsCertPassword = $certPassword;
+    }
+
+    /**
+     * @param ?string $keyPath
+     * @param ?string $keyType
+     * @param ?string $keyPassword
+     * @return void
+     */
+    public function setMtlsKey($keyPath = null, $keyType = null, $keyPassword = null)
+    {
+        $this->mtlsKeyPath = $keyPath;
+        $this->mtlsKeyType = $keyType;
+        $this->mtlsKeyPassword = $keyPassword;
     }
 
     /**
