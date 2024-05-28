@@ -2027,6 +2027,10 @@ class OpenIDConnectClient
         $this->codeChallengeMethod = $codeChallengeMethod;
     }
 
+    public function setAwsCognitoFlow(bool $awsCognitoFlow) {
+        $this->awsCognitoFlow = $awsCognitoFlow;
+    }
+
     /**
      * @throws OpenIDConnectClientException
      */
