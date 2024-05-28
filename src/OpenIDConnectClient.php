@@ -255,6 +255,11 @@ class OpenIDConnectClient
     private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
 
     /**
+     * @var bool Enable or disable logout parameters for AWS Cognito
+     */
+    private $awsCognitoFlow = false;
+
+    /**
      * @param string|null $provider_url optional
      * @param string|null $client_id optional
      * @param string|null $client_secret optional
