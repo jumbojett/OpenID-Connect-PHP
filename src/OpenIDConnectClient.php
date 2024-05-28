@@ -444,6 +444,12 @@ class OpenIDConnectClient
         if($redirect === null){
             $signout_params = ['id_token_hint' => $idToken];
         }
+        elseif($this->awsCognitoFlow){
+            $signout_params = [
+                'id_token_hint' => $idToken,
+                'client_id' => $this->clientID,
+                'logout_uri' => $redirect];
+        }
         else {
             $signout_params = [
                 'id_token_hint' => $idToken,
