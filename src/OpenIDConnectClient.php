@@ -1715,22 +1715,34 @@ class OpenIDConnectClient
      * Set the access token.
      *
      * May be required for subclasses of this Client.
+     *
+     * @param string|null $accessToken
      */
-    public function setAccessToken(string $accessToken) {
+    public function setAccessToken($accessToken) {
         $this->accessToken = $accessToken;
     }
 
-    public function getAccessToken(): string
+
+    /**
+     * @return string|null
+     */
+    public function getAccessToken()
     {
         return $this->accessToken;
     }
 
-    public function getRefreshToken(): string
+    /**
+     * @return string|null
+     */
+    public function getRefreshToken()
     {
         return $this->refreshToken;
     }
 
-    public function getIdToken(): string
+    /**
+     * @return string|null
+     */
+    public function getIdToken()
     {
         return $this->idToken;
     }

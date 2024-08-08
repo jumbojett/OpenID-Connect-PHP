@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Fix unnecessary client_id in token params. Which can issue errors in OIDC providers authentication with PKCE support. Fixes [issue](https://github.com/jumbojett/OpenID-Connect-PHP/issues/312)
+- Remove type hints for `getAccessToken`, `getRefreshToken`, `getIdToken` because when calling this method, in case the OIDC provider did not send these tokens to the application, may cause error in application, since variables `accessToken`, `refreshToken`, `idToken` still null
 
 ## [1.0.0] - 2023-12-13
 
