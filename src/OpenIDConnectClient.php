@@ -880,7 +880,7 @@ class OpenIDConnectClient
         $authorizationHeader = null;
         # Consider Basic authentication if provider config is set this way
         if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
-            $authorizationHeader = 'Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret));
+            $authorizationHeader = 'Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret);
             unset($token_params['client_secret'], $token_params['client_id']);
         }
 
