@@ -1220,11 +1220,11 @@ class OpenIDConnectClient
     /**
      * @param string $jwt encoded JWT
      * @param int $section the section we would like to decode
-     * @return object|null
+     * @return object|string|null
      */
     protected function decodeJWT(string $jwt, int $section = 0) {
         $parts = explode('.', $jwt);
-        return json_decode(base64url_decode($parts[$section]), false);
+        return json_decode(base64url_decode($parts[$section] ?? ''), false);
     }
 
     /**
@@ -1737,6 +1737,10 @@ class OpenIDConnectClient
         return $this->refreshToken;
     }
 
+    public function setIdToken(string $idToken) {
+        $this->idToken = $idToken;
+    }
+
     /**
      * @return string|null
      */
@@ -1753,21 +1757,21 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return object
+     * @return object|string|null
      */
     public function getAccessTokenPayload() {
         return $this->decodeJWT($this->accessToken, 1);
     }
 
     /**
-     * @return object
+     * @return object|string|null
      */
     public function getIdTokenHeader() {
         return $this->decodeJWT($this->idToken);
     }
 
     /**
-     * @return object
+     * @return object|string|null
      */
     public function getIdTokenPayload() {
         return $this->decodeJWT($this->idToken, 1);

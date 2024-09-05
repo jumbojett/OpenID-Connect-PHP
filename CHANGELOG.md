@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 [unreleased]
+- Fix JWT decode of non JWT tokens #428
+- Fix method signatures #427
 - Updated CI to also test on PHP 8.3 #407
 - Updated readme PHP requirement to PHP 7.0+ #407
 - Added dependabot for GitHub Actions #407
