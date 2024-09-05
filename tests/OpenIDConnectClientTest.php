@@ -7,9 +7,38 @@ use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 class OpenIDConnectClientTest extends TestCase
 {
-    /**
-     * @return void
-     */
+    public function testJWTDecode()
+    {
+        $client = new OpenIDConnectClient();
+        $client->setAccessToken('');
+        $header = $client->getAccessTokenHeader();
+        self::assertEquals('', $header);
+    }
+
+    public function testGetNull()
+    {
+        $client = new OpenIDConnectClient();
+        self::assertNull($client->getAccessToken());
+        self::assertNull($client->getRefreshToken());
+        self::assertNull($client->getIdToken());
+        self::assertNull($client->getClientName());
+        self::assertNull($client->getClientID());
+        self::assertNull($client->getClientSecret());
+        self::assertNull($client->getCertPath());
+    }
+
+    public function testResponseTypes()
+    {
+        $client = new OpenIDConnectClient();
+        self::assertEquals([], $client->getResponseTypes());
+
+        $client->setResponseTypes('foo');
+        self::assertEquals(['foo'], $client->getResponseTypes());
+
+        $client->setResponseTypes(['bar', 'ipsum']);
+        self::assertEquals(['foo', 'bar', 'ipsum'], $client->getResponseTypes());
+    }
+
     public function testGetRedirectURL()
     {
         $client = new OpenIDConnectClient();
