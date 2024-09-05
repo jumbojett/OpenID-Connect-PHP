@@ -10,9 +10,20 @@ class OpenIDConnectClientTest extends TestCase
     public function testJWTDecode()
     {
         $client = new OpenIDConnectClient();
+        # access token
         $client->setAccessToken('');
         $header = $client->getAccessTokenHeader();
         self::assertEquals('', $header);
+        $payload = $client->getAccessTokenPayload();
+        self::assertEquals('', $payload);
+
+        # id token
+        $client->setIdToken('');
+        $header = $client->getIdTokenHeader();
+        self::assertEquals('', $header);
+        $payload = $client->getIdTokenPayload();
+        self::assertEquals('', $payload);
+
     }
 
     public function testGetNull()
