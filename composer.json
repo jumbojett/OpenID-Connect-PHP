@@ -10,7 +10,7 @@
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",
-        "yoast/phpunit-polyfills": "^1.0"
+        "yoast/phpunit-polyfills": "^2.0"
     },
     "archive" : {
         "exclude" : [
