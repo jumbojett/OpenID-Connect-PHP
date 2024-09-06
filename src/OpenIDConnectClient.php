@@ -144,7 +144,7 @@ class OpenIDConnectClient
     /**
      * @var int|null Response code from the server
      */
-    private $responseCode;
+    protected $responseCode;
 
     /**
      * @var string|null Content type from the server
