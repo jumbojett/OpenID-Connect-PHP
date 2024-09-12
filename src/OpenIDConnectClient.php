@@ -293,8 +293,8 @@ class OpenIDConnectClient
     }
 	
 	/**
-	 * use this method to magically handle all incoming OIDC requests at one endpoint
-	 * if you need more control, use the handleError(), handleCode(), handleClaims(), requestAuthorisation() and redirect() methods
+	 * use this method to magically handle all incoming OIDC requests
+	 * if you need more control per request, use the methods handleError(), handleCode(), handleClaims(), requestAuthorisation() and redirect()
 	 * @return bool
 	 * @throws OpenIDConnectClientException
 	 */
