@@ -212,6 +212,37 @@ $oidc->setPrivateKeyJwtGenerator(function(string $token_endpoint) {
 })
 ```
 
+## Example 11: Basic Client splitting up the process in individual actions
+
+```php
+// controllers/oidc_request_authorization.php
+use Jumbojett\OpenIDConnectClient;
+
+$oidc = new OpenIDConnectClient('https://id.provider.com',
+                                'ClientIDHere',
+                                'ClientSecretHere');
+$oidc->setCertPath('/path/to/my.cert');
+
+$auth_endpoint = $oidc->requestAuthorization();
+$redirectUrl = $oidc->redirect($auth_endpoint);
+
+$oidc->redirect($redirectUrl);
+```
+
+```php
+// controllers/oidc_convert_code_into_tokens.php
+use Jumbojett\OpenIDConnectClient;
+
+$oidc = new OpenIDConnectClient('https://id.provider.com',
+                                'ClientIDHere',
+                                'ClientSecretHere');
+$oidc->setCertPath('/path/to/my.cert');
+
+$oidc->handleCode($_REQUEST['code']);
+
+$idToken = $oidc->getIdToken();
+$accessToken = $oidc->getAccessToken();
+```
 
 ## Development Environments ##
 In some cases you may need to disable SSL security on your development systems.
