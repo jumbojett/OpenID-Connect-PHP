@@ -224,9 +224,7 @@ $oidc = new OpenIDConnectClient('https://id.provider.com',
 $oidc->setCertPath('/path/to/my.cert');
 
 $auth_endpoint = $oidc->requestAuthorization();
-$redirectUrl = $oidc->redirect($auth_endpoint);
-
-$oidc->redirect($redirectUrl);
+$oidc->redirect($auth_endpoint);
 ```
 
 ```php
