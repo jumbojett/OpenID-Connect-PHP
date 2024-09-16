@@ -376,27 +376,26 @@ class OpenIDConnectClient
         $this->accessToken = $token_json->access_token;
 
         // If this is a valid claim
-        if ($this->verifyJWTClaims($claims, $token_json->access_token)) {
-
-            // Clean up the session a little
-            $this->unsetNonce();
-
-            // Save the full response
-            $this->tokenResponse = $token_json;
-
-            // Save the verified claims
-            $this->verifiedClaims = $claims;
-
-            // Save the refresh token, if we got one
-            if (isset($token_json->refresh_token)) {
-                $this->refreshToken = $token_json->refresh_token;
-            }
-
-            // Success!
-            return true;
+        if (!$this->verifyJWTClaims($claims, $token_json->access_token)) {
+            throw new OpenIDConnectClientException ('Unable to verify JWT claims');
         }
 
-        throw new OpenIDConnectClientException ('Unable to verify JWT claims');
+        // Clean up the session a little
+        $this->unsetNonce();
+
+        // Save the full response
+        $this->tokenResponse = $token_json;
+
+        // Save the verified claims
+        $this->verifiedClaims = $claims;
+
+        // Save the refresh token, if we got one
+        if (isset($token_json->refresh_token)) {
+            $this->refreshToken = $token_json->refresh_token;
+        }
+
+        // Success!
+        return true;
     }
 
     /**
@@ -421,25 +420,23 @@ class OpenIDConnectClient
         $this->idToken = $id_token;
 
         // If this is a valid claim
-        if ($this->verifyJWTClaims($claims, $accessToken)) {
-
-            // Clean up the session a little
-            $this->unsetNonce();
-
-            // Save the verified claims
-            $this->verifiedClaims = $claims;
-
-            // Save the access token
-            if ($accessToken) {
-                $this->accessToken = $accessToken;
-            }
-
-            // Success!
-            return true;
-
+        if (!$this->verifyJWTClaims($claims, $accessToken)) {
+            throw new OpenIDConnectClientException ('Unable to verify JWT claims');
         }
 
-        throw new OpenIDConnectClientException ('Unable to verify JWT claims');
+        // Clean up the session a little
+        $this->unsetNonce();
+
+        // Save the verified claims
+        $this->verifiedClaims = $claims;
+
+        // Save the access token
+        if ($accessToken) {
+            $this->accessToken = $accessToken;
+        }
+
+        // Success!
+        return true;
     }
 
     /**
