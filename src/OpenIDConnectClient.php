@@ -307,9 +307,9 @@ class OpenIDConnectClient
 		
 		// If we have an authorization code then proceed to request a token
 		if (isset($_REQUEST['code'])) {
-			return $this->handleCode($_REQUEST['code']);
+			return $this->handleCode($_REQUEST['code'], $_REQUEST['state'] ?? null);
 		}
-		
+
 		if ($this->allowImplicitFlow && isset($_REQUEST['id_token'])) {
 			return $this->handleClaims($_REQUEST['id_token'], $_REQUEST['access_token'] ?? null, $_REQUEST['state'] ?? null);
 		}
@@ -331,7 +331,7 @@ class OpenIDConnectClient
 	/**
 	 * @throws OpenIDConnectClientException
 	 */
-	public function handleCode(string $code): bool {
+	public function handleCode(string $code, string $state = null): bool {
 		$token_json = $this->requestTokens($code);
 		
 		// Throw an error if the server returns one
@@ -343,7 +343,7 @@ class OpenIDConnectClient
 		}
 		
 		// Do an OpenID Connect session check
-		if (!isset($_REQUEST['state']) || ($_REQUEST['state'] !== $this->getState())) {
+		if ($state === null || ($state !== $this->getState())) {
 			throw new OpenIDConnectClientException('Unable to determine state');
 		}
 		
