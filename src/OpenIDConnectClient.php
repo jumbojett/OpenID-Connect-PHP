@@ -291,110 +291,113 @@ class OpenIDConnectClient
     public function setResponseTypes($response_types) {
         $this->responseTypes = array_merge($this->responseTypes, (array)$response_types);
     }
-	
-	/**
-	 * use this method to magically handle all incoming OIDC requests
-	 * if you need more control per request, use the methods handleError(), handleCode(), handleClaims(), requestAuthorisation() and redirect()
-	 * @return bool
-	 * @throws OpenIDConnectClientException
-	 */
-	public function authenticate(): bool {
-		// Do a preemptive check to see if the provider has thrown an error from a previous redirect
-		if (isset($_REQUEST['error'])) {
-			// always throws an exception, routine will end here
-			$this->handleError($_REQUEST['error'], $_REQUEST['error_description'] ?? null);
-		}
-		
-		// If we have an authorization code then proceed to request a token
-		if (isset($_REQUEST['code'])) {
-			return $this->handleCode($_REQUEST['code'], $_REQUEST['state'] ?? null);
-		}
 
-		if ($this->allowImplicitFlow && isset($_REQUEST['id_token'])) {
-			return $this->handleClaims($_REQUEST['id_token'], $_REQUEST['access_token'] ?? null, $_REQUEST['state'] ?? null);
-		}
-		
-		$auth_endpoint = $this->requestAuthorization();
-		$this->redirect($auth_endpoint);
-		
-		return false;
-	}
-	
-	/**
-	 * @throws OpenIDConnectClientException
-	 */
-	public function handleError(string $error, string $errorDescription = null) {
-		$desc = $errorDescription !== null ? ' Description: '.$errorDescription : '';
-		throw new OpenIDConnectClientException('Error: '.$error.$desc);
-	}
-	
-	/**
-	 * @throws OpenIDConnectClientException
-	 */
-	public function handleCode(string $code, string $state = null): bool {
-		$token_json = $this->requestTokens($code);
-		
-		// Throw an error if the server returns one
-		if (isset($token_json->error)) {
-			if (isset($token_json->error_description)) {
-				throw new OpenIDConnectClientException($token_json->error_description);
-			}
-			throw new OpenIDConnectClientException('Got response: '.$token_json->error);
-		}
-		
-		// Do an OpenID Connect session check
-		if ($state === null || ($state !== $this->getState())) {
-			throw new OpenIDConnectClientException('Unable to determine state');
-		}
-		
-		// Cleanup state
-		$this->unsetState();
-		
-		if (!property_exists($token_json, 'id_token')) {
-			throw new OpenIDConnectClientException('User did not authorize openid scope.');
-		}
-		
-		$id_token       = $token_json->id_token;
-		$idTokenHeaders = $this->decodeJWT($id_token);
-		if (isset($idTokenHeaders->enc)) {
-			// Handle JWE
-			$id_token = $this->handleJweResponse($id_token);
-		}
-		
-		$claims = $this->decodeJWT($id_token, 1);
-		
-		// Verify the signature
-		$this->verifySignatures($id_token);
-		
-		// Save the id token
-		$this->idToken = $id_token;
-		
-		// Save the access token
-		$this->accessToken = $token_json->access_token;
-		
-		// If this is a valid claim
-		if ($this->verifyJWTClaims($claims, $token_json->access_token)) {
-			
-			// Clean up the session a little
-			$this->unsetNonce();
-			
-			// Save the full response
-			$this->tokenResponse = $token_json;
-			
-			// Save the verified claims
-			$this->verifiedClaims = $claims;
-			
-			// Save the refresh token, if we got one
-			if (isset($token_json->refresh_token)) {
-				$this->refreshToken = $token_json->refresh_token;
-			}
-			
-			// Success!
-			return true;
-		}
-		
-		throw new OpenIDConnectClientException ('Unable to verify JWT claims');
-	}
+    /**
+     * use this method to magically handle all incoming OIDC requests
+     * if you need more control per request, use the methods handleError(), handleCode(), handleClaims(), requestAuthorisation() and redirect()
+     * @return bool
+     * @throws OpenIDConnectClientException
+     */
+    public function authenticate(): bool
+    {
+        // Do a preemptive check to see if the provider has thrown an error from a previous redirect
+        if (isset($_REQUEST['error'])) {
+            // always throws an exception, routine will end here
+            $this->handleError($_REQUEST['error'], $_REQUEST['error_description'] ?? null);
+        }
+
+        // If we have an authorization code then proceed to request a token
+        if (isset($_REQUEST['code'])) {
+            return $this->handleCode($_REQUEST['code'], $_REQUEST['state'] ?? null);
+        }
+
+        if ($this->allowImplicitFlow && isset($_REQUEST['id_token'])) {
+            return $this->handleClaims($_REQUEST['id_token'], $_REQUEST['access_token'] ?? null, $_REQUEST['state'] ?? null);
+        }
+
+        $auth_endpoint = $this->requestAuthorization();
+        $this->redirect($auth_endpoint);
+
+        return false;
+    }
+
+    /**
+     * @throws OpenIDConnectClientException
+     */
+    public function handleError(string $error, string $errorDescription = null)
+    {
+        $desc = $errorDescription !== null ? ' Description: ' . $errorDescription : '';
+        throw new OpenIDConnectClientException('Error: ' . $error . $desc);
+    }
+
+    /**
+     * @throws OpenIDConnectClientException
+     */
+    public function handleCode(string $code, string $state = null): bool
+    {
+        $token_json = $this->requestTokens($code);
+
+        // Throw an error if the server returns one
+        if (isset($token_json->error)) {
+            if (isset($token_json->error_description)) {
+                throw new OpenIDConnectClientException($token_json->error_description);
+            }
+            throw new OpenIDConnectClientException('Got response: ' . $token_json->error);
+        }
+
+        // Do an OpenID Connect session check
+        if ($state === null || ($state !== $this->getState())) {
+            throw new OpenIDConnectClientException('Unable to determine state');
+        }
+
+        // Cleanup state
+        $this->unsetState();
+
+        if (!property_exists($token_json, 'id_token')) {
+            throw new OpenIDConnectClientException('User did not authorize openid scope.');
+        }
+
+        $id_token = $token_json->id_token;
+        $idTokenHeaders = $this->decodeJWT($id_token);
+        if (isset($idTokenHeaders->enc)) {
+            // Handle JWE
+            $id_token = $this->handleJweResponse($id_token);
+        }
+
+        $claims = $this->decodeJWT($id_token, 1);
+
+        // Verify the signature
+        $this->verifySignatures($id_token);
+
+        // Save the id token
+        $this->idToken = $id_token;
+
+        // Save the access token
+        $this->accessToken = $token_json->access_token;
+
+        // If this is a valid claim
+        if ($this->verifyJWTClaims($claims, $token_json->access_token)) {
+
+            // Clean up the session a little
+            $this->unsetNonce();
+
+            // Save the full response
+            $this->tokenResponse = $token_json;
+
+            // Save the verified claims
+            $this->verifiedClaims = $claims;
+
+            // Save the refresh token, if we got one
+            if (isset($token_json->refresh_token)) {
+                $this->refreshToken = $token_json->refresh_token;
+            }
+
+            // Success!
+            return true;
+        }
+
+        throw new OpenIDConnectClientException ('Unable to verify JWT claims');
+    }
 
     /**
      * @throws OpenIDConnectClientException
