@@ -1201,8 +1201,10 @@ class OpenIDConnectClient
             $len = ((int)$bit)/16;
             $expected_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
+        $auds = $claims->aud;
+        $auds = is_array( $auds ) ? $auds : [ $auds ];
         return (($this->validateIssuer($claims->iss))
-            && (($claims->aud === $this->clientID) || in_array($this->clientID, $claims->aud, true))
+            && (in_array($this->clientID, $auds, true))
             && ($claims->sub === $this->getIdTokenPayload()->sub)
             && (!isset($claims->nonce) || $claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((is_int($claims->exp)) && ($claims->exp >= time() - $this->leeway)))
