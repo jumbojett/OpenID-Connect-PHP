@@ -7,6 +7,48 @@ use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 class OpenIDConnectClientTest extends TestCase
 {
+    public function testValidateClaims()
+    {
+        $client = new class extends OpenIDConnectClient {
+            public function testVerifyJWTClaims($claims): bool
+            {
+                return $this->verifyJWTClaims($claims);
+            }
+            public function getIdTokenPayload()
+            {
+                return (object)[
+                    'sub' => 'sub'
+                ];
+            }
+        };
+        $client->setClientID('client-id');
+        $client->setIssuer('issuer');
+        $client->setIdToken('');
+
+        # simple aud
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => 'client-id',
+            'iss' => 'issuer',
+            'sub' => 'sub',
+        ]);
+        self::assertTrue($valid);
+
+        # array aud
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => ['client-id'],
+            'iss' => 'issuer',
+            'sub' => 'sub',
+        ]);
+        self::assertTrue($valid);
+
+        # aud not matching
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => ['ipsum'],
+            'iss' => 'issuer',
+            'sub' => 'sub',
+        ]);
+        self::assertFalse($valid);
+    }
     public function testJWTDecode()
     {
         $client = new OpenIDConnectClient();
@@ -23,7 +65,6 @@ class OpenIDConnectClientTest extends TestCase
         self::assertEquals('', $header);
         $payload = $client->getIdTokenPayload();
         self::assertEquals('', $payload);
-
     }
 
     public function testGetNull()
