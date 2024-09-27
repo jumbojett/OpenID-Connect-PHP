@@ -149,7 +149,7 @@ class OpenIDConnectClient
     /**
      * @var string|null Content type from the server
      */
-    private $responseContentType;
+    protected $responseContentType;
 
     /**
      * @var array holds response types
