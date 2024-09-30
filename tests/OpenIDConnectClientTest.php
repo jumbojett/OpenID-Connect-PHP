@@ -157,6 +157,72 @@ class OpenIDConnectClientTest extends TestCase
         }
     }
 
+    public function testAuthenticateWithCodeThrowsExceptionIfStateDoesNotMatch()
+    {
+        $_REQUEST['code'] = 'some-code';
+        $_REQUEST['state'] = "incorrect-state-from-user";
+        $_SESSION['openid_connect_state'] = "random-generated-state";
+
+        $client = new OpenIDConnectClient();
+
+        try {
+            $client->authenticate();
+        } catch ( OpenIDConnectClientException $e ) {
+            $this->assertEquals('Unable to determine state', $e->getMessage());
+            return;
+        }
+
+        $this->fail('OpenIDConnectClientException was not thrown when it should have been.');
+    }
+
+    public function testAuthenticateWithCodeMockedVerify()
+    {
+        $mockCode = 'some-code';
+        $mockState = 'some-code';
+
+        $_REQUEST['code'] = $mockCode;
+        $_REQUEST['state'] = $mockState;
+
+        $mockClaims = (object)['email' => 'test@example.com'];
+        $mockIdToken = implode('.', [base64_encode('{}'), base64_encode(json_encode($mockClaims)), '']);
+        $mockAccessToken = 'some-access-token';
+        $mockRefreshToken = 'some-access-token';
+
+        $mockTokenResponse = (object)[
+            'id_token' => $mockIdToken,
+            'access_token' => $mockAccessToken,
+            'refresh_token' => $mockRefreshToken,
+        ];
+
+        $client = $this->getMockBuilder(OpenIDConnectClient::class)
+            ->setMethods(['requestTokens', 'verifySignatures', 'verifyJWTClaims', 'getState'])
+            ->getMock();
+        $client->method('getState')
+            ->willReturn($mockState);
+        $client->method('requestTokens')
+            ->with($mockCode)
+            ->willReturn($mockTokenResponse);
+        $client->method('verifySignatures')
+            ->with($mockIdToken);
+        $client->method('verifyJWTClaims')
+            ->with($mockClaims, $mockAccessToken)
+            ->willReturn(true);
+
+        try {
+            // In this mocked case we should be authenticated
+            // because we are not actually verifying the JWT
+            $authenticated = $client->authenticate();
+            $this->assertTrue($authenticated);
+            $this->assertEquals($mockIdToken, $client->getIdToken());
+            $this->assertEquals($mockAccessToken, $client->getAccessToken());
+            $this->assertEquals($mockTokenResponse, $client->getTokenResponse());
+            $this->assertEquals($mockClaims, $client->getVerifiedClaims());
+            $this->assertEquals($mockRefreshToken, $client->getRefreshToken());
+        } catch ( OpenIDConnectClientException $e ) {
+            $this->fail('OpenIDConnectClientException was thrown when it should not have been. Received exception: ' . $e->getMessage());
+        }
+    }
+
     public function testSerialize()
     {
         $client = new OpenIDConnectClient('https://example.com', 'foo', 'bar', 'baz');
