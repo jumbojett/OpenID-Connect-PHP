@@ -4,10 +4,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.1] - 2024-09-13
+[unreleased]
+
+### Added
+- Add unit tests for verifyJWTClaims and different aud claims. #443
+
+## Changed
+- Validate state before ID Token request. #447
+
+### Fixed
+- Fix protected responseContentType to allow overloading of fetchUrl function. #446
+- Fix TypeError in verifyJWTClaims. #442
+
+
+## [1.0.2] - 2024-09-13
+
+### Added
+- Add unit test for SERVER_PORT type cast. #438
 
 ### Fixed
 - Cast `$_SERVER['SERVER_PORT']` to integer to prevent adding 80 or 443 port to redirect URL. #437
+- Fix protected $responseCode to allow proper overloading of fetchURL(). #433
+- Fix bring back #404. #437
 
 ## [1.0.1] - 2024-09-05
 
