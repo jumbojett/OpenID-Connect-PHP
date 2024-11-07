@@ -4,10 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-[unreleased]
-- Updated CI to also test on PHP 8.3 #407
-- Updated readme PHP requirement to PHP 7.0+ #407
-- Added dependabot for GitHub Actions #407
+## [1.0.1] - 2024-09-13
+
+### Fixed
+- Cast `$_SERVER['SERVER_PORT']` to integer to prevent adding 80 or 443 port to redirect URL. #437
+
+## [1.0.1] - 2024-09-05
+
+### Fixed
+- Fix JWT decode of non JWT tokens #428
+- Fix method signatures #427
 - Cast `$_SERVER['SERVER_PORT']` to integer to prevent adding 80 or 443 port to redirect URL. #403
 - Check subject when verifying JWT #406
 - Removed duplicate check on jwks_uri and only check if jwks_uri exists when needed #373

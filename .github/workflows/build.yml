@@ -1,7 +1,13 @@
 ---
 name: build
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 env:
     DEFAULT_COMPOSER_FLAGS: "--prefer-dist --no-interaction --no-progress --optimize-autoloader --ansi"
@@ -35,4 +41,4 @@ jobs:
             - name: Install dependencies
               run: composer update $DEFAULT_COMPOSER_FLAGS
             - name: Run unit tests
-              run: vendor/bin/phpunit --verbose --colors=always tests
+              run: vendor/bin/phpunit --colors=always tests

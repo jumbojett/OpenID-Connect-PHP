@@ -7,9 +7,90 @@ use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 class OpenIDConnectClientTest extends TestCase
 {
-    /**
-     * @return void
-     */
+    public function testValidateClaims()
+    {
+        $client = new class extends OpenIDConnectClient {
+            public function testVerifyJWTClaims($claims): bool
+            {
+                return $this->verifyJWTClaims($claims);
+            }
+            public function getIdTokenPayload()
+            {
+                return (object)[
+                    'sub' => 'sub'
+                ];
+            }
+        };
+        $client->setClientID('client-id');
+        $client->setIssuer('issuer');
+        $client->setIdToken('');
+
+        # simple aud
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => 'client-id',
+            'iss' => 'issuer',
+            'sub' => 'sub',
+        ]);
+        self::assertTrue($valid);
+
+        # array aud
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => ['client-id'],
+            'iss' => 'issuer',
+            'sub' => 'sub',
+        ]);
+        self::assertTrue($valid);
+
+        # aud not matching
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => ['ipsum'],
+            'iss' => 'issuer',
+            'sub' => 'sub',
+        ]);
+        self::assertFalse($valid);
+    }
+    public function testJWTDecode()
+    {
+        $client = new OpenIDConnectClient();
+        # access token
+        $client->setAccessToken('');
+        $header = $client->getAccessTokenHeader();
+        self::assertEquals('', $header);
+        $payload = $client->getAccessTokenPayload();
+        self::assertEquals('', $payload);
+
+        # id token
+        $client->setIdToken('');
+        $header = $client->getIdTokenHeader();
+        self::assertEquals('', $header);
+        $payload = $client->getIdTokenPayload();
+        self::assertEquals('', $payload);
+    }
+
+    public function testGetNull()
+    {
+        $client = new OpenIDConnectClient();
+        self::assertNull($client->getAccessToken());
+        self::assertNull($client->getRefreshToken());
+        self::assertNull($client->getIdToken());
+        self::assertNull($client->getClientName());
+        self::assertNull($client->getClientID());
+        self::assertNull($client->getClientSecret());
+        self::assertNull($client->getCertPath());
+    }
+
+    public function testResponseTypes()
+    {
+        $client = new OpenIDConnectClient();
+        self::assertEquals([], $client->getResponseTypes());
+
+        $client->setResponseTypes('foo');
+        self::assertEquals(['foo'], $client->getResponseTypes());
+
+        $client->setResponseTypes(['bar', 'ipsum']);
+        self::assertEquals(['foo', 'bar', 'ipsum'], $client->getResponseTypes());
+    }
+
     public function testGetRedirectURL()
     {
         $client = new OpenIDConnectClient();
@@ -18,7 +99,11 @@ class OpenIDConnectClientTest extends TestCase
 
         $_SERVER['SERVER_NAME'] = 'domain.test';
         $_SERVER['REQUEST_URI'] = '/path/index.php?foo=bar&baz#fragment';
+        $_SERVER['SERVER_PORT'] = '443';
         self::assertSame('http://domain.test/path/index.php', $client->getRedirectURL());
+
+        $_SERVER['SERVER_PORT'] = '8888';
+        self::assertSame('http://domain.test:8888/path/index.php', $client->getRedirectURL());
     }
 
     public function testAuthenticateDoesNotThrowExceptionIfClaimsIsMissingNonce()

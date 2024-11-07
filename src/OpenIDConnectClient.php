@@ -3,7 +3,7 @@
  *
  * Copyright MITRE 2020
  *
- * OpenIDConnectClient for PHP5
+ * OpenIDConnectClient for PHP7+
  * Author: Michael Jett <mjett@mitre.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -25,7 +25,6 @@ namespace Jumbojett;
 
 use Error;
 use Exception;
-use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Crypt\RSA;
 use phpseclib3\Math\BigInteger;
 use stdClass;
@@ -145,12 +144,12 @@ class OpenIDConnectClient
     /**
      * @var int|null Response code from the server
      */
-    private $responseCode;
+    protected $responseCode;
 
     /**
      * @var string|null Content type from the server
      */
-    private $responseContentType;
+    protected $responseContentType;
 
     /**
      * @var array holds response types
@@ -380,7 +379,7 @@ class OpenIDConnectClient
             $accessToken = $_REQUEST['access_token'] ?? null;
 
             // Do an OpenID Connect session check
-	    if (!isset($_REQUEST['state']) || ($_REQUEST['state'] !== $this->getState())) {            
+    	    if (!isset($_REQUEST['state']) || ($_REQUEST['state'] !== $this->getState())) {
                 throw new OpenIDConnectClientException('Unable to determine state');
             }
 
@@ -691,6 +690,7 @@ class OpenIDConnectClient
         if (isset($_SERVER['HTTP_X_FORWARDED_PORT'])) {
             $port = (int)$_SERVER['HTTP_X_FORWARDED_PORT'];
         } elseif (isset($_SERVER['SERVER_PORT'])) {
+            # keep this case - even if some tool claim it is unnecessary
             $port = (int)$_SERVER['SERVER_PORT'];
         } elseif ($protocol === 'https') {
             $port = 443;
@@ -1212,8 +1212,10 @@ class OpenIDConnectClient
             $len = ((int)$bit)/16;
             $expected_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
+        $auds = $claims->aud;
+        $auds = is_array( $auds ) ? $auds : [ $auds ];
         return (($this->validateIssuer($claims->iss))
-            && (($claims->aud === $this->clientID) || in_array($this->clientID, $claims->aud, true))
+            && (in_array($this->clientID, $auds, true))
             && ($claims->sub === $this->getIdTokenPayload()->sub)
             && (!isset($claims->nonce) || $claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((is_int($claims->exp)) && ($claims->exp >= time() - $this->leeway)))
@@ -1232,12 +1234,11 @@ class OpenIDConnectClient
     /**
      * @param string $jwt encoded JWT
      * @param int $section the section we would like to decode
-     * @return object
+     * @return object|string|null
      */
-    protected function decodeJWT(string $jwt, int $section = 0): stdClass {
-
+    protected function decodeJWT(string $jwt, int $section = 0) {
         $parts = explode('.', $jwt);
-        return json_decode(base64url_decode($parts[$section]), false);
+        return json_decode(base64url_decode($parts[$section] ?? ''), false);
     }
 
     /**
@@ -1699,7 +1700,10 @@ class OpenIDConnectClient
         return json_decode($this->fetchURL($revocation_endpoint, $post_params, $headers), false);
     }
 
-    public function getClientName(): string
+    /**
+     * @return string|null
+     */
+    public function getClientName()
     {
         return $this->clientName;
     }
@@ -1709,14 +1713,14 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getClientID() {
         return $this->clientID;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getClientSecret() {
         return $this->clientSecret;
@@ -1731,17 +1735,30 @@ class OpenIDConnectClient
         $this->accessToken = $accessToken;
     }
 
-    public function getAccessToken(): string
+    /**
+     * @return string|null
+     */
+    public function getAccessToken()
     {
         return $this->accessToken;
     }
 
-    public function getRefreshToken(): string
+    /**
+     * @return string|null
+     */
+    public function getRefreshToken()
     {
         return $this->refreshToken;
     }
 
-    public function getIdToken(): string
+    public function setIdToken(string $idToken) {
+        $this->idToken = $idToken;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getIdToken()
     {
         return $this->idToken;
     }
@@ -1754,21 +1771,21 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return object
+     * @return object|string|null
      */
     public function getAccessTokenPayload() {
         return $this->decodeJWT($this->accessToken, 1);
     }
 
     /**
-     * @return object
+     * @return object|string|null
      */
     public function getIdTokenHeader() {
         return $this->decodeJWT($this->idToken);
     }
 
     /**
-     * @return object
+     * @return object|string|null
      */
     public function getIdTokenPayload() {
         return $this->decodeJWT($this->idToken, 1);
