@@ -6,11 +6,12 @@
         "php": ">=7.0",
         "ext-json": "*",
         "ext-curl": "*",
-        "phpseclib/phpseclib": "~3.0"
+        "phpseclib/phpseclib": "^3.0.7"
     },
     "require-dev": {
+        "phpunit/phpunit": "<10",
         "roave/security-advisories": "dev-latest",
-        "yoast/phpunit-polyfills": "^1.0"
+        "yoast/phpunit-polyfills": "^2.0"
     },
 	"replace": {
 		"jumbojett/openid-connect-php": "<=0.9.10"
