@@ -451,23 +451,24 @@ class OpenIDConnectClient
      *
      * @throws OpenIDConnectClientException
      */
-    public function signOut($enduserIdentification, $redirect, $method = "id_token_hint") {
-        if (!in_array($method, array("id_token_hint", "login_hint")))
-            throw new OpenIDConnectClientException('method must be "id_token_hint" or "login_hint"');
+    public function signOut($enduserIdentification, $redirect, $method = "id_token_hint")
+    {
+        if (!in_array($method, array("id_token_hint", "login_hint", "client_id")))
+            throw new OpenIDConnectClientException('method must be "id_token_hint" or "login_hint" or "client_id"');
 
         $signout_endpoint = $this->getProviderConfigValue("end_session_endpoint");
 
         $signout_params = null;
-        if($redirect === null){
+        if ($redirect === null) {
             $signout_params = array($method => $enduserIdentification);
-        }
-        else {
+        } else {
             $signout_params = array(
                 $method => $enduserIdentification,
-                'post_logout_redirect_uri' => $redirect);
+                'post_logout_redirect_uri' => $redirect,
+            );
         }
 
-        $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, '', '&', $this->enc_type);
+        $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query($signout_params, '', '&', $this->enc_type);
         $this->redirect($signout_endpoint);
     }
 
