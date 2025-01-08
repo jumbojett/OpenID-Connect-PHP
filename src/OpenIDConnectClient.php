@@ -173,7 +173,7 @@ class OpenIDConnectClient
 
     /**
      * @var mixed holds well-known openid configuration parameters, like policy for MS Azure AD B2C User Flow
-     * @see https://docs.microsoft.com/en-us/azure/active-directory-b2c/user-flow-overview 
+     * @see https://docs.microsoft.com/en-us/azure/active-directory-b2c/user-flow-overview
      */
     private $wellKnownConfigParameters = [];
 
@@ -686,7 +686,7 @@ class OpenIDConnectClient
         } else {
             $protocol = 'http';
         }
-	    
+
         if (isset($_SERVER['HTTP_X_FORWARDED_PORT'])) {
             $port = (int)$_SERVER['HTTP_X_FORWARDED_PORT'];
         } elseif (isset($_SERVER['SERVER_PORT'])) {
@@ -709,7 +709,7 @@ class OpenIDConnectClient
         }
 
         $port = (443 === $port) || (80 === $port) ? '' : ':' . $port;
-	    
+
         $explodedRequestUri = isset($_SERVER['REQUEST_URI']) ? explode('?', $_SERVER['REQUEST_URI']) : [];
         return sprintf('%s://%s%s/%s', $protocol, $host, $port, trim(reset($explodedRequestUri), '/'));
     }
@@ -1087,6 +1087,18 @@ class OpenIDConnectClient
         return $key->verify($payload, $signature);
     }
 
+    private function verifyEdDSAJWTsignature($key, $payload, $signature) {
+        if (!(property_exists($key, 'x'))) {
+            throw new OpenIDConnectClientException('Malformed key object');
+        }
+
+        if (!function_exists("sodium_crypto_sign_verify_detached")) {
+            throw new OpenIDConnectClientException('sodium_crypto_sign_verify_detached support unavailable.');
+        }
+
+        return sodium_crypto_sign_verify_detached($signature, $payload, base64url_decode($key->x));
+    }
+
     private function verifyHMACJWTSignature(string $hashType, string $key, string $payload, string $signature): bool
     {
         $expected = hash_hmac($hashType, $payload, $key, true);
@@ -1145,6 +1157,24 @@ class OpenIDConnectClient
                     $jwk,
                     $payload, $signature, $signatureType);
                 break;
+            case 'EdDSA':
+                if (isset($header->jwk)) {
+                    $jwk = $header->jwk;
+                    $this->verifyJWKHeader($jwk);
+                } else {
+                    $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
+                    if ($jwks === NULL) {
+                        throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
+                    }
+                    $jwk = $this->getKeyForHeader($jwks->keys, $header);
+                }
+
+                $verified = $this->verifyEdDSAJWTsignature(
+                    $jwk,
+                    $payload,
+                    $signature
+                );
+                break;
             case 'HS256':
             case 'HS512':
             case 'HS384':
@@ -1192,12 +1222,19 @@ class OpenIDConnectClient
     protected function verifyJWTClaims($claims, string $accessToken = null): bool
     {
         if(isset($claims->at_hash, $accessToken)) {
-            if(isset($this->getIdTokenHeader()->alg) && $this->getIdTokenHeader()->alg !== 'none') {
-                $bit = substr($this->getIdTokenHeader()->alg, 2, 3);
-            } else {
-                // TODO: Error case. throw exception???
-                $bit = '256';
+            switch($this->getIdTokenHeader()->alg ?? '') {
+                case 'EdDSA':
+                    $bit = '512';
+                    break;
+                case 'none':
+                case '':
+                    // TODO: Error case. throw exception???
+                    $bit = '256';
+                    break;
+                default:
+                    $bit = substr($this->getIdTokenHeader()->alg, 2, 3);
             }
+
             $len = ((int)$bit)/16;
             $expected_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
