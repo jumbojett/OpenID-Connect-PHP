@@ -68,6 +68,93 @@ class OpenIDConnectClientException extends Exception
 {
 }
 
+interface OpenIdConnectSessionInterface {
+    function getSessionKey(string $key);
+
+    function setSessionKey(string $key, $value);
+
+    function unsetSessionKey(string $key);
+
+    function commitSession();
+}
+
+class OpenIdConnectSessionFileBased implements OpenIdConnectSessionInterface {
+    private function startSession() {
+        if (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+    }
+
+    function getSessionKey(string $key) {
+        $this->startSession();
+
+        if (array_key_exists($key, $_SESSION)) {
+            return $_SESSION[$key];
+        }
+        return false;
+    }
+
+    function setSessionKey(string $key, $value) {
+        $this->startSession();
+
+        $_SESSION[$key] = $value;
+    }
+
+    function unsetSessionKey(string $key) {
+        $this->startSession();
+
+        unset($_SESSION[$key]);
+    }
+
+    function commitSession() {
+        $this->startSession();
+
+        session_write_close();
+    }
+}
+
+
+class OpenIdConnectSessionCookieBased {
+    function getSessionKey(string $key) {
+        if (!isset($_COOKIE[$key])) {
+            return false;
+        }
+
+        return $_COOKIE[$key];
+    }
+
+    function setSessionKey(string $key, $value) {
+        setcookie(
+            $key, $value, [
+                'expires'  => (new \DateTime())->add(new \DateInterval('P1D'))->getTimestamp(),
+                'path'     => '/',
+                'domain'   => '.'.$_SERVER['HTTP_HOST'],
+                'secure'   => true,
+                'httponly' => false,
+                'samesite' => 'Lax',
+            ]
+        );
+    }
+
+    function unsetSessionKey(string $key) {
+        setcookie(
+            $key, '', [
+                'expires'  => (new \DateTime())->sub(new \DateInterval('P1M'))->getTimestamp(),
+                'path'     => '/',
+                'domain'   => '.'.$_SERVER['HTTP_HOST'],
+                'secure'   => true,
+                'httponly' => false,
+                'samesite' => 'Lax',
+            ]
+        );
+        unset($_COOKIE[$key]);
+    }
+
+    function commitSession() {
+        // nothing
+    }
+}
+
 /**
  *
  * Please note this class stores nonces by default in $_SESSION['openid_connect_nonce']
@@ -254,12 +341,18 @@ class OpenIDConnectClient
     private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
 
     /**
+     * @var OpenIdConnectSessionInterface
+     */
+    private $session;
+
+    /**
      * @param string|null $provider_url optional
      * @param string|null $client_id optional
      * @param string|null $client_secret optional
      * @param string|null $issuer
+     * @param OpenIdConnectSessionFileBased|OpenIdConnectSessionCookieBased|null $session optional, defaults to OpenIdConnectSessionFileBased
      */
-    public function __construct(string $provider_url = null, string $client_id = null, string $client_secret = null, string $issuer = null) {
+    public function __construct(string $provider_url = null, string $client_id = null, string $client_secret = null, string $issuer = null, $session = null) {
         $this->setProviderURL($provider_url);
         if ($issuer === null) {
             $this->setIssuer($provider_url);
@@ -269,6 +362,7 @@ class OpenIDConnectClient
 
         $this->clientID = $client_id;
         $this->clientSecret = $client_secret;
+        $this->session = $session ?? new OpenIdConnectSessionFileBased();
     }
 
     /**
@@ -786,7 +880,7 @@ class OpenIDConnectClient
 
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, '', '&', $this->encType);
 
-        $this->commitSession();
+        $this->session->commitSession();
         $this->redirect($auth_endpoint);
     }
 
@@ -1792,7 +1886,7 @@ class OpenIDConnectClient
      */
     protected function setNonce(string $nonce): string
     {
-        $this->setSessionKey('openid_connect_nonce', $nonce);
+        $this->session->setSessionKey('openid_connect_nonce', $nonce);
         return $nonce;
     }
 
@@ -1802,7 +1896,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getNonce() {
-        return $this->getSessionKey('openid_connect_nonce');
+        return $this->session->getSessionKey('openid_connect_nonce');
     }
 
     /**
@@ -1811,7 +1905,7 @@ class OpenIDConnectClient
      * @return void
      */
     protected function unsetNonce() {
-        $this->unsetSessionKey('openid_connect_nonce');
+        $this->session->unsetSessionKey('openid_connect_nonce');
     }
 
     /**
@@ -1819,7 +1913,7 @@ class OpenIDConnectClient
      */
     protected function setState(string $state): string
     {
-        $this->setSessionKey('openid_connect_state', $state);
+        $this->session->setSessionKey('openid_connect_state', $state);
         return $state;
     }
 
@@ -1829,7 +1923,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getState() {
-        return $this->getSessionKey('openid_connect_state');
+        return $this->session->getSessionKey('openid_connect_state');
     }
 
     /**
@@ -1838,7 +1932,7 @@ class OpenIDConnectClient
      * @return void
      */
     protected function unsetState() {
-        $this->unsetSessionKey('openid_connect_state');
+        $this->session->unsetSessionKey('openid_connect_state');
     }
 
     /**
@@ -1846,7 +1940,7 @@ class OpenIDConnectClient
      */
     protected function setCodeVerifier(string $codeVerifier): string
     {
-        $this->setSessionKey('openid_connect_code_verifier', $codeVerifier);
+        $this->session->setSessionKey('openid_connect_code_verifier', $codeVerifier);
         return $codeVerifier;
     }
 
@@ -1856,7 +1950,7 @@ class OpenIDConnectClient
      * @return string
      */
     protected function getCodeVerifier() {
-        return $this->getSessionKey('openid_connect_code_verifier');
+        return $this->session->getSessionKey('openid_connect_code_verifier');
     }
 
     /**
@@ -1865,7 +1959,7 @@ class OpenIDConnectClient
      * @return void
      */
     protected function unsetCodeVerifier() {
-        $this->unsetSessionKey('openid_connect_code_verifier');
+        $this->session->unsetSessionKey('openid_connect_code_verifier');
     }
 
     /**
@@ -1900,42 +1994,6 @@ class OpenIDConnectClient
     public function getTimeout(): int
     {
         return $this->timeOut;
-    }
-
-    /**
-     * Use session to manage a nonce
-     */
-    protected function startSession() {
-        if (session_status() === PHP_SESSION_NONE) {
-            @session_start();
-        }
-    }
-
-    protected function commitSession() {
-        $this->startSession();
-
-        session_write_close();
-    }
-
-    protected function getSessionKey(string $key) {
-        $this->startSession();
-
-        if (array_key_exists($key, $_SESSION)) {
-            return $_SESSION[$key];
-        }
-        return false;
-    }
-
-    protected function setSessionKey(string $key, $value) {
-        $this->startSession();
-
-        $_SESSION[$key] = $value;
-    }
-
-    protected function unsetSessionKey(string $key) {
-        $this->startSession();
-
-        unset($_SESSION[$key]);
     }
 
     /**
