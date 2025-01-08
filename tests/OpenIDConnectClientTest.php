@@ -323,4 +323,44 @@ class OpenIDConnectClientTest extends TestCase
             ],
         ];
     }
+
+    /**
+     * Testing the CookieBased implementation cannot be done in a meaningful way, hence only the FileBased tests
+     */
+    public function testSessionFileBased_HappyPath() {
+        $nonceValue = 'thenoncevalue';
+
+        $setNonceMethod = new ReflectionMethod(OpenIDConnectClient::class, 'setNonce');
+        $setNonceMethod->setAccessible(true);
+
+        $getNonceMethod = new ReflectionMethod(OpenIDConnectClient::class, 'getNonce');
+        $getNonceMethod->setAccessible(true);
+
+        $client = new OpenIDConnectClient();
+        $setNonceMethod->invoke($client, $nonceValue);
+
+        $resultingNonce = $getNonceMethod->invoke($client);
+
+        $this->assertEquals($nonceValue, $resultingNonce);
+    }
+
+    public function testSessionFileBased_SimulateServerSwitch() {
+        $nonceValue = 'thenoncevalue';
+
+        $setNonceMethod = new ReflectionMethod(OpenIDConnectClient::class, 'setNonce');
+        $setNonceMethod->setAccessible(true);
+
+        $getNonceMethod = new ReflectionMethod(OpenIDConnectClient::class, 'getNonce');
+        $getNonceMethod->setAccessible(true);
+
+        $client = new OpenIDConnectClient();
+        $setNonceMethod->invoke($client, $nonceValue);
+
+        // simulate switching web server in between method calls, resulting in session data loss
+        unset($_SESSION['openid_connect_nonce']);
+
+        $resultingNonce = $getNonceMethod->invoke($client);
+
+        $this->assertFalse($resultingNonce);
+    }
 }
