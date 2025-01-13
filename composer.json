@@ -1,6 +1,6 @@
 {
     "name": "jumbojett/openid-connect-php",
-    "description": "Bare-bones OpenID Connect client (forked to allow client secret basic authentication on obtaining access token)",
+    "description": "Bare-bones OpenID Connect",
     "license": "Apache-2.0",
     "require": {
         "php": ">=7.0",
@@ -13,9 +13,6 @@
         "roave/security-advisories": "dev-latest",
         "yoast/phpunit-polyfills": "^2.0"
     },
-	"replace": {
-		"jumbojett/openid-connect-php": "<=0.9.10"
-	},
     "archive" : {
         "exclude" : [
             ".*"
