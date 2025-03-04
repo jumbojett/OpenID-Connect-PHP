@@ -3,7 +3,7 @@
     "description": "Bare-bones OpenID Connect client",
     "license": "Apache-2.0",
     "require": {
-        "php": ">=7.0",
+        "php": ">=7.1",
         "ext-json": "*",
         "ext-curl": "*",
         "phpseclib/phpseclib": "^3.0.7"
