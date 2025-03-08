@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Stop adding ?schema=openid to userinfo endpoint URL. #449
+- Add support for EdDSA signed JWTs
 
 ## [1.0.1] - 2024-09-13
 
