@@ -841,7 +841,7 @@ class OpenIDConnectClient
         if($bClientAuth) {
             $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
             if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
-                $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
+                $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret)];
             } else {
                 $post_data['client_id']     = $this->clientID;
                 $post_data['client_secret'] = $this->clientSecret;
@@ -880,7 +880,7 @@ class OpenIDConnectClient
         $authorizationHeader = null;
         # Consider Basic authentication if provider config is set this way
         if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
-            $authorizationHeader = 'Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret));
+            $authorizationHeader = 'Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret);
             unset($token_params['client_secret'], $token_params['client_id']);
         }
 
@@ -962,7 +962,7 @@ class OpenIDConnectClient
 
         # Consider Basic authentication if provider config is set this way
         if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
-            $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
+            $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret)];
             unset($post_data['client_secret'], $post_data['client_id']);
         }
 
@@ -998,7 +998,7 @@ class OpenIDConnectClient
 
         # Consider Basic authentication if provider config is set this way
         if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
-            $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret))];
+            $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret)];
             unset($token_params['client_secret'], $token_params['client_id']);
         }
 
@@ -1644,7 +1644,7 @@ class OpenIDConnectClient
         $clientSecret = $clientSecret ?? $this->clientSecret;
 
         // Convert token params to string format
-        $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
+        $headers = ['Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret),
             'Accept: application/json'];
 
         if ($this->supportsAuthMethod('client_secret_jwt', $token_endpoint_auth_methods_supported)) {
@@ -1685,7 +1685,7 @@ class OpenIDConnectClient
 
         // Convert token params to string format
         $post_params = http_build_query($post_data, '', '&');
-        $headers = ['Authorization: Basic ' . base64_encode(urlencode($clientId) . ':' . urlencode($clientSecret)),
+        $headers = ['Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret),
             'Accept: application/json'];
 
         return json_decode($this->fetchURL($revocation_endpoint, $post_params, $headers), false);
