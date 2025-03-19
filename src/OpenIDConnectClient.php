@@ -548,7 +548,7 @@ class OpenIDConnectClient
      * @param array $scope - example: openid, given_name, etc...
      */
     public function addScope(array $scope) {
-        $this->scopes = array_merge($this->scopes, $scope);
+        $this->scopes = array_unique(array_merge($this->scopes, $scope));
     }
 
     /**
@@ -760,7 +760,7 @@ class OpenIDConnectClient
 
         // If the client has been registered with additional scopes
         if (count($this->scopes) > 0) {
-            $auth_params = array_merge($auth_params, ['scope' => implode(' ', array_merge($this->scopes, ['openid']))]);
+            $auth_params = array_merge($auth_params, ['scope' => implode(' ', array_unique(array_merge($this->scopes, ['openid'])))]);
         }
 
         // If the client has been registered with additional response types
