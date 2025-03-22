@@ -711,6 +711,13 @@ class OpenIDConnectClient
         $port = (443 === $port) || (80 === $port) ? '' : ':' . $port;
 	    
         $explodedRequestUri = isset($_SERVER['REQUEST_URI']) ? explode('?', $_SERVER['REQUEST_URI']) : [];
+
+        // Add support for X-Forwarded-Prefix
+        if (isset($_SERVER['HTTP_X_FORWARDED_PREFIX'])) {
+            $locationPrefix = $_SERVER['HTTP_X_FORWARDED_PREFIX'];
+            $explodedRequestUri[0] = isset($explodedRequestUri[0]) ? $locationPrefix.$explodedRequestUri[0] : $locationPrefix;
+        }
+
         return sprintf('%s://%s%s/%s', $protocol, $host, $port, trim(reset($explodedRequestUri), '/'));
     }
 
