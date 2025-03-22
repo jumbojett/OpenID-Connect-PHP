@@ -698,7 +698,9 @@ class OpenIDConnectClient
             $port = 80;
         }
 
-        if (isset($_SERVER['HTTP_HOST'])) {
+        if (isset($_SERVER['HTTP_X_FORWARDED_HOST'])) {
+            $host = $_SERVER['HTTP_X_FORWARDED_HOST'];
+        } elseif (isset($_SERVER['HTTP_HOST'])) {
             $host = explode(':', $_SERVER['HTTP_HOST'])[0];
         } elseif (isset($_SERVER['SERVER_NAME'])) {
             $host = $_SERVER['SERVER_NAME'];
