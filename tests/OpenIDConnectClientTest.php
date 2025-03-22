@@ -104,6 +104,17 @@ class OpenIDConnectClientTest extends TestCase
 
         $_SERVER['SERVER_PORT'] = '8888';
         self::assertSame('http://domain.test:8888/path/index.php', $client->getRedirectURL());
+
+
+        // HTTP_X_FORWARDED_* Tests
+        $_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
+        self::assertSame('https://domain.test:8888/path/index.php', $client->getRedirectURL());
+
+        $_SERVER['HTTP_X_FORWARDED_HOST'] = 'example.org';
+        self::assertSame('https://example.org:9999/path/index.php', $client->getRedirectURL());
+
+        $_SERVER['HTTP_X_FORWARDED_PREFIX'] = '/prefix';
+        self::assertSame('https://example.org:9999/prefix/path/index.php', $client->getRedirectURL());
     }
 
     public function testAuthenticateDoesNotThrowExceptionIfClaimsIsMissingNonce()
