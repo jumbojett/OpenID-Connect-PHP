@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 
 ### Changed
+- Added support for X-Forwarded-Host & X-Forwarded-Prefix headers
+- Added tests for X-Forwarded-Proto, X-Forwarded-Host & X-Forwarded-Prefix Headers
 - Stop adding ?schema=openid to userinfo endpoint URL. #449
 
 ## [1.0.1] - 2024-09-13
