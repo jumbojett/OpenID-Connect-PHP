@@ -30,9 +30,8 @@ use Jumbojett\OpenIDConnectClient;
 $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 'ClientSecretHere');
-$oidc->setCertPath('/path/to/my.cert');
 $oidc->authenticate();
-$name = $oidc->requestUserInfo('given_name');
+$name = $oidc->requestUserInfo('email');
 
 ```
 
@@ -57,7 +56,7 @@ $client_secret = $oidc->getClientSecret();
 // Configure a proxy
 $oidc->setHttpProxy("http://my.proxy.com:80/");
 
-// Configure a cert
+// Configure a self-signed TLS certificate
 $oidc->setCertPath("/path/to/my.cert");
 ```
 
@@ -202,7 +201,7 @@ use Jumbojett\OpenIDConnectClient;
 $oidc = new OpenIDConnectClient('https://id.provider.com',
                                 'ClientIDHere',
                                 null);
-# enable 'client_secret_basic' and 'client_secret_jwt'                                
+# enable 'client_secret_basic' and 'client_secret_jwt'
 $oidc->setTokenEndpointAuthMethodsSupported(['client_secret_basic', 'client_secret_jwt']);
 
 # for 'private_key_jwt' in addition also the generator function has to be set.
@@ -232,6 +231,6 @@ $oidc->setHttpUpgradeInsecureRequests(false);
 - Dynamic registration does not support registration auth tokens and endpoints
 
   [1]: http://openid.net/specs/openid-connect-basic-1_0-15.html#id_res
-  
+
 ## Contributing ###
  - All pull requests, once merged, should be added to the CHANGELOG.md file.
