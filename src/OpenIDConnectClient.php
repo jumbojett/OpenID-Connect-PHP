@@ -1191,6 +1191,11 @@ class OpenIDConnectClient
      */
     protected function verifyJWTClaims($claims, string $accessToken = null): bool
     {
+        // Verify that sub is set
+        if (!isset($claims->sub)) {
+            return false;
+        }
+	    
         if(isset($claims->at_hash, $accessToken)) {
             if(isset($this->getIdTokenHeader()->alg) && $this->getIdTokenHeader()->alg !== 'none') {
                 $bit = substr($this->getIdTokenHeader()->alg, 2, 3);
