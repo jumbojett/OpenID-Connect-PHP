@@ -259,7 +259,7 @@ class OpenIDConnectClient
      * @param string|null $client_secret optional
      * @param string|null $issuer
      */
-    public function __construct(string $provider_url = null, string $client_id = null, string $client_secret = null, string $issuer = null) {
+    public function __construct(?string $provider_url = null, ?string $client_id = null, ?string $client_secret = null, ?string $issuer = null) {
         $this->setProviderURL($provider_url);
         if ($issuer === null) {
             $this->setIssuer($provider_url);
@@ -1189,8 +1189,13 @@ class OpenIDConnectClient
      * @return bool
      * @throws OpenIDConnectClientException
      */
-    protected function verifyJWTClaims($claims, string $accessToken = null): bool
+    protected function verifyJWTClaims($claims, ?string $accessToken = null): bool
     {
+        // Verify that sub is set
+        if (!isset($claims->sub)) {
+            return false;
+        }
+	    
         if(isset($claims->at_hash, $accessToken)) {
             if(isset($this->getIdTokenHeader()->alg) && $this->getIdTokenHeader()->alg !== 'none') {
                 $bit = substr($this->getIdTokenHeader()->alg, 2, 3);
@@ -1259,7 +1264,7 @@ class OpenIDConnectClient
      *
      * @throws OpenIDConnectClientException
      */
-    public function requestUserInfo(string $attribute = null) {
+    public function requestUserInfo(?string $attribute = null) {
 
         $user_info_endpoint = $this->getProviderConfigValue('userinfo_endpoint');
 
@@ -1333,7 +1338,7 @@ class OpenIDConnectClient
      * @return mixed
      *
      */
-    public function getVerifiedClaims(string $attribute = null) {
+    public function getVerifiedClaims(?string $attribute = null) {
 
         if($attribute === null) {
             return $this->verifiedClaims;
@@ -1353,7 +1358,7 @@ class OpenIDConnectClient
      * @return bool|string
      * @throws OpenIDConnectClientException
      */
-    protected function fetchURL(string $url, string $post_body = null, array $headers = []) {
+    protected function fetchURL(string $url, ?string $post_body = null, array $headers = []) {
 
         // OK cool - then let's create a new cURL resource handle
         $ch = curl_init();
@@ -1627,7 +1632,7 @@ class OpenIDConnectClient
      * @throws OpenIDConnectClientException
      * @throws Exception
      */
-    public function introspectToken(string $token, string $token_type_hint = '', string $clientId = null, string $clientSecret = null) {
+    public function introspectToken(string $token, string $token_type_hint = '', ?string $clientId = null, ?string $clientSecret = null) {
         $introspection_endpoint = $this->getProviderConfigValue('introspection_endpoint');
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
 
@@ -1668,7 +1673,7 @@ class OpenIDConnectClient
      * @return mixed
      * @throws OpenIDConnectClientException
      */
-    public function revokeToken(string $token, string $token_type_hint = '', string $clientId = null, string $clientSecret = null) {
+    public function revokeToken(string $token, string $token_type_hint = '', ?string $clientId = null, ?string $clientSecret = null) {
         $revocation_endpoint = $this->getProviderConfigValue('revocation_endpoint');
 
         $post_data = ['token' => $token];
