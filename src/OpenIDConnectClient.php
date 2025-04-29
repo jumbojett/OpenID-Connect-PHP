@@ -1214,7 +1214,7 @@ class OpenIDConnectClient
             && (!isset($claims->nonce) || $claims->nonce === $this->getNonce())
             && ( !isset($claims->exp) || ((is_int($claims->exp)) && ($claims->exp >= time() - $this->leeway)))
             && ( !isset($claims->nbf) || ((is_int($claims->nbf)) && ($claims->nbf <= time() + $this->leeway)))
-	        && ( isset($claims->iat) && is_int($claims->iat))
+            && ( isset($claims->iat) && is_int($claims->iat))
             && ( !isset($claims->at_hash) || !isset($accessToken) || $claims->at_hash === $expected_at_hash )
         );
     }
