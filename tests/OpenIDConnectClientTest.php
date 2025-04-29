@@ -48,6 +48,21 @@ class OpenIDConnectClientTest extends TestCase
             'sub' => 'sub',
         ]);
         self::assertFalse($valid);
+
+        # sub not matching
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => ['client-id'],
+            'iss' => 'issuer',
+            'sub' => 'sub-invalid',
+        ]);
+        self::assertFalse($valid);
+
+        # sub missing
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => ['client-id'],
+            'iss' => 'issuer',
+        ]);
+        self::assertFalse($valid);
     }
     public function testJWTDecode()
     {
