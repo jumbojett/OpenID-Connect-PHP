@@ -1303,6 +1303,11 @@ class OpenIDConnectClient
             $user_json = $claims;
         } else {
             $user_json = json_decode($response, false);
+
+            // Check subject
+            if(!isset($user_json->sub) || $user_json->sub !== $this->getIdTokenPayload()->sub){
+                throw new OpenIDConnectClientException('Invalid subject in user info response');
+            }
         }
 
         $userInfo = $user_json;
