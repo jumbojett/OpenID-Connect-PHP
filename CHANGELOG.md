@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Check existence of subject when verifying JWT #474
+- Remove incorrect URL encoding from Basic Authentication header construction (RFC 2617/7617 compliance) #466
 
 ## [1.0.1] - 2024-09-13
 

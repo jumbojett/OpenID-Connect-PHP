@@ -338,4 +338,46 @@ class OpenIDConnectClientTest extends TestCase
             ],
         ];
     }
+
+    /**
+     * @dataProvider provideBasicAuthTestData
+     */
+    public function testBasicAuthenticationHeaderConstruction($clientId, $clientSecret, $expectedHeader)
+    {
+        $client = new class extends OpenIDConnectClient {
+            public function getBasicAuthHeader($clientId, $clientSecret): string
+            {
+                return 'Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret);
+            }
+        };
+
+        $actualHeader = $client->getBasicAuthHeader($clientId, $clientSecret);
+        $this->assertEquals($expectedHeader, $actualHeader);
+    }
+
+    public function provideBasicAuthTestData(): array
+    {
+        return [
+            'simple_credentials' => [
+                'client_id',
+                'client_secret',
+                'Authorization: Basic ' . base64_encode('client_id:client_secret')
+            ],
+            'with_forward_slash' => [
+                'client_id',
+                'my/secret',
+                'Authorization: Basic ' . base64_encode('client_id:my/secret')
+            ],
+            'with_special_chars' => [
+                'client@id',
+                'secret#123$%^',
+                'Authorization: Basic ' . base64_encode('client@id:secret#123$%^')
+            ],
+            'with_unicode' => [
+                'client_üid',
+                'sécret',
+                'Authorization: Basic ' . base64_encode('client_üid:sécret')
+            ],
+        ];
+    }
 }
