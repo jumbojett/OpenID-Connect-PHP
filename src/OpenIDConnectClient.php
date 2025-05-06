@@ -1277,8 +1277,11 @@ class OpenIDConnectClient
             throw new OpenIDConnectClientException('The communication to retrieve user data has failed with status code '.$this->getResponseCode());
         }
 
+	// Extract the content type from the response (remove optional charset)
+        $contentType = explode(";",$this->getResponseContentType())[0];
+
         // When we receive application/jwt, the UserInfo Response is signed and/or encrypted.
-        if ($this->getResponseContentType() === 'application/jwt' ) {
+        if ($contentType === 'application/jwt' ) {
             // Check if the response is encrypted
             $jwtHeaders = $this->decodeJWT($response);
             if (isset($jwtHeaders->enc)) {
