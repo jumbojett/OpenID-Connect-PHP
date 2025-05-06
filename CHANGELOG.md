@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Check existence of subject when verifying JWT #474
+- Signed and/or encrypted userInfo Responses with content type "application/jwt;charset=UTF-8" #479
 
 ## [1.0.1] - 2024-09-13
 
