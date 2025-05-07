@@ -249,6 +249,11 @@ class OpenIDConnectClient
     private $backChannelSubject;
 
     /**
+     * @var string jti (JWT ID) of back-channel logout it will be stored here
+     */
+    private $backChannelJti;
+
+    /**
      * @var array list of supported auth methods
      */
     private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
@@ -514,6 +519,12 @@ class OpenIDConnectClient
         if (isset($claims->sub)) {
             $this->backChannelSubject = $claims->sub;
         }
+
+        // Verify that the Logout Token contains a jti Claim (Unique identifier for the token)
+        if(!isset($claims->jti)) {
+            return false;
+        }
+        $this->backChannelJti = $claims->jti;
 
         // Verify that the Logout Token contains an events Claim whose
         // value is a JSON object containing the member name
@@ -2067,6 +2078,11 @@ class OpenIDConnectClient
     public function getSubjectFromBackChannel(): string
     {
         return $this->backChannelSubject;
+    }
+
+    public function getJtiFromBackChannel(): string
+    {
+        return $this->backChannelJti;
     }
 
     public function supportsAuthMethod(string $auth_method, array $token_endpoint_auth_methods_supported): bool
