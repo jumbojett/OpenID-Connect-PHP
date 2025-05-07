@@ -338,4 +338,15 @@ class OpenIDConnectClientTest extends TestCase
             ],
         ];
     }
+
+    public function testLeeway()
+    {
+        // Default leeway is 300
+        $client = new OpenIDConnectClient();
+        $this->assertEquals(300, $client->getLeeway());
+
+        // Set leeway to 100
+        $client->setLeeway(100);
+        $this->assertEquals(100, $client->getLeeway());
+    }
 }
