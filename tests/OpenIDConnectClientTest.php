@@ -224,6 +224,7 @@ class OpenIDConnectClientTest extends TestCase
                     'aud' => 'fake-client-id',
                     'sid' => 'fake-client-sid',
                     'sub' => 'fake-client-sub',
+                    'jti' => 'fake-client-jti',
                     'iat' => time(),
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
@@ -237,6 +238,7 @@ class OpenIDConnectClientTest extends TestCase
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
                     'sub' => 'fake-client-sub',
+                    'jti' => 'fake-client-jti',
                     'iat' => time(),
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
@@ -248,6 +250,7 @@ class OpenIDConnectClientTest extends TestCase
                 (object)[
                     'iss' => 'fake-issuer',
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'jti' => 'fake-client-jti',
                     'iat' => time(),
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
@@ -260,6 +263,7 @@ class OpenIDConnectClientTest extends TestCase
                     'iss' => 'fake-issuer',
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sub' => 'fake-client-sub',
+                    'jti' => 'fake-client-jti',
                     'iat' => time(),
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
@@ -272,6 +276,7 @@ class OpenIDConnectClientTest extends TestCase
                     'iss' => 'fake-issuer',
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
+                    'jti' => 'fake-client-jti',
                     'iat' => time(),
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
@@ -284,6 +289,7 @@ class OpenIDConnectClientTest extends TestCase
                     'iss' => 'fake-issuer',
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
+                    'jti' => 'fake-client-jti',
                     'iat' => time(),
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
@@ -297,6 +303,7 @@ class OpenIDConnectClientTest extends TestCase
                     'iss' => 'fake-issuer',
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
+                    'jti' => 'fake-client-jti',
                     'iat' => time(),
                     'nonce' => 'must-not-be-set'
                 ],
@@ -307,9 +314,22 @@ class OpenIDConnectClientTest extends TestCase
                     'iss' => 'fake-issuer',
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
+                    'jti' => 'fake-client-jti',
                     'iat' => time(),
                     'events' => (object) [],
                     'nonce' => 'must-not-be-set'
+                ],
+                false
+            ],
+            'invalid-no-jti' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sub' => 'fake-client-sub',
+                    'iat' => time(),
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ],
                 ],
                 false
             ],
@@ -318,6 +338,7 @@ class OpenIDConnectClientTest extends TestCase
                     'iss' => 'fake-issuer',
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
+                    'jti' => 'fake-client-jti',
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
                     ]
@@ -329,6 +350,7 @@ class OpenIDConnectClientTest extends TestCase
                     'iss' => 'fake-issuer',
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
+                    'jti' => 'fake-client-jti',
                     'iat' => time() + 301,
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
