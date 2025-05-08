@@ -6,12 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+- Support to change the `leeway` time for JWT verification using `setLeeway` #483
+
 ### Changed
 - Stop adding ?schema=openid to userinfo endpoint URL. #449
 
 ### Fixed
 - Check existence of subject when verifying JWT #474
 - Check existence of events claim when verifying Logout Token claims #480
+- exp verification when verifying Logout Token claims #482
 
 ## [1.0.1] - 2024-09-13
 

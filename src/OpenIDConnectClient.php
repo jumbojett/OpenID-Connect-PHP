@@ -539,12 +539,17 @@ class OpenIDConnectClient
         if (!in_array($this->clientID, $auds, true)) {
             return false;
         }
-        // Validate the iat. At this point we can return true if it is ok
-        if (isset($claims->iat) && ((is_int($claims->iat)) && ($claims->iat <= time() + $this->leeway))) {
-            return true;
+        // Validate iat exists, is an int, and is not in the future
+        if (!isset($claims->iat) || !is_int($claims->iat) || ($claims->iat >= time() + $this->leeway)) {
+            return false;
         }
 
-        return false;
+        // Validate exp exists, is an int, and is not too old
+        if (!isset($claims->exp) || !is_int($claims->exp) || ($claims->exp <= time() - $this->leeway)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -2031,6 +2036,11 @@ class OpenIDConnectClient
     public function getLeeway(): int
     {
         return $this->leeway;
+    }
+
+    public function setLeeway(int $leeway)
+    {
+        $this->leeway = $leeway;
     }
 
     /**
