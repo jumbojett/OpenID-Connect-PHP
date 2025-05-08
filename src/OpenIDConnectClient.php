@@ -2030,6 +2030,11 @@ class OpenIDConnectClient
         return $this->leeway;
     }
 
+    public function setLeeway(int $leeway)
+    {
+        $this->leeway = $leeway;
+    }
+
     /**
      * @return string
      */
