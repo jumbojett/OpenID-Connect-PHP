@@ -63,6 +63,13 @@ class OpenIDConnectClientTest extends TestCase
             'iss' => 'issuer',
         ]);
         self::assertFalse($valid);
+
+        # missing iss
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => 'client-id',
+            'sub' => 'sub',
+        ]);
+        self::assertFalse($valid);
     }
     public function testJWTDecode()
     {
@@ -370,6 +377,18 @@ class OpenIDConnectClientTest extends TestCase
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
                     ]
+                ],
+                false
+            ],
+            'invalid-no-iss' => [
+                (object)[
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sub' => 'fake-client-sub',
+                    'sid' => 'fake-client-sid',
+                    'iat' => time(),
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ],
                 ],
                 false
             ],

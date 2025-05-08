@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Check existence of subject when verifying JWT #474
+- Check existence of issuer before validating #477
 - exp verification when verifying Logout Token claims #482
 
 ## [1.0.1] - 2024-09-13
