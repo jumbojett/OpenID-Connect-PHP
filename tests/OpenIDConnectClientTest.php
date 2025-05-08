@@ -232,6 +232,7 @@ class OpenIDConnectClientTest extends TestCase
                     'sid' => 'fake-client-sid',
                     'sub' => 'fake-client-sub',
                     'iat' => time(),
+                    'exp' => time() + 300,
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
                     ],
@@ -245,6 +246,7 @@ class OpenIDConnectClientTest extends TestCase
                     'sid' => 'fake-client-sid',
                     'sub' => 'fake-client-sub',
                     'iat' => time(),
+                    'exp' => time() + 300,
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
                     ],
@@ -256,6 +258,7 @@ class OpenIDConnectClientTest extends TestCase
                     'iss' => 'fake-issuer',
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'iat' => time(),
+                    'exp' => time() + 300,
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
                     ],
@@ -268,6 +271,7 @@ class OpenIDConnectClientTest extends TestCase
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sub' => 'fake-client-sub',
                     'iat' => time(),
+                    'exp' => time() + 300,
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
                     ],
@@ -280,6 +284,7 @@ class OpenIDConnectClientTest extends TestCase
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
                     'iat' => time(),
+                    'exp' => time() + 300,
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
                     ],
@@ -292,6 +297,7 @@ class OpenIDConnectClientTest extends TestCase
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
                     'iat' => time(),
+                    'exp' => time() + 300,
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
                     ],
@@ -305,6 +311,7 @@ class OpenIDConnectClientTest extends TestCase
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
                     'iat' => time(),
+                    'exp' => time() + 300,
                     'nonce' => 'must-not-be-set'
                 ],
                 false
@@ -315,6 +322,7 @@ class OpenIDConnectClientTest extends TestCase
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
                     'iat' => time(),
+                    'exp' => time() + 300,
                     'events' => (object) [],
                     'nonce' => 'must-not-be-set'
                 ],
@@ -325,6 +333,7 @@ class OpenIDConnectClientTest extends TestCase
                     'iss' => 'fake-issuer',
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
+                    'exp' => time() + 300,
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
                     ]
@@ -337,6 +346,34 @@ class OpenIDConnectClientTest extends TestCase
                     'aud' => [ 'fake-client-id', 'some-other-aud' ],
                     'sid' => 'fake-client-sid',
                     'iat' => time() + 301,
+                    'exp' => time() + 300,
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ]
+                ],
+                false
+            ],
+            'invalid-no-exp' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sid' => 'fake-client-sid',
+                    'jti' => 'fake-client-jti',
+                    'iat' => time(),
+                    'events' => (object) [
+                        'http://schemas.openid.net/event/backchannel-logout' => (object)[]
+                    ]
+                ],
+                false
+            ],
+            'invalid-bad-exp' => [
+                (object)[
+                    'iss' => 'fake-issuer',
+                    'aud' => [ 'fake-client-id', 'some-other-aud' ],
+                    'sid' => 'fake-client-sid',
+                    'jti' => 'fake-client-jti',
+                    'iat' => time(),
+                    'exp' => time() - 300,
                     'events' => (object) [
                         'http://schemas.openid.net/event/backchannel-logout' => (object)[]
                     ]
@@ -356,5 +393,16 @@ class OpenIDConnectClientTest extends TestCase
                 false
             ],
         ];
+    }
+
+    public function testLeeway()
+    {
+        // Default leeway is 300
+        $client = new OpenIDConnectClient();
+        $this->assertEquals(300, $client->getLeeway());
+
+        // Set leeway to 100
+        $client->setLeeway(100);
+        $this->assertEquals(100, $client->getLeeway());
     }
 }
