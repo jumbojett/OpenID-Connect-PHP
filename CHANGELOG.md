@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support to change the `leeway` time for JWT verification using `setLeeway` #483
 
 ### Changed
+- Removed duplicates from scopes generated strings.
+
+## [unreleased]
+
+### Changed
 - Stop adding ?schema=openid to userinfo endpoint URL. #449
 
 ### Fixed
