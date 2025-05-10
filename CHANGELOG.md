@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cast `$_SERVER['SERVER_PORT']` to integer to prevent adding 80 or 443 port to redirect URL. #403
 - Check subject when verifying JWT #406
 - Removed duplicate check on jwks_uri and only check if jwks_uri exists when needed #373
+* Enabled `client_secret_basic` authentication on `requestClientCredentialsToken()` #347
 
 ## [1.0.0] - 2023-12-13
 
