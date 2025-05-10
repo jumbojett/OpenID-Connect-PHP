@@ -45,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed LogoutToken verification for single value aud claims. #334
 - Update well known config value function response types. #376
 
+### Changed
+- Avoid to send empty optional scope parameter in a client credentials grant #392
+
 ## [0.9.10] - 2022-09-30
 
 ### Fixed
