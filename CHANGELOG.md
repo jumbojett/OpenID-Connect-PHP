@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Check subject when verifying JWT #406
 - Removed duplicate check on jwks_uri and only check if jwks_uri exists when needed #373
 
+### Fixed
+- Changed parameter #2 of http_build_query to empty string on requestTokenExchange to support PHP8.x
+
 ## [1.0.0] - 2023-12-13
 
 ### Added

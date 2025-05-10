@@ -972,7 +972,7 @@ class OpenIDConnectClient
         }
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&', $this->encType);
+        $post_params = http_build_query($post_data, '', '&', $this->encType);
 
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers), false);
     }
