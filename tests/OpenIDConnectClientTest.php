@@ -130,8 +130,8 @@ class OpenIDConnectClientTest extends TestCase
         $fakeClaims->nonce = null;
 
         $_REQUEST['id_token'] = 'abc.123.xyz';
-        $_REQUEST['state'] = false;
-        $_SESSION['openid_connect_state'] = false;
+        $_REQUEST['state'] = 'false';
+        $_SESSION['openid_connect_state'] = 'false';
 
         /** @var OpenIDConnectClient | MockObject $client */
         $client = $this->getMockBuilder(OpenIDConnectClient::class)->setMethods(['decodeJWT', 'getProviderConfigValue', 'verifyJWTSignature'])->getMock();
