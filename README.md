@@ -212,6 +212,20 @@ $oidc->setPrivateKeyJwtGenerator(function(string $token_endpoint) {
 })
 ```
 
+## Example 11: Enable logout behavior for AWS Cognito
+
+```php
+// NOTE: assumes that $oidc is an instance of OpenIDConnectClient()
+
+// enable logout behavior for AWS Cognito before call signOut()
+$oidc->setAwsCognitoFlow(true);
+
+// call the signOut() function
+// Be sure to get $idToken and $redirect from the logout request
+$oidc->signOut($idToken, $redirect);
+
+// Referente: https://docs.aws.amazon.com/cognito/latest/developerguide/logout-endpoint.html
+```
 
 ## Development Environments ##
 In some cases you may need to disable SSL security on your development systems.
