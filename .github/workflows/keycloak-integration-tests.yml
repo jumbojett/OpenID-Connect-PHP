@@ -1,0 +1,69 @@
+---
+name: Keycloak Integration Tests
+
+on: [ push, pull_request ]
+
+env:
+  DEFAULT_COMPOSER_FLAGS: "--prefer-dist --no-interaction --no-progress --optimize-autoloader --ansi"
+
+jobs:
+  integration-tests:
+    name: PHP ${{ matrix.php }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        php: [ '8.0' ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+      - name: Cache composer dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+      - name: Install dependencies
+        run: composer update $DEFAULT_COMPOSER_FLAGS
+      - name: Start keycloak
+        run: |
+          cd .github/workflows/keycloak
+          make docker-up
+          echo "Waiting for Keycloak to start..."
+          sleep 10 # Wait for keycloak to start because of please wait in logs
+          ./wait-for-keycloak.sh http://localhost:8080/realms/master
+      - name: Echo logs of keycloak
+        run: |
+          cd .github/workflows/keycloak
+          docker-compose logs --tail all keycloak
+      - name: Create custom realm, user and client
+        run: |
+          cd .github/workflows/keycloak
+          make keycloak-create-test-realm
+      - name: Run simple test application
+        run: |
+          cd .github/workflows/keycloak
+          make serve-test-application > /dev/null 2>&1 &
+      - name: Run integration tests
+        uses: cypress-io/github-action@v4
+        with:
+          working-directory: .github/workflows/keycloak
+          browser: chrome
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: .github/workflows/keycloak/cypress/screenshots
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: cypress-videos
+          path: .github/workflows/keycloak/cypress/videos
