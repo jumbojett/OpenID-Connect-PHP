@@ -8,13 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Support to change the `leeway` time for JWT verification using `setLeeway` #483
+- Support for elliptic curves (ES256, ES384 & ES512) #488
+- Support for EdDSA (only Ed25519) #488
+- `getJtiFromBackChannel()` to retrieve the JTI after back-channel logout request #488
+- `getJWSClaims` to retrieve the claims from a JWS #488
+- `verifyJWSHeader` to verify the JWS header #488
 
 ### Changed
 - Stop adding ?schema=openid to userinfo endpoint URL. #449
+- Min. PHP version to 8.1 #488
+- `fetchURL` response type to `Response` class #488
+- `Nonce` claim must be present, Partially reverts #280
+- `verifySignatures` method signature, accepting `JWS` object instead of string #488
 
 ### Fixed
-- Check existence of subject when verifying JWT #474
+- Check existence of `sub` claim when verifying JWT #474
 - exp verification when verifying Logout Token claims #482
+- Missing `iat` claim verification #488
+- Exception is thrown when `iss` claim is missing #488
+- Missing check of `events` claim when verifying Logout Token claims #488
+- Missing check of `jti` claim when verifying Logout Token claims #488
+- Missing check of `sub` claim for unsigned UserInfo Responses #488
+
+### Removed
+- `getResponseCode()`, replaced with new response method `getStatus()` #488
+- `getResponseContentType()`, replaced with new response method `getContentType()` #488
+- `verifyJWTClaims()`, replaced with individual checks #488
+- `validateIssuer()`, replaced with `IssuerChecker` #488
+- `verifyJWTSignature()`, replaced with `verifyJWSSignature()` #488
 
 ## [1.0.1] - 2024-09-13
 
