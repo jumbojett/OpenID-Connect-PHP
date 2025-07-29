@@ -997,9 +997,14 @@ class OpenIDConnectClient
             'grant_type' => $grant_type,
             'refresh_token' => $refresh_token,
             'client_id' => $this->clientID,
-            'client_secret' => $this->clientSecret,
-            'scope'         => implode(' ', $this->scopes),
+            'client_secret' => $this->clientSecret
         ];
+
+        // Add additional scopes if any
+        // If unset, the same scopes as in the original token are used (https://tools.ietf.org/html/rfc6749#section-6)
+        if (count($this->scopes) > 0) {
+            $token_params['scope'] = implode(' ', $this->scopes);
+        }
 
         # Consider Basic authentication if provider config is set this way
         if ($this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)) {
