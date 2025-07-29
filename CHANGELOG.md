@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Check existence of subject when verifying JWT #474
 - exp verification when verifying Logout Token claims #482
+- Don't send empty scope parameter on `refreshToken()` #489
 
 ## [1.0.1] - 2024-09-13
 
