@@ -1824,7 +1824,7 @@ class OpenIDConnectClient
     /**
      * Stores $state
      */
-    protected function setState(string $state): string
+    public function setState(string $state): string
     {
         $this->setSessionKey('openid_connect_state', $state);
         return $state;
@@ -1835,7 +1835,7 @@ class OpenIDConnectClient
      *
      * @return string
      */
-    protected function getState() {
+    public function getState() {
         return $this->getSessionKey('openid_connect_state');
     }
 

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Stop adding ?schema=openid to userinfo endpoint URL. #449
+- Make getting and setting state public
 
 ### Fixed
 - Check existence of subject when verifying JWT #474
