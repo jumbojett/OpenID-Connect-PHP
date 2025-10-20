@@ -208,8 +208,34 @@ $oidc->setTokenEndpointAuthMethodsSupported(['client_secret_basic', 'client_secr
 # for 'private_key_jwt' in addition also the generator function has to be set.
 $oidc->setTokenEndpointAuthMethodsSupported(['private_key_jwt']);
 $oidc->setPrivateKeyJwtGenerator(function(string $token_endpoint) {
-    # TODO: what ever is necessary
-})
+    $key = \file_get_contents('PrivateKeyFileHere');
+    $headers = [
+        'typ' => 'JWT',
+        'alg' => 'RS256',
+        'x5t' => \base64_encode(\hex2bin('PublicCertificateThumbprintBinaryStringHere')),
+    ];
+    $payload = [
+        'iss' => 'ClientIDHere',
+        'sub' => 'ClientIDHere',
+        'aud' => $token_endpoint,
+        'jti' => \base64_encode(\random_bytes(16)),
+        'exp' => \time() + 300,
+    ];
+    openssl_sign(
+        base64UrlEncode(\json_encode($headers)) . "." . base64UrlEncode(\json_encode($payload)),
+        $signature,
+        $key,
+        "sha256WithRSAEncryption"
+    );
+    $jwt = base64UrlEncode(\json_encode($headers)) . "." . base64UrlEncode(\json_encode($payload)) . "." . base64UrlEncode($signature);
+
+    return $jwt;
+});
+
+function base64UrlEncode(string $text): string
+{
+    return \rtrim(\strtr(\base64_encode($text), '+/', '-_'), '=');
+}
 ```
 
 
