@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Stop adding ?schema=openid to userinfo endpoint URL. #449
+- Drop support for PHP 7.1 #502
 
 ### Fixed
 - Check existence of subject when verifying JWT #474
