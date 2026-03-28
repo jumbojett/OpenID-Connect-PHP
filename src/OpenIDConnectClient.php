@@ -1283,7 +1283,7 @@ class OpenIDConnectClient
         }
 
         // When we receive application/jwt, the UserInfo Response is signed and/or encrypted.
-        if ($this->getResponseContentType() === 'application/jwt' ) {
+        if (strpos($this->getResponseContentType(), 'application/jwt') === 0) {
             // Check if the response is encrypted
             $jwtHeaders = $this->decodeJWT($response);
             if (isset($jwtHeaders->enc)) {
