@@ -254,6 +254,11 @@ class OpenIDConnectClient
     private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
 
     /**
+     * @var bool Enable or disable logout parameters for AWS Cognito
+     */
+    private $awsCognitoFlow = false;
+
+    /**
      * @param string|null $provider_url optional
      * @param string|null $client_id optional
      * @param string|null $client_secret optional
@@ -437,6 +442,12 @@ class OpenIDConnectClient
 
         if($redirect === null){
             $signout_params = ['id_token_hint' => $idToken];
+        }
+        elseif($this->awsCognitoFlow){
+            $signout_params = [
+                'id_token_hint' => $idToken,
+                'client_id' => $this->clientID,
+                'logout_uri' => $redirect];
         }
         else {
             $signout_params = [
@@ -2049,6 +2060,10 @@ class OpenIDConnectClient
 
     public function setCodeChallengeMethod(string $codeChallengeMethod) {
         $this->codeChallengeMethod = $codeChallengeMethod;
+    }
+
+    public function setAwsCognitoFlow(bool $awsCognitoFlow) {
+        $this->awsCognitoFlow = $awsCognitoFlow;
     }
 
     /**
