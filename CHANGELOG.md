@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Check existence of subject when verifying JWT #474
 - exp verification when verifying Logout Token claims #482
+- http_build_query expects (non nullable) string as 2nd argument
+- curl_close() is ineffective since PHP 8.0.0, deprecated since 8.5.0
 
 ## [1.0.1] - 2024-09-13
 

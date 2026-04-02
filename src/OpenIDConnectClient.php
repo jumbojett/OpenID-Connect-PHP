@@ -972,7 +972,7 @@ class OpenIDConnectClient
         }
 
         // Convert token params to string format
-        $post_params = http_build_query($post_data, null, '&', $this->encType);
+        $post_params = http_build_query($post_data, '', '&', $this->encType);
 
         return json_decode($this->fetchURL($token_endpoint, $post_params, $headers), false);
     }
@@ -1446,7 +1446,9 @@ class OpenIDConnectClient
         }
 
         // Close the cURL resource, and free system resources
-        curl_close($ch);
+        if (PHP_VERSION_ID < 80000) {
+            curl_close($ch);
+        }
 
         return $output;
     }
