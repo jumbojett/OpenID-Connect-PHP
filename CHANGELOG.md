@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Fixed
+- Prevent Okta complaint: If we have a client secret and we're doing client_secret_basic, keep credentials ONLY in the Authorization header. #164
+
 ### Added
 - Support to change the `leeway` time for JWT verification using `setLeeway` #483
 
