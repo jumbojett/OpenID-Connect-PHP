@@ -775,18 +775,30 @@ class OpenIDConnectClient
 
         // If the client supports Proof Key for Code Exchange (PKCE)
         $codeChallengeMethod = $this->getCodeChallengeMethod();
-        if (!empty($codeChallengeMethod) && in_array($codeChallengeMethod, $this->getProviderConfigValue('code_challenge_methods_supported', []), true)) {
-            $codeVerifier = bin2hex(random_bytes(64));
-            $this->setCodeVerifier($codeVerifier);
-            if (!empty($this->pkceAlgs[$codeChallengeMethod])) {
-                $codeChallenge = rtrim(strtr(base64_encode(hash($this->pkceAlgs[$codeChallengeMethod], $codeVerifier, true)), '+/', '-_'), '=');
-            } else {
-                $codeChallenge = $codeVerifier;
+        if (!empty($codeChallengeMethod)) {
+            //code_challenge_methods_supported can be omitted
+            try{
+                $supportedMethods = $this->getProviderConfigValue('code_challenge_methods_supported', null);
+            } catch ( \OpenIDConnectClientException| \Exception $e) {
+                $supportedMethods = null;
             }
-            $auth_params = array_merge($auth_params, [
-                'code_challenge' => $codeChallenge,
-                'code_challenge_method' => $codeChallengeMethod
-            ]);
+
+
+            // If the provider does not specify supported methods, assume the one registered is supported.
+            // Otherwise, check if registered method is in the list of supported methods.
+            if (is_null($supportedMethods) || in_array($codeChallengeMethod, $supportedMethods, true)) {
+                $codeVerifier = bin2hex(random_bytes(64));
+                $this->setCodeVerifier($codeVerifier);
+                if (!empty($this->pkceAlgs[$codeChallengeMethod])) {
+                    $codeChallenge = rtrim(strtr(base64_encode(hash($this->pkceAlgs[$codeChallengeMethod], $codeVerifier, true)), '+/', '-_'), '=');
+                } else {
+                    $codeChallenge = $codeVerifier;
+                }
+                $auth_params = array_merge($auth_params, [
+                    'code_challenge' => $codeChallenge,
+                    'code_challenge_method' => $codeChallengeMethod
+                ]);
+            }
         }
 
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, '', '&', $this->encType);
