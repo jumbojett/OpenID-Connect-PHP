@@ -30,6 +30,7 @@ class OpenIDConnectClientTest extends TestCase
             'aud' => 'client-id',
             'iss' => 'issuer',
             'sub' => 'sub',
+            'iat' => time(),
         ]);
         self::assertTrue($valid);
 
@@ -38,6 +39,7 @@ class OpenIDConnectClientTest extends TestCase
             'aud' => ['client-id'],
             'iss' => 'issuer',
             'sub' => 'sub',
+            'iat' => time(),
         ]);
         self::assertTrue($valid);
 
@@ -46,6 +48,24 @@ class OpenIDConnectClientTest extends TestCase
             'aud' => ['ipsum'],
             'iss' => 'issuer',
             'sub' => 'sub',
+            'iat' => time(),
+        ]);
+        self::assertFalse($valid);
+
+        # iat missing
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => ['client-id'],
+            'iss' => 'issuer',
+            'sub' => 'sub',
+        ]);
+        self::assertFalse($valid);
+
+        # iat invalid
+        $valid = $client->testVerifyJWTClaims((object)[
+            'aud' => ['client-id'],
+            'iss' => 'issuer',
+            'sub' => 'sub',
+            'iat' => 'invalid'
         ]);
         self::assertFalse($valid);
 
@@ -127,6 +147,7 @@ class OpenIDConnectClientTest extends TestCase
         $fakeClaims->iss = 'fake-issuer';
         $fakeClaims->aud = 'fake-client-id';
         $fakeClaims->sub = 'fake-sub';
+        $fakeClaims->iat = time();
         $fakeClaims->nonce = null;
 
         $_REQUEST['id_token'] = 'abc.123.xyz';
