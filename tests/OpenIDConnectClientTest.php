@@ -305,7 +305,6 @@ class OpenIDConnectClientTest extends TestCase
                     'sid' => 'fake-client-sid',
                     'iat' => time(),
                     'exp' => time() + 300,
-                    'nonce' => 'must-not-be-set'
                 ],
                 false
             ],
@@ -317,7 +316,6 @@ class OpenIDConnectClientTest extends TestCase
                     'iat' => time(),
                     'exp' => time() + 300,
                     'events' => (object) [],
-                    'nonce' => 'must-not-be-set'
                 ],
                 false
             ],
