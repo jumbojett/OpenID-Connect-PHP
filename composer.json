@@ -6,6 +6,7 @@
         "php": ">=7.2",
         "ext-json": "*",
         "ext-curl": "*",
+        "ext-sodium": "*",
         "phpseclib/phpseclib": "^3.0.7"
     },
     "require-dev": {

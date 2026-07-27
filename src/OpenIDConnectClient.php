@@ -173,7 +173,7 @@ class OpenIDConnectClient
 
     /**
      * @var mixed holds well-known openid configuration parameters, like policy for MS Azure AD B2C User Flow
-     * @see https://docs.microsoft.com/en-us/azure/active-directory-b2c/user-flow-overview 
+     * @see https://docs.microsoft.com/en-us/azure/active-directory-b2c/user-flow-overview
      */
     private $wellKnownConfigParameters = [];
 
@@ -253,6 +253,8 @@ class OpenIDConnectClient
      */
     private $token_endpoint_auth_methods_supported = ['client_secret_basic'];
 
+    private $statePayload = [];
+
     /**
      * @param string|null $provider_url optional
      * @param string|null $client_id optional
@@ -306,9 +308,10 @@ class OpenIDConnectClient
 
         // If we have an authorization code then proceed to request a token
         if (isset($_REQUEST['code'])) {
+            $state = $this->claimState();
 
             $code = $_REQUEST['code'];
-            $token_json = $this->requestTokens($code);
+            $token_json = $this->requestTokens($code, $state);
 
             // Throw an error if the server returns one
             if (isset($token_json->error)) {
@@ -317,14 +320,6 @@ class OpenIDConnectClient
                 }
                 throw new OpenIDConnectClientException('Got response: ' . $token_json->error);
             }
-
-            // Do an OpenID Connect session check
-	    if (!isset($_REQUEST['state']) || ($_REQUEST['state'] !== $this->getState())) {
-                throw new OpenIDConnectClientException('Unable to determine state');
-            }
-
-            // Cleanup state
-            $this->unsetState();
 
             if (!property_exists($token_json, 'id_token')) {
                 throw new OpenIDConnectClientException('User did not authorize openid scope.');
@@ -349,10 +344,7 @@ class OpenIDConnectClient
             $this->accessToken = $token_json->access_token;
 
             // If this is a valid claim
-            if ($this->verifyJWTClaims($claims, $token_json->access_token)) {
-
-                // Clean up the session a little
-                $this->unsetNonce();
+            if ($this->verifyJWTClaims($claims, $token_json->access_token, $state)) {
 
                 // Save the full response
                 $this->tokenResponse = $token_json;
@@ -378,13 +370,7 @@ class OpenIDConnectClient
 
             $accessToken = $_REQUEST['access_token'] ?? null;
 
-            // Do an OpenID Connect session check
-    	    if (!isset($_REQUEST['state']) || ($_REQUEST['state'] !== $this->getState())) {
-                throw new OpenIDConnectClientException('Unable to determine state');
-            }
-
-            // Cleanup state
-            $this->unsetState();
+            $state = $this->claimState();
 
             $claims = $this->decodeJWT($id_token, 1);
 
@@ -395,10 +381,7 @@ class OpenIDConnectClient
             $this->idToken = $id_token;
 
             // If this is a valid claim
-            if ($this->verifyJWTClaims($claims, $accessToken)) {
-
-                // Clean up the session a little
-                $this->unsetNonce();
+            if ($this->verifyJWTClaims($claims, $accessToken, $state)) {
 
                 // Save the verified claims
                 $this->verifiedClaims = $claims;
@@ -691,7 +674,7 @@ class OpenIDConnectClient
         } else {
             $protocol = 'http';
         }
-	    
+
         if (isset($_SERVER['HTTP_X_FORWARDED_PORT'])) {
             $port = (int)$_SERVER['HTTP_X_FORWARDED_PORT'];
         } elseif (isset($_SERVER['SERVER_PORT'])) {
@@ -714,7 +697,7 @@ class OpenIDConnectClient
         }
 
         $port = (443 === $port) || (80 === $port) ? '' : ':' . $port;
-	    
+
         $explodedRequestUri = isset($_SERVER['REQUEST_URI']) ? explode('?', $_SERVER['REQUEST_URI']) : [];
         return sprintf('%s://%s%s/%s', $protocol, $host, $port, trim(reset($explodedRequestUri), '/'));
     }
@@ -747,19 +730,16 @@ class OpenIDConnectClient
         $auth_endpoint = $this->getProviderConfigValue('authorization_endpoint');
         $response_type = 'code';
 
-        // Generate and store a nonce in the session
-        // The nonce is an arbitrary value
-        $nonce = $this->setNonce($this->generateRandString());
-
-        // State essentially acts as a session key for OIDC
-        $state = $this->setState($this->generateRandString());
+        $state = $this->setState(
+            new StateData($this->generateRandString(), $this->generateRandString(), $this->statePayload)
+        );
 
         $auth_params = array_merge($this->authParams, [
             'response_type' => $response_type,
             'redirect_uri' => $this->getRedirectURL(),
             'client_id' => $this->clientID,
-            'nonce' => $nonce,
-            'state' => $state,
+            'nonce' => $state->getNonce(),
+            'state' => $state->getId(),
             'scope' => 'openid'
         ]);
 
@@ -777,7 +757,7 @@ class OpenIDConnectClient
         $codeChallengeMethod = $this->getCodeChallengeMethod();
         if (!empty($codeChallengeMethod) && in_array($codeChallengeMethod, $this->getProviderConfigValue('code_challenge_methods_supported', []), true)) {
             $codeVerifier = bin2hex(random_bytes(64));
-            $this->setCodeVerifier($codeVerifier);
+            $this->setCodeVerifier($state, $codeVerifier);
             if (!empty($this->pkceAlgs[$codeChallengeMethod])) {
                 $codeChallenge = rtrim(strtr(base64_encode(hash($this->pkceAlgs[$codeChallengeMethod], $codeVerifier, true)), '+/', '-_'), '=');
             } else {
@@ -868,7 +848,7 @@ class OpenIDConnectClient
      * @return mixed
      * @throws OpenIDConnectClientException
      */
-    protected function requestTokens(string $code, array $headers = []) {
+    protected function requestTokens(string $code, StateData  $state, array $headers = []) {
         $token_endpoint = $this->getProviderConfigValue('token_endpoint');
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
 
@@ -911,7 +891,7 @@ class OpenIDConnectClient
     	}
 
         $ccm = $this->getCodeChallengeMethod();
-        $cv = $this->getCodeVerifier();
+        $cv = $state->getCodeVerifier();
         if (!empty($ccm) && !empty($cv)) {
             $cs = $this->getClientSecret();
             if (empty($cs)) {
@@ -920,7 +900,7 @@ class OpenIDConnectClient
             }
             $token_params = array_merge($token_params, [
                 'client_id' => $this->clientID,
-                'code_verifier' => $this->getCodeVerifier()
+                'code_verifier' => $state->getCodeVerifier()
             ]);
         }
 
@@ -1092,6 +1072,14 @@ class OpenIDConnectClient
         return $key->verify($payload, $signature);
     }
 
+    private function verifyEdDSAJWTsignature($key, $payload, $signature) {
+        if (!(property_exists($key, 'x'))) {
+            throw new OpenIDConnectClientException('Malformed key object');
+        }
+
+        return sodium_crypto_sign_verify_detached($signature, $payload, base64url_decode($key->x));
+    }
+
     private function verifyHMACJWTSignature(string $hashType, string $key, string $payload, string $signature): bool
     {
         $expected = hash_hmac($hashType, $payload, $key, true);
@@ -1150,6 +1138,24 @@ class OpenIDConnectClient
                     $jwk,
                     $payload, $signature, $signatureType);
                 break;
+            case 'EdDSA':
+                if (isset($header->jwk)) {
+                    $jwk = $header->jwk;
+                    $this->verifyJWKHeader($jwk);
+                } else {
+                    $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
+                    if ($jwks === NULL) {
+                        throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
+                    }
+                    $jwk = $this->getKeyForHeader($jwks->keys, $header);
+                }
+
+                $verified = $this->verifyEdDSAJWTsignature(
+                    $jwk,
+                    $payload,
+                    $signature
+                );
+                break;
             case 'HS256':
             case 'HS512':
             case 'HS384':
@@ -1194,7 +1200,7 @@ class OpenIDConnectClient
      * @return bool
      * @throws OpenIDConnectClientException
      */
-    protected function verifyJWTClaims($claims, ?string $accessToken = null): bool
+    protected function verifyJWTClaims($claims, ?string $accessToken = null, ?StateData $state = null): bool
     {
         // Verify that sub is set
         if (!isset($claims->sub)) {
@@ -1202,12 +1208,19 @@ class OpenIDConnectClient
         }
 	    
         if(isset($claims->at_hash, $accessToken)) {
-            if(isset($this->getIdTokenHeader()->alg) && $this->getIdTokenHeader()->alg !== 'none') {
-                $bit = substr($this->getIdTokenHeader()->alg, 2, 3);
-            } else {
-                // TODO: Error case. throw exception???
-                $bit = '256';
+            switch($this->getIdTokenHeader()->alg ?? '') {
+                case 'EdDSA':
+                    $bit = '512';
+                    break;
+                case 'none':
+                case '':
+                    // TODO: Error case. throw exception???
+                    $bit = '256';
+                    break;
+                default:
+                    $bit = substr($this->getIdTokenHeader()->alg, 2, 3);
             }
+
             $len = ((int)$bit)/16;
             $expected_at_hash = $this->urlEncode(substr(hash('sha'.$bit, $accessToken, true), 0, $len));
         }
@@ -1216,7 +1229,7 @@ class OpenIDConnectClient
         return (($this->validateIssuer($claims->iss))
             && (in_array($this->clientID, $auds, true))
             && ($claims->sub === $this->getIdTokenPayload()->sub)
-            && (!isset($claims->nonce) || $claims->nonce === $this->getNonce())
+            && (!isset($claims->nonce) || ($state !== null && $claims->nonce === $state->getNonce()))
             && ( !isset($claims->exp) || ((is_int($claims->exp)) && ($claims->exp >= time() - $this->leeway)))
             && ( !isset($claims->nbf) || ((is_int($claims->nbf)) && ($claims->nbf <= time() + $this->leeway)))
             && ( !isset($claims->at_hash) || !isset($accessToken) || $claims->at_hash === $expected_at_hash )
@@ -1797,48 +1810,27 @@ class OpenIDConnectClient
     }
 
     /**
-     * Stores nonce
-     */
-    protected function setNonce(string $nonce): string
-    {
-        $this->setSessionKey('openid_connect_nonce', $nonce);
-        return $nonce;
-    }
-
-    /**
-     * Get stored nonce
-     *
-     * @return string
-     */
-    protected function getNonce() {
-        return $this->getSessionKey('openid_connect_nonce');
-    }
-
-    /**
-     * Cleanup nonce
-     *
-     * @return void
-     */
-    protected function unsetNonce() {
-        $this->unsetSessionKey('openid_connect_nonce');
-    }
-
-    /**
      * Stores $state
      */
-    protected function setState(string $state): string
+    protected function setState(StateData $state): StateData
     {
-        $this->setSessionKey('openid_connect_state', $state);
+        $this->setSessionKey('openid_connect_state', $state->toArray());
+
         return $state;
     }
 
-    /**
-     * Get stored state
-     *
-     * @return string
-     */
-    protected function getState() {
-        return $this->getSessionKey('openid_connect_state');
+    protected function claimState(): StateData
+    {
+        // Do an OpenID Connect session check
+        $data = $this->getSessionKey('openid_connect_state');
+        if (!isset($_REQUEST['state']) || $_REQUEST['state'] !== ($data['id'] ?? null)) {
+            throw new OpenIDConnectClientException('Unable to determine state');
+        }
+
+        // Cleanup state
+        $this->unsetState();
+
+        return StateData::fromArray($data);
     }
 
     /**
@@ -1853,28 +1845,13 @@ class OpenIDConnectClient
     /**
      * Stores $codeVerifier
      */
-    protected function setCodeVerifier(string $codeVerifier): string
+    protected function setCodeVerifier(StateData $state, string $codeVerifier): string
     {
-        $this->setSessionKey('openid_connect_code_verifier', $codeVerifier);
+        $this->setState(
+            $state->setCodeVerifier($codeVerifier)
+        );
+
         return $codeVerifier;
-    }
-
-    /**
-     * Get stored codeVerifier
-     *
-     * @return string
-     */
-    protected function getCodeVerifier() {
-        return $this->getSessionKey('openid_connect_code_verifier');
-    }
-
-    /**
-     * Cleanup state
-     *
-     * @return void
-     */
-    protected function unsetCodeVerifier() {
-        $this->unsetSessionKey('openid_connect_code_verifier');
     }
 
     /**
@@ -2017,13 +1994,13 @@ class OpenIDConnectClient
         return $this->authParams;
     }
 
+
     /**
      * @return callable
      */
     public function getIssuerValidator() {
         return $this->issuerValidator;
     }
-
 
     /**
      * @return callable
@@ -2094,5 +2071,12 @@ class OpenIDConnectClient
     protected function getUserAgent(): string
     {
         return "jumbojett/OpenID-Connect-PHP";
+    }
+
+    public function setStatePayload(array $data): self
+    {
+        $this->statePayload = $data;
+
+        return $this;
     }
 }
