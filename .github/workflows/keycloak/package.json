@@ -1,0 +1,14 @@
+{
+  "name": "keycloak-testing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "cy:run": "cypress run",
+    "cy:open": "cypress open"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "cypress": "^10.11.0"
+  }
+}
