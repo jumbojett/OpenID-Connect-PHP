@@ -810,9 +810,12 @@ class OpenIDConnectClient
         $post_data = [
             'grant_type'    => $grant_type,
             'client_id'     => $this->clientID,
-            'client_secret' => $this->clientSecret,
-            'scope'         => implode(' ', $this->scopes)
+            'client_secret' => $this->clientSecret
         ];
+        
+        if ($this->scopes) {
+            $post_data['scope'] = implode(' ', $this->scopes);
+        }
 
         // Convert token params to string format
         $post_params = http_build_query($post_data, '', '&', $this->encType);
