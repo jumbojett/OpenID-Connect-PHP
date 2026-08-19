@@ -527,7 +527,7 @@ class OpenIDConnectClient
         }
 
         // Validate the iss
-        if (!$this->validateIssuer($claims->iss)) {
+        if (!isset($claims->iss) || !$this->validateIssuer($claims->iss)) {
             return false;
         }
         // Validate the aud
@@ -1213,7 +1213,7 @@ class OpenIDConnectClient
         }
         $auds = $claims->aud;
         $auds = is_array( $auds ) ? $auds : [ $auds ];
-        return (($this->validateIssuer($claims->iss))
+        return ((isset($claims->iss) && $this->validateIssuer($claims->iss))
             && (in_array($this->clientID, $auds, true))
             && ($claims->sub === $this->getIdTokenPayload()->sub)
             && (!isset($claims->nonce) || $claims->nonce === $this->getNonce())
