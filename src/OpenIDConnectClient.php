@@ -999,6 +999,7 @@ class OpenIDConnectClient
             'client_id' => $this->clientID,
             'client_secret' => $this->clientSecret,
             'scope'         => implode(' ', $this->scopes),
+            'redirect_uri'  => $this->getRedirectURL(),
         ];
 
         # Consider Basic authentication if provider config is set this way
