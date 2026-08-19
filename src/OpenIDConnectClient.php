@@ -193,6 +193,11 @@ class OpenIDConnectClient
     private $additionalJwks = [];
 
     /**
+     * @var bool ignore JWK from JWT header
+     */
+    private $ignoreJwkFromHeader = false;
+
+    /**
      * @var object holds verified jwt claims
      */
     protected $verifiedClaims = [];
@@ -1130,7 +1135,7 @@ class OpenIDConnectClient
             case 'RS512':
                 $hashType = 'sha' . substr($header->alg, 2);
                 $signatureType = $header->alg === 'PS256' || $header->alg === 'PS512' ? 'PSS' : '';
-                if (isset($header->jwk)) {
+                if (!$this->ignoreJwkFromHeader && isset($header->jwk)) {
                     $jwk = $header->jwk;
                     $this->verifyJWKHeader($jwk);
                 } else {
@@ -1520,6 +1525,10 @@ class OpenIDConnectClient
      */
     public function setHttpUpgradeInsecureRequests(bool $httpUpgradeInsecureRequests) {
         $this->httpUpgradeInsecureRequests = $httpUpgradeInsecureRequests;
+    }
+
+    public function setIgnoreJwkFromHeader(bool $ignoreJwkFromHeader) {
+        $this->ignoreJwkFromHeader = $ignoreJwkFromHeader;
     }
 
     public function getVerifyHost(): bool
