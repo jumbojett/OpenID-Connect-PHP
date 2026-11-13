@@ -427,12 +427,13 @@ class OpenIDConnectClient
      *
      * @param string $idToken ID token (obtained at login)
      * @param string|null $redirect URL to which the RP is requesting that the End-User's User Agent
+     * @param array $params Optional GET parameters to end-session endpoint
      * be redirected after a logout has been performed. The value MUST have been previously
      * registered with the OP. Value can be null.
      *
      * @throws OpenIDConnectClientException
      */
-    public function signOut(string $idToken, $redirect) {
+    public function signOut(string $idToken, $redirect, array $params = []) {
         $sign_out_endpoint = $this->getProviderConfigValue('end_session_endpoint');
 
         if($redirect === null){
@@ -443,6 +444,9 @@ class OpenIDConnectClient
                 'id_token_hint' => $idToken,
                 'post_logout_redirect_uri' => $redirect];
         }
+
+        if($params)
+            $signout_params = array_merge($signout_params, $params);
 
         $sign_out_endpoint  .= (strpos($sign_out_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, '', '&', $this->encType);
         $this->redirect($sign_out_endpoint);
