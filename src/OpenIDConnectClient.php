@@ -525,6 +525,9 @@ class OpenIDConnectClient
                 return false;
             }
         }
+        else{
+            return false;
+        }
 
         // Validate the iss
         if (!$this->validateIssuer($claims->iss)) {
