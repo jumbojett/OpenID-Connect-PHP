@@ -7,22 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 
 ### Added
+- Add unit tests for verifyJWTClaims and different aud claims. #443
 - Support to change the `leeway` time for JWT verification using `setLeeway` #483
 
 ### Changed
+- Validate state before ID Token request. #447
 - Stop adding ?schema=openid to userinfo endpoint URL. #449
 - Drop support for PHP 7.1 #502
 
 ### Fixed
+- Fix protected responseContentType to allow overloading of fetchUrl function. #446
+- Fix TypeError in verifyJWTClaims. #442
 - Check existence of subject when verifying JWT #474
 - exp verification when verifying Logout Token claims #482
 - http_build_query expects (non nullable) string as 2nd argument
 - curl_close() is ineffective since PHP 8.0.0, deprecated since 8.5.0
 
-## [1.0.1] - 2024-09-13
+## [1.0.2] - 2024-09-13
+
+### Added
+- Add unit test for SERVER_PORT type cast. #438
 
 ### Fixed
 - Cast `$_SERVER['SERVER_PORT']` to integer to prevent adding 80 or 443 port to redirect URL. #437
+- Fix protected $responseCode to allow proper overloading of fetchURL(). #433
+- Fix bring back #404. #437
 
 ## [1.0.1] - 2024-09-05
 
