@@ -914,14 +914,29 @@ class OpenIDConnectClient
         $cv = $this->getCodeVerifier();
         if (!empty($ccm) && !empty($cv)) {
             $cs = $this->getClientSecret();
-            if (empty($cs)) {
-                $authorizationHeader = null;
-                unset($token_params['client_secret']);
+
+            // If we have a client secret and we're doing client_secret_basic,
+            // keep credentials ONLY in the Authorization header.
+            $usingBasicAuth = (
+                $authorizationHeader !== null
+                && $this->supportsAuthMethod('client_secret_basic', $token_endpoint_auth_methods_supported)
+                && !empty($cs)
+            );
+
+            if ($usingBasicAuth) {
+                // Add PKCE verifier only; do NOT re-add client_id to POST body
+                $token_params['code_verifier'] = $cv;
+            } else {
+                // Public client / no secret: no Authorization header; include client_id + code_verifier
+                if (empty($cs)) {
+                    $authorizationHeader = null;
+                    unset($token_params['client_secret'], $token_params['client_id']);
+                }
+                $token_params = array_merge($token_params, [
+                    'client_id' => $this->clientID,
+                    'code_verifier' => $this->getCodeVerifier()
+                ]);
             }
-            $token_params = array_merge($token_params, [
-                'client_id' => $this->clientID,
-                'code_verifier' => $this->getCodeVerifier()
-            ]);
         }
 
         // Convert token params to string format
